@@ -6,7 +6,6 @@ import com.traveltrace.app.ui.map.MapUiState;
 import com.traveltrace.app.ui.photo.PhotoSelectionUiState;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -118,8 +117,4 @@ public final class ScreenFixtures {
         return "파리";
     }
 
-    /** 테스트/디버그 편의용 — 정차점 이름 목록. */
-    public static List<String> stopNames() {
-        return Arrays.asList("개선문", "에펠탑", "센강 유람선", "루브르 박물관", "노트르담", "몽마르트");
-    }
 }

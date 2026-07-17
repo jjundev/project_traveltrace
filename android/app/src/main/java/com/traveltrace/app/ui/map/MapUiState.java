@@ -2,6 +2,7 @@ package com.traveltrace.app.ui.map;
 
 import androidx.annotation.ColorInt;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -24,7 +25,7 @@ public final class MapUiState {
                       boolean playing, boolean satellite, boolean cinema, Speed speed) {
         this.tripTitle = tripTitle;
         this.unknownCount = unknownCount;
-        this.stops = Collections.unmodifiableList(stops);
+        this.stops = Collections.unmodifiableList(new ArrayList<>(stops));
         this.activeIndex = activeIndex;
         this.playing = playing;
         this.satellite = satellite;
@@ -33,7 +34,10 @@ public final class MapUiState {
     }
 
     public Stop activeStop() {
-        return stops.get(Math.min(activeIndex, stops.size() - 1));
+        if (stops.isEmpty()) {
+            throw new IllegalStateException("activeStop() on a trip with no stops");
+        }
+        return stops.get(Math.max(0, Math.min(activeIndex, stops.size() - 1)));
     }
 
     /** 경로 위 정차 지점 1곳. 좌표는 로직 단계(에픽 12)에서 붙는다. */

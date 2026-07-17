@@ -17,7 +17,7 @@ public final class PhotoSelectionUiState {
     public PhotoSelectionUiState(String periodLabel, int maxCount, List<Tile> tiles) {
         this.periodLabel = periodLabel;
         this.maxCount = maxCount;
-        this.tiles = Collections.unmodifiableList(tiles);
+        this.tiles = Collections.unmodifiableList(new ArrayList<>(tiles));
     }
 
     public int selectedCount() {

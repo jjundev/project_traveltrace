@@ -10,6 +10,9 @@ import com.traveltrace.app.ui.home.HomeUiState;
 import com.traveltrace.app.ui.map.MapUiState;
 import com.traveltrace.app.ui.photo.PhotoSelectionUiState;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.Test;
 
 /** 픽스처가 프로토타입 원본 값과 어긋나면 화면 충실도가 조용히 깨지므로 값을 고정한다. */
@@ -113,5 +116,16 @@ public class ScreenFixturesTest {
     public void unknownThumbTones_hasFiveTones() {
         assertEquals(5, ScreenFixtures.unknownThumbTones().length);
         assertEquals(0xFFE3D6C8, ScreenFixtures.unknownThumbTones()[0]);
+    }
+
+    @Test
+    public void uiStateDoesNotAliasCallerList() {
+        List<PhotoSelectionUiState.Tile> tiles = new ArrayList<>();
+        tiles.add(new PhotoSelectionUiState.Tile(0xFF000000, null, true));
+        PhotoSelectionUiState s = new PhotoSelectionUiState("p", 100, tiles);
+
+        tiles.add(new PhotoSelectionUiState.Tile(0xFFFFFFFF, null, true));
+
+        assertEquals("생성 후 호출자가 원본 리스트를 바꿔도 상태는 불변", 1, s.tiles.size());
     }
 }

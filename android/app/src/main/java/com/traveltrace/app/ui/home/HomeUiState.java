@@ -2,6 +2,7 @@ package com.traveltrace.app.ui.home;
 
 import androidx.annotation.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -13,7 +14,7 @@ public final class HomeUiState {
 
     private HomeUiState(boolean empty, List<TripCard> trips) {
         this.empty = empty;
-        this.trips = Collections.unmodifiableList(trips);
+        this.trips = Collections.unmodifiableList(new ArrayList<>(trips));
     }
 
     public static HomeUiState trips(List<TripCard> trips) {
