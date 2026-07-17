@@ -1,0 +1,9 @@
+// buildSrc is a separate build: the root settings.gradle's toolchain resolver does not
+// reach it, so it needs its own. Without this, buildSrc's Java 17 toolchain pin can only
+// be satisfied by a JDK 17 already installed on the host — and an Android Studio JBR
+// tracks the IDE version (quail1 ships 21), so that is not guaranteed.
+// No version here on purpose: buildSrc inherits the plugin on its classpath from the
+// root build, and re-declaring a version makes resolution fail as unverifiable.
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention'
+}

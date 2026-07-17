@@ -12,6 +12,14 @@ pluginManagement {
     }
 }
 
+// buildSrc pins the Java 17 toolchain, but a host's Android Studio JBR tracks the IDE
+// version (quail1 ships 21), so the pin cannot be satisfied from JAVA_HOME alone. Let
+// Gradle provision a matching JDK rather than relaxing the pin — the build then works
+// regardless of which Android Studio is installed. Must follow pluginManagement.
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+}
+
 dependencyResolutionManagement {
     repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
     repositories {
