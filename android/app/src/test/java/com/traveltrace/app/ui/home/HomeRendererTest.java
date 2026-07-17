@@ -7,6 +7,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.test.core.app.ApplicationProvider;
@@ -110,5 +111,29 @@ public class HomeRendererTest {
 
         assertEquals(View.VISIBLE, binding.toastPill.getVisibility());
         assertEquals("토스트 B", binding.toastPill.getText().toString());
+    }
+
+    @Test
+    public void cancelAfterDetachPreventsLateHide() {
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        activity.setContentView(binding.getRoot());
+
+        View root = binding.getRoot();
+        com.traveltrace.app.ui.common.ToastPresenter.show(root, "데모에선 파리 여행만 열려요");
+        assertEquals(View.VISIBLE, binding.toastPill.getVisibility());
+
+        // onDestroyView() 이전에 AndroidX Fragment가 뷰를 컨테이너에서 detach하는 상황을 재현.
+        ((ViewGroup) root.getParent()).removeView(root);
+
+        com.traveltrace.app.ui.common.ToastPresenter.cancel(root);
+
+        ShadowLooper.idleMainLooper(3, TimeUnit.SECONDS);
+
+        assertEquals(
+                "취소 후에는 태그에 대기 중인 콜백이 남아있으면 안 된다",
+                null, binding.toastPill.getTag(R.id.toastPill));
+        assertEquals(
+                "취소된 숨김이 detach 이후에도 뒤늦게 실행되면 안 된다",
+                View.VISIBLE, binding.toastPill.getVisibility());
     }
 }
