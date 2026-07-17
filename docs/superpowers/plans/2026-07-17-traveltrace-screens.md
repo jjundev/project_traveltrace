@@ -387,8 +387,9 @@ public final class HomeUiState {
         this.trips = Collections.unmodifiableList(trips);
     }
 
+    /** empty 는 목록에서 파생한다 — 리포지토리가 빈 목록을 주면 자동으로 빈 상태가 된다. */
     public static HomeUiState trips(List<TripCard> trips) {
-        return new HomeUiState(false, trips);
+        return new HomeUiState(trips.isEmpty(), trips);
     }
 
     public static HomeUiState empty() {
@@ -1370,6 +1371,8 @@ Expected: 컴파일 실패 — `cannot find symbol: class HomeRenderer`, `cannot
 ```java
 package com.traveltrace.app.ui.common;
 
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.TextView;
 
@@ -1384,6 +1387,12 @@ public final class ToastPresenter {
 
     private static final long DURATION_MS = 1900L;
 
+    // View.postDelayed/removeCallbacks 는 뷰가 attach 된 동안에만 실제 윈도우 Handler 에 닿는다.
+    // removeCallbacks 는 호출 시점의 attach 여부를 보는데, 이미 detach 된 뷰면 실제 Handler 에
+    // 걸린 메시지를 지우지 못한다. AndroidX Fragment 는 onDestroyView() 전에 뷰를 detach 하므로
+    // 그 시점의 View 기반 취소는 무효가 된다 → attach 와 무관하게 취소되도록 main Looper Handler 사용.
+    private static final Handler HANDLER = new Handler(Looper.getMainLooper());
+
     private ToastPresenter() {}
 
     public static void show(View anchorRoot, String message) {
@@ -1391,22 +1400,35 @@ public final class ToastPresenter {
         if (pill == null) return;
 
         // 연속 토스트가 겹치면 앞선 숨김 예약이 새 토스트를 조기에 지운다 → 예약을 갈아끼운다.
-        Object pending = pill.getTag(R.id.toastPill);
-        if (pending instanceof Runnable) {
-            pill.removeCallbacks((Runnable) pending);
-        }
+        cancel(anchorRoot);
 
         pill.setText(message);
         pill.setVisibility(View.VISIBLE);
 
         Runnable hide = () -> pill.setVisibility(View.GONE);
         pill.setTag(R.id.toastPill, hide);
-        pill.postDelayed(hide, DURATION_MS);
+        HANDLER.postDelayed(hide, DURATION_MS);
+    }
+
+    /**
+     * 화면이 사라질 때 예약된 숨김을 취소한다 — 파괴된 뷰로 콜백이 튀지 않게.
+     * main Looper Handler 에 위임하므로 뷰의 attach 상태와 무관하게 항상 취소된다.
+     */
+    public static void cancel(View anchorRoot) {
+        TextView pill = anchorRoot.findViewById(R.id.toastPill);
+        if (pill == null) return;
+        Object pending = pill.getTag(R.id.toastPill);
+        if (pending instanceof Runnable) {
+            HANDLER.removeCallbacks((Runnable) pending);
+            pill.setTag(R.id.toastPill, null);
+        }
     }
 }
 ```
 
 > `setTag(int key, Object)` 의 키는 리소스 ID여야 한다 — `@id/toastPill` 을 키로 재사용한다.
+>
+> **`show()` 를 쓰는 화면은 `onDestroyView()` 에서 반드시 `ToastPresenter.cancel(binding.getRoot())` 를 `binding` 을 null 로 만들기 전에 호출해야 한다** (Task 9의 "빼기" 토스트가 두 번째 호출자다). 이 짝을 빠뜨리면 1.9초 동안 파괴된 뷰 계층이 붙잡힌다. 테스트는 `ui/common/ToastPresenterTest` 에 있다.
 
 `android/app/src/main/java/com/traveltrace/app/ui/home/TripCardAdapter.java` (신규):
 
@@ -1434,9 +1456,14 @@ public class TripCardAdapter extends RecyclerView.Adapter<TripCardAdapter.VH> {
     }
 
     private final List<HomeUiState.TripCard> items = new ArrayList<>();
-    private final Listener listener;
+    private Listener listener;
 
     public TripCardAdapter(Listener listener) {
+        this.listener = listener;
+    }
+
+    /** 재사용 경로에서 Renderer 가 현재 리스너로 갱신한다 (final 이면 옛 리스너가 남는다). */
+    public void setListener(Listener listener) {
         this.listener = listener;
     }
 
@@ -1465,6 +1492,8 @@ public class TripCardAdapter extends RecyclerView.Adapter<TripCardAdapter.VH> {
         holder.b.tripHero.setImageResource(heroFor(card.id));
         holder.b.tripTitle.setText(card.title);
         holder.b.tripMeta.setText(card.meta);
+        // locationLabel 은 @Nullable — 그냥 setText 하면 빈 pill 이 hero 위에 떠 버린다.
+        holder.b.tripLocation.setVisibility(card.locationLabel == null ? View.GONE : View.VISIBLE);
         holder.b.tripLocation.setText(card.locationLabel);
         holder.b.tripCard.setOnClickListener(v -> listener.onTripClick(card));
     }
@@ -1506,21 +1535,24 @@ public final class HomeRenderer {
         binding.tripList.setVisibility(state.empty ? View.GONE : View.VISIBLE);
         binding.emptyGroup.setVisibility(state.empty ? View.VISIBLE : View.GONE);
 
-        if (state.empty) return;
-
         TripCardAdapter adapter;
         if (binding.tripList.getAdapter() instanceof TripCardAdapter) {
             adapter = (TripCardAdapter) binding.tripList.getAdapter();
+            // 이번 호출의 리스너가 항상 이긴다 — 재사용 경로에서 옛 리스너가 남지 않도록.
+            adapter.setListener(listener);
         } else {
             adapter = new TripCardAdapter(listener);
             binding.tripList.setLayoutManager(
                     new LinearLayoutManager(binding.getRoot().getContext()));
             binding.tripList.setAdapter(adapter);
         }
-        adapter.submit(state.trips);
+        // 빈 상태에서도 제출한다 — early return 하면 숨겨진 목록에 옛 항목이 남는다.
+        adapter.submit(state.empty ? Collections.emptyList() : state.trips);
     }
 }
 ```
+
+> **이 Renderer 형태가 이후 8개 화면의 본이다.** 세 가지가 의도적이다: (1) `static` — Fragment·Hilt 없이 Robolectric이 직접 호출한다; (2) 재사용 경로에서도 리스너를 다시 건다; (3) 빈 상태에서도 어댑터에 제출한다. 셋 다 실제 리뷰에서 잡힌 결함을 막은 것이므로 복사할 때 빠뜨리지 말 것.
 
 - [ ] **Step 12: HomeViewModel · HomeFragment 작성**
 
@@ -4959,6 +4991,8 @@ import com.traveltrace.app.databinding.ViewMapBottomSheetBinding;
         sheet.detachButton.setOnClickListener(v ->
                 ToastPresenter.show(binding.getRoot(), getString(R.string.map_detach_toast)));
 ```
+
+> **`ToastPresenter.show()` 를 쓰므로 짝을 맞춰야 한다** — `MapReplayFragment.onDestroyView()` 에서 `binding` 을 null 로 만들기 **전에** `ToastPresenter.cancel(binding.getRoot());` 를 호출할 것. 빠뜨리면 예약된 숨김이 1.9초 동안 파괴된 뷰를 붙잡는다 (Task 3에서 실제로 잡힌 결함).
 
 `render(MapUiState)` 본문에 시트 렌더를 추가:
 
