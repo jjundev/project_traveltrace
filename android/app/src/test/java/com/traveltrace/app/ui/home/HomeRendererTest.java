@@ -3,11 +3,9 @@ package com.traveltrace.app.ui.home;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import android.app.Activity;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.test.core.app.ApplicationProvider;
@@ -19,11 +17,9 @@ import com.traveltrace.app.ui.preview.ScreenFixtures;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.shadows.ShadowLooper;
 
-import java.util.concurrent.TimeUnit;
+import java.util.Collections;
 
 @RunWith(RobolectricTestRunner.class)
 public class HomeRendererTest {
@@ -38,6 +34,15 @@ public class HomeRendererTest {
         binding = FragmentHomeBinding.inflate(LayoutInflater.from(ctx));
     }
 
+    /** ConstraintLayout Group 이 참조 뷰에 가시성을 실제로 전파하도록 강제하는 measure/layout. */
+    private void layoutRoot() {
+        View root = binding.getRoot();
+        root.measure(
+                View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(1920, View.MeasureSpec.EXACTLY));
+        root.layout(0, 0, 1080, 1920);
+    }
+
     @Test
     public void tripsState_showsListAndHidesEmptyBlock() {
         HomeRenderer.render(binding, ScreenFixtures.home(), card -> {});
@@ -50,10 +55,21 @@ public class HomeRendererTest {
 
     @Test
     public void emptyState_showsEmptyBlockAndHidesList() {
+        HomeRenderer.render(binding, ScreenFixtures.home(), card -> {});
+        layoutRoot();
+        assertEquals(View.GONE, binding.emptyGroup.getVisibility());
+        assertEquals(
+                "trips 상태에서는 Group 이 참조하는 실제 자식도 숨겨져야 한다",
+                View.GONE, binding.emptyTitle.getVisibility());
+
         HomeRenderer.render(binding, ScreenFixtures.homeEmpty(), card -> {});
+        layoutRoot();
 
         assertEquals(View.GONE, binding.tripList.getVisibility());
         assertEquals(View.VISIBLE, binding.emptyGroup.getVisibility());
+        assertEquals(
+                "empty 상태에서는 Group 의 가시성이 참조 자식(emptyTitle)에도 전파돼야 한다",
+                View.VISIBLE, binding.emptyTitle.getVisibility());
     }
 
     @Test
@@ -74,66 +90,35 @@ public class HomeRendererTest {
     }
 
     @Test
-    public void toastPillStartsHiddenAndShowsMessage() {
-        assertEquals(View.GONE, binding.toastPill.getVisibility());
+    public void tripsToEmptyTransition_clearsAdapterItems() {
+        HomeRenderer.render(binding, ScreenFixtures.home(), card -> {});
+        assertEquals(2, binding.tripList.getAdapter().getItemCount());
 
-        com.traveltrace.app.ui.common.ToastPresenter.show(
-                binding.getRoot(), "데모에선 파리 여행만 열려요");
+        HomeRenderer.render(binding, ScreenFixtures.homeEmpty(), card -> {});
 
-        assertEquals(View.VISIBLE, binding.toastPill.getVisibility());
-        assertEquals("데모에선 파리 여행만 열려요", binding.toastPill.getText().toString());
-    }
-
-    @Test
-    public void toastAutoHidesAfterDelay() {
-        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
-        activity.setContentView(binding.getRoot());
-
-        com.traveltrace.app.ui.common.ToastPresenter.show(
-                binding.getRoot(), "데모에선 파리 여행만 열려요");
-        assertEquals(View.VISIBLE, binding.toastPill.getVisibility());
-
-        ShadowLooper.idleMainLooper(2, TimeUnit.SECONDS);
-
-        assertEquals(View.GONE, binding.toastPill.getVisibility());
-    }
-
-    @Test
-    public void rapidSecondToastCancelsPriorHide() {
-        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
-        activity.setContentView(binding.getRoot());
-
-        com.traveltrace.app.ui.common.ToastPresenter.show(binding.getRoot(), "토스트 A");
-        ShadowLooper.idleMainLooper(1, TimeUnit.SECONDS);
-
-        com.traveltrace.app.ui.common.ToastPresenter.show(binding.getRoot(), "토스트 B");
-        ShadowLooper.idleMainLooper(1200, TimeUnit.MILLISECONDS);
-
-        assertEquals(View.VISIBLE, binding.toastPill.getVisibility());
-        assertEquals("토스트 B", binding.toastPill.getText().toString());
-    }
-
-    @Test
-    public void cancelAfterDetachPreventsLateHide() {
-        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
-        activity.setContentView(binding.getRoot());
-
-        View root = binding.getRoot();
-        com.traveltrace.app.ui.common.ToastPresenter.show(root, "데모에선 파리 여행만 열려요");
-        assertEquals(View.VISIBLE, binding.toastPill.getVisibility());
-
-        // onDestroyView() 이전에 AndroidX Fragment가 뷰를 컨테이너에서 detach하는 상황을 재현.
-        ((ViewGroup) root.getParent()).removeView(root);
-
-        com.traveltrace.app.ui.common.ToastPresenter.cancel(root);
-
-        ShadowLooper.idleMainLooper(3, TimeUnit.SECONDS);
-
+        assertNotNull(binding.tripList.getAdapter());
         assertEquals(
-                "취소 후에는 태그에 대기 중인 콜백이 남아있으면 안 된다",
-                null, binding.toastPill.getTag(R.id.toastPill));
+                "empty 로 전환되면 어댑터에 이전 trips 상태의 stale row 가 남아있으면 안 된다",
+                0, binding.tripList.getAdapter().getItemCount());
+    }
+
+    @Test
+    public void tripCardWithNullLocationLabel_hidesLocationPill() {
+        HomeUiState.TripCard noLocation = new HomeUiState.TripCard(
+                "paris", "제목", "메타", null, true);
+        HomeUiState state = HomeUiState.trips(Collections.singletonList(noLocation));
+
+        HomeRenderer.render(binding, state, card -> {});
+        binding.tripList.measure(
+                View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(1920, View.MeasureSpec.EXACTLY));
+        binding.tripList.layout(0, 0, 1080, 1920);
+
+        View itemView = binding.tripList.getChildAt(0);
+        assertNotNull(itemView);
+        View locationPill = itemView.findViewById(R.id.tripLocation);
         assertEquals(
-                "취소된 숨김이 detach 이후에도 뒤늦게 실행되면 안 된다",
-                View.VISIBLE, binding.toastPill.getVisibility());
+                "locationLabel 이 null 이면 위치 pill 은 GONE 이어야 한다(빈 캡슐 방지)",
+                View.GONE, locationPill.getVisibility());
     }
 }

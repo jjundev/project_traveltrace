@@ -33,7 +33,7 @@
                 style="@style/Widget.TravelTrace.Badge"
                 android:layout_gravity="bottom|start"
                 android:layout_marginStart="14dp"
-                android:layout_marginBottom="12dp"
+                android:layout_marginBottom="@dimen/space_3"
                 android:background="@drawable/bg_pill_glass"
                 android:textColor="@color/text_secondary"
                 android:textFontWeight="700"

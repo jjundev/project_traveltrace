@@ -18,7 +18,7 @@ public final class HomeUiState {
     }
 
     public static HomeUiState trips(List<TripCard> trips) {
-        return new HomeUiState(false, trips);
+        return new HomeUiState(trips.isEmpty(), trips);
     }
 
     public static HomeUiState empty() {

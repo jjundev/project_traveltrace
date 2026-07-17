@@ -1,6 +1,7 @@
 package com.traveltrace.app.ui.home;
 
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.DrawableRes;
@@ -56,6 +57,7 @@ public class TripCardAdapter extends RecyclerView.Adapter<TripCardAdapter.VH> {
         holder.b.tripHero.setImageResource(heroFor(card.id));
         holder.b.tripTitle.setText(card.title);
         holder.b.tripMeta.setText(card.meta);
+        holder.b.tripLocation.setVisibility(card.locationLabel == null ? View.GONE : View.VISIBLE);
         holder.b.tripLocation.setText(card.locationLabel);
         holder.b.tripCard.setOnClickListener(v -> listener.onTripClick(card));
     }

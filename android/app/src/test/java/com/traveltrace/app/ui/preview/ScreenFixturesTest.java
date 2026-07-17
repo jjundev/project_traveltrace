@@ -11,6 +11,7 @@ import com.traveltrace.app.ui.map.MapUiState;
 import com.traveltrace.app.ui.photo.PhotoSelectionUiState;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.Test;
@@ -41,6 +42,13 @@ public class ScreenFixturesTest {
     public void homeEmpty_hasNoTrips() {
         HomeUiState s = ScreenFixtures.homeEmpty();
         assertTrue(s.empty);
+        assertTrue(s.trips.isEmpty());
+    }
+
+    @Test
+    public void trips_withEmptyList_derivesEmptyTrue() {
+        HomeUiState s = HomeUiState.trips(Collections.<HomeUiState.TripCard>emptyList());
+        assertTrue("빈 리스트로 만든 상태는 empty=true 여야 한다", s.empty);
         assertTrue(s.trips.isEmpty());
     }
 
