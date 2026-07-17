@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 제주 카드 hero (프로토타입 SVG viewBox 0 0 320 140 이식). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="320dp"
+    android:height="140dp"
+    android:viewportWidth="320"
+    android:viewportHeight="140">
+
+    <path android:pathData="M0,0 L320,0 L320,140 L0,140 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="0" android:startY="0"
+                android:endX="320" android:endY="140"
+                android:startColor="@color/illust_jeju_bg_start"
+                android:endColor="@color/illust_jeju_bg_end" />
+        </aapt:attr>
+    </path>
+
+    <!-- 섬 타원 (cx160 cy80 rx150 ry50, opacity .6) -->
+    <path
+        android:fillColor="@color/illust_jeju_land"
+        android:fillAlpha="0.6"
+        android:pathData="M10,80 a150,50 0 1,0 300,0 a150,50 0 1,0 -300,0 Z" />
+
+    <path
+        android:pathData="M40,70 L110,90 L180,56 L250,84"
+        android:strokeColor="@color/fill_brand"
+        android:strokeWidth="2.5"
+        android:strokeLineJoin="round"
+        android:strokeLineCap="round" />
+
+    <path android:fillColor="@color/fill_brand" android:pathData="M40,65 a5,5 0 1,0 0.1,0 Z" />
+    <path android:fillColor="@color/fill_brand" android:pathData="M110,85 a5,5 0 1,0 0.1,0 Z" />
+    <path android:fillColor="@color/fill_brand" android:pathData="M180,51 a5,5 0 1,0 0.1,0 Z" />
+    <path android:fillColor="@color/fill_brand" android:pathData="M250,79 a5,5 0 1,0 0.1,0 Z" />
+</vector>

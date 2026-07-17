@@ -55,4 +55,21 @@
     <dimen name="sheet_corner_map">24dp</dimen>   <!-- 맵 상시 바텀시트(L335, 에픽 12) -->
     <dimen name="sheet_handle_width">40dp</dimen>
     <dimen name="sheet_handle_height">4dp</dimen>
+
+    <!-- 완전한 라운드(pill). 기존 Radii 목록에 없고 badge_*.xml 들은 999dp 를 하드코딩해
+         왔다 — 이 계획의 pill 드로어블 8종이 공유하므로 토큰으로 승격한다. -->
+    <dimen name="radius_full">999dp</dimen>
+
+    <!-- 프로토타입 실측: 토큰 스케일에 없는 화면 고유 치수 -->
+    <dimen name="text_home_title">27sp</dimen>
+    <dimen name="line_home_title">30sp</dimen>   <!-- 27 x1.1 -->
+    <dimen name="text_card_title">18sp</dimen>
+    <dimen name="line_card_title">22sp</dimen>
+    <dimen name="text_empty_title">21sp</dimen>
+    <dimen name="line_empty_title">27sp</dimen>
+
+    <dimen name="home_header_icon">40dp</dimen>
+    <dimen name="trip_hero_height">140dp</dimen>
+    <dimen name="cta_fade_height">120dp</dimen>
+    <dimen name="toast_bottom_margin">110dp</dimen>
 </resources>

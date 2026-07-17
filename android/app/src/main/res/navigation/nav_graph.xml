@@ -2,7 +2,20 @@
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/photoSelectionFragment">
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.traveltrace.app.ui.home.HomeFragment"
+        android:label="@string/home_title">
+        <action
+            android:id="@+id/action_home_to_photo"
+            app:destination="@id/photoSelectionFragment" />
+        <!-- 프로토타입 openTrip: 저장된 여행은 분석을 건너뛰고 바로 지도로 간다. -->
+        <action
+            android:id="@+id/action_home_to_map"
+            app:destination="@id/mapReplayFragment" />
+    </fragment>
 
     <!-- A1 스캐폴딩: 사진 선택 → 분석/진행 → 지도/리플레이 -->
     <fragment

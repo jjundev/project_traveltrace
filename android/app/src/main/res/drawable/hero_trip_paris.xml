@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  파리 카드 hero (프로토타입 SVG viewBox 0 0 320 140 이식).
+  알려진 격차: VectorDrawable 은 stroke-dasharray 를 지원하지 않으므로
+  AI 근사 지점(186,78)의 점선 링은 실선 회색 링으로 대체한다.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="320dp"
+    android:height="140dp"
+    android:viewportWidth="320"
+    android:viewportHeight="140">
+
+    <!-- 배경 그라데이션 (CSS 135deg: 좌상 → 우하) -->
+    <path android:pathData="M0,0 L320,0 L320,140 L0,140 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="0" android:startY="0"
+                android:endX="320" android:endY="140"
+                android:startColor="@color/illust_hero_bg_start"
+                android:endColor="@color/illust_hero_bg_end" />
+        </aapt:attr>
+    </path>
+
+    <!-- 강(굵은 곡선) -->
+    <path
+        android:pathData="M-10,96 C60,80 110,110 175,70 C230,38 270,60 330,30"
+        android:strokeColor="@color/illust_route"
+        android:strokeWidth="14"
+        android:strokeAlpha="0.7"
+        android:strokeLineCap="round" />
+
+    <!-- 도로 2줄 -->
+    <path android:pathData="M40,120 L300,24" android:strokeColor="@color/illust_road" android:strokeWidth="2" />
+    <path android:pathData="M20,50 L260,130" android:strokeColor="@color/illust_road" android:strokeWidth="2" />
+
+    <!-- 경로 폴리라인 -->
+    <path
+        android:pathData="M64,110 L120,60 L186,78 L232,44 L286,58"
+        android:strokeColor="@color/fill_brand"
+        android:strokeWidth="2.5"
+        android:strokeLineJoin="round"
+        android:strokeLineCap="round" />
+
+    <!-- 경로 위 지점 5개 (r=5) -->
+    <path android:fillColor="@color/fill_brand" android:pathData="M64,105 a5,5 0 1,0 0.1,0 Z" />
+    <path android:fillColor="@color/fill_brand" android:pathData="M120,55 a5,5 0 1,0 0.1,0 Z" />
+    <path android:fillColor="@color/fill_brand" android:pathData="M186,73 a5,5 0 1,0 0.1,0 Z" />
+    <path android:fillColor="@color/fill_brand" android:pathData="M232,39 a5,5 0 1,0 0.1,0 Z" />
+    <path android:fillColor="@color/fill_brand" android:pathData="M286,53 a5,5 0 1,0 0.1,0 Z" />
+
+    <!-- AI 근사 지점 링 (원본은 점선 — 위 주석의 격차) -->
+    <path
+        android:pathData="M186,73 a5,5 0 1,0 0.1,0 Z"
+        android:strokeColor="@color/location_approx"
+        android:strokeWidth="2.5" />
+</vector>

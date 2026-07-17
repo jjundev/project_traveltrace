@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 빈 상태 일러스트 (프로토타입 SVG viewBox 0 0 120 120 이식). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+
+    <!-- 배경 디스크 (cx60 cy60 r56) -->
+    <path android:fillColor="@color/illust_empty_disc"
+        android:pathData="M4,60 a56,56 0 1,0 112,0 a56,56 0 1,0 -112,0 Z" />
+
+    <!-- 경로 곡선 -->
+    <path
+        android:pathData="M28,78 C44,70 52,84 66,64 C76,50 86,58 96,46"
+        android:strokeColor="@color/illust_empty_path"
+        android:strokeWidth="3"
+        android:strokeLineCap="round" />
+
+    <!-- 경로 위 지점 2개 (r=5) -->
+    <path android:fillColor="@color/fill_brand" android:pathData="M44,69 a5,5 0 1,0 0.1,0 Z" />
+    <path android:fillColor="@color/fill_brand" android:pathData="M78,49 a5,5 0 1,0 0.1,0 Z" />
+
+    <!-- 핀 -->
+    <path android:fillColor="@color/fill_brand"
+        android:pathData="M60,30c-6.6,0 -12,5.4 -12,12 0,9 12,20 12,20s12,-11 12,-20c0,-6.6 -5.4,-12 -12,-12Z" />
+    <path android:fillColor="@color/surface"
+        android:pathData="M55.8,42 a4.2,4.2 0 1,0 8.4,0 a4.2,4.2 0 1,0 -8.4,0 Z" />
+</vector>

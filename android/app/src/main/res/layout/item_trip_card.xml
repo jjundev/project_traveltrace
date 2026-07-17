@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 여행 카드: hero 140dp + 위치 pill + 제목/메타 (프로토타입 HOME 카드). -->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/tripCard"
+    style="@style/Widget.TravelTrace.Card"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardPreventCornerOverlap="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/trip_hero_height">
+
+            <ImageView
+                android:id="@+id/tripHero"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="@string/home_trip_hero_desc"
+                android:scaleType="centerCrop" />
+
+            <TextView
+                android:id="@+id/tripLocation"
+                style="@style/Widget.TravelTrace.Badge"
+                android:layout_gravity="bottom|start"
+                android:layout_marginStart="14dp"
+                android:layout_marginBottom="12dp"
+                android:background="@drawable/bg_pill_glass"
+                android:textColor="@color/text_secondary"
+                android:textFontWeight="700"
+                tools:text="🇫🇷 파리 · 프랑스" />
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/tripTitle"
+            style="@style/TextAppearance.TravelTrace.Title3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="17dp"
+            android:layout_marginTop="15dp"
+            android:layout_marginEnd="17dp"
+            android:textSize="@dimen/text_card_title"
+            android:lineHeight="@dimen/line_card_title"
+            tools:text="2024 파리 여행" />
+
+        <TextView
+            android:id="@+id/tripMeta"
+            style="@style/TextAppearance.TravelTrace.Numeric"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="17dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginEnd="17dp"
+            android:layout_marginBottom="17dp"
+            android:textSize="@dimen/text_caption"
+            android:textColor="@color/text_tertiary"
+            tools:text="82장 · 4일 · 2024. 6" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

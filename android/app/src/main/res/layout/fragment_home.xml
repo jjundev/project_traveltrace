@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- HOME: 헤더 + (여행 목록 | 빈 상태) + 플로팅 CTA + 토스트. -->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/homeRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_screen"
+    android:fitsSystemWindows="true">
+
+    <TextView
+        android:id="@+id/homeTitle"
+        style="@style/TextAppearance.TravelTrace.Display"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="22dp"
+        android:layout_marginTop="14dp"
+        android:letterSpacing="-0.03"
+        android:lineHeight="@dimen/line_home_title"
+        android:text="@string/home_title"
+        android:textSize="@dimen/text_home_title"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/homeSubtitle"
+        style="@style/TextAppearance.TravelTrace.Label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:text="@string/home_subtitle"
+        android:textColor="@color/text_tertiary"
+        android:textFontWeight="500"
+        app:layout_constraintStart_toStartOf="@id/homeTitle"
+        app:layout_constraintTop_toBottomOf="@id/homeTitle" />
+
+    <ImageView
+        android:id="@+id/homeSettings"
+        android:layout_width="@dimen/home_header_icon"
+        android:layout_height="@dimen/home_header_icon"
+        android:layout_marginTop="14dp"
+        android:layout_marginEnd="22dp"
+        android:background="@drawable/bg_pill_glass"
+        android:backgroundTint="@color/fill_neutral"
+        android:contentDescription="@string/home_settings_desc"
+        android:padding="9dp"
+        android:src="@drawable/ic_settings"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="@color/text_secondary" />
+
+    <!-- 여행 목록 상태 -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/tripList"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="18dp"
+        android:clipToPadding="false"
+        android:paddingStart="18dp"
+        android:paddingEnd="18dp"
+        android:paddingBottom="@dimen/cta_fade_height"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/homeSubtitle"
+        tools:listitem="@layout/item_trip_card" />
+
+    <!-- 빈 상태 -->
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/emptyGroup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:constraint_referenced_ids="emptyIllust,emptyTitle,emptyBody" />
+
+    <ImageView
+        android:id="@+id/emptyIllust"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_marginTop="54dp"
+        android:contentDescription="@null"
+        android:src="@drawable/illust_empty_trips"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/homeSubtitle" />
+
+    <TextView
+        android:id="@+id/emptyTitle"
+        style="@style/TextAppearance.TravelTrace.Title2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="26dp"
+        android:lineHeight="@dimen/line_empty_title"
+        android:text="@string/home_empty_title"
+        android:textSize="@dimen/text_empty_title"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/emptyIllust" />
+
+    <TextView
+        android:id="@+id/emptyBody"
+        style="@style/TextAppearance.TravelTrace.Body"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="9dp"
+        android:gravity="center"
+        android:text="@string/home_empty_body"
+        android:textColor="@color/text_tertiary"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/emptyTitle"
+        app:layout_constraintWidth_max="330dp" />
+
+    <!-- 플로팅 CTA (그라데이션 페이드 위) -->
+    <View
+        android:id="@+id/ctaFade"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/cta_fade_height"
+        android:background="@drawable/bg_cta_fade"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/newTripButton"
+        style="@style/Widget.TravelTrace.Button.Primary"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/btn_height_primary"
+        android:layout_marginStart="18dp"
+        android:layout_marginEnd="18dp"
+        android:layout_marginBottom="30dp"
+        android:text="@string/home_new_trip"
+        app:icon="@drawable/ic_add"
+        app:iconGravity="textStart"
+        app:iconPadding="7dp"
+        app:iconTint="@color/text_on_fill"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- 토스트 pill -->
+    <TextView
+        android:id="@+id/toastPill"
+        style="@style/TextAppearance.TravelTrace.Caption"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/toast_bottom_margin"
+        android:background="@drawable/bg_toast_pill"
+        android:paddingStart="18dp"
+        android:paddingTop="11dp"
+        android:paddingEnd="18dp"
+        android:paddingBottom="11dp"
+        android:textColor="@color/text_on_fill"
+        android:textFontWeight="600"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:text="데모에선 파리 여행만 열려요"
+        tools:visibility="visible" />
+</androidx.constraintlayout.widget.ConstraintLayout>

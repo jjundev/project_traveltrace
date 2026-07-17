@@ -48,4 +48,20 @@
     <color name="badge_approx_stroke">#D9FFFFFF</color> <!-- rgba(255,255,255,.85) 흰 점선 -->
     <color name="badge_unknown_fill">#D1191F28</color>  <!-- rgba(25,31,40,.82) 위치미상 배지 -->
     <color name="pill_location_scrim">#E6191F28</color> <!-- rgba(25,31,40,.90) 위치 라벨 pill (real blur는 post-v1) -->
+
+    <!-- 일러스트 전용 (프로토타입 SVG 실측). 화면 텍스트/배경엔 쓰지 않는다. -->
+    <color name="illust_hero_bg_start">#EEF2F6</color>
+    <color name="illust_hero_bg_end">#E3EBF3</color>
+    <color name="illust_route">#CFE0F0</color>
+    <color name="illust_road">#DDE4EA</color>
+    <color name="illust_jeju_bg_start">#EEF4F0</color>
+    <color name="illust_jeju_bg_end">#E2EFE8</color>
+    <color name="illust_jeju_land">#D7ECE0</color>
+    <color name="illust_empty_disc">#EEF2F6</color>
+    <color name="illust_empty_path">#CDD9E6</color>
+
+    <!-- 토스트 pill: rgba(25,31,40,.92) -->
+    <color name="toast_pill_bg">#EB191F28</color>
+    <!-- hero 위 위치 라벨 pill: rgba(255,255,255,.72) — 실제 blur 는 post-v1, 불투명 폴백 -->
+    <color name="pill_glass_bg">#B8FFFFFF</color>
 </resources>

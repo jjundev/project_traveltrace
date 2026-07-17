@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  hero 위 위치 라벨 pill. 프로토타입은 반투명 흰색 + backdrop-filter:blur(6px).
+  실제 blur 는 post-v1 — 불투명도를 높인 스크림으로 폴백한다(pill_location_scrim 선례).
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/pill_glass_bg" />
+    <corners android:radius="@dimen/radius_full" />
+</shape>

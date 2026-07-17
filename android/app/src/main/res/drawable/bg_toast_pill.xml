@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 토스트 pill 배경: radius 12dp, rgba(25,31,40,.92). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/toast_pill_bg" />
+    <corners android:radius="@dimen/radius_12" />
+</shape>

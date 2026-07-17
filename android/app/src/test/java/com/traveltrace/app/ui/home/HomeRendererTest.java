@@ -1,0 +1,80 @@
+package com.traveltrace.app.ui.home;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.TextView;
+
+import androidx.test.core.app.ApplicationProvider;
+
+import com.traveltrace.app.R;
+import com.traveltrace.app.databinding.FragmentHomeBinding;
+import com.traveltrace.app.ui.preview.ScreenFixtures;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
+
+@RunWith(RobolectricTestRunner.class)
+public class HomeRendererTest {
+
+    private Context ctx;
+    private FragmentHomeBinding binding;
+
+    @Before
+    public void setUp() {
+        ctx = ApplicationProvider.getApplicationContext();
+        ctx.setTheme(R.style.Theme_TravelTrace);
+        binding = FragmentHomeBinding.inflate(LayoutInflater.from(ctx));
+    }
+
+    @Test
+    public void tripsState_showsListAndHidesEmptyBlock() {
+        HomeRenderer.render(binding, ScreenFixtures.home(), card -> {});
+
+        assertEquals(View.VISIBLE, binding.tripList.getVisibility());
+        assertEquals(View.GONE, binding.emptyGroup.getVisibility());
+        assertNotNull(binding.tripList.getAdapter());
+        assertEquals(2, binding.tripList.getAdapter().getItemCount());
+    }
+
+    @Test
+    public void emptyState_showsEmptyBlockAndHidesList() {
+        HomeRenderer.render(binding, ScreenFixtures.homeEmpty(), card -> {});
+
+        assertEquals(View.GONE, binding.tripList.getVisibility());
+        assertEquals(View.VISIBLE, binding.emptyGroup.getVisibility());
+    }
+
+    @Test
+    public void ctaIsAlwaysVisibleInBothStates() {
+        HomeRenderer.render(binding, ScreenFixtures.home(), card -> {});
+        assertEquals(View.VISIBLE, binding.newTripButton.getVisibility());
+
+        HomeRenderer.render(binding, ScreenFixtures.homeEmpty(), card -> {});
+        assertEquals(View.VISIBLE, binding.newTripButton.getVisibility());
+    }
+
+    @Test
+    public void emptyBlockUsesPrototypeCopy() {
+        HomeRenderer.render(binding, ScreenFixtures.homeEmpty(), card -> {});
+
+        TextView title = binding.emptyTitle;
+        assertEquals("첫 여행을 만들어 보세요", title.getText().toString());
+    }
+
+    @Test
+    public void toastPillStartsHiddenAndShowsMessage() {
+        assertEquals(View.GONE, binding.toastPill.getVisibility());
+
+        com.traveltrace.app.ui.common.ToastPresenter.show(
+                binding.getRoot(), "데모에선 파리 여행만 열려요");
+
+        assertEquals(View.VISIBLE, binding.toastPill.getVisibility());
+        assertEquals("데모에선 파리 여행만 열려요", binding.toastPill.getText().toString());
+    }
+}

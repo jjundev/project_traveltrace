@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- CTA 플러스 아이콘 (프로토타입 24x24 path). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="22dp"
+    android:height="22dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="@color/text_on_fill">
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M12,3.75a0.75,0.75 0,0 1,0.75 0.75v6.75h6.75a0.75,0.75 0,0 1,0 1.5H12.75v6.75a0.75,0.75 0,0 1,-1.5 0V12.75H4.5a0.75,0.75 0,0 1,0 -1.5h6.75V4.5a0.75,0.75 0,0 1,0.75 -0.75Z" />
+</vector>
