@@ -1,0 +1,16 @@
+# Copy this file to `local.properties` (which is gitignored) and fill values.
+# Android Studio sets sdk.dir automatically on first open.
+sdk.dir=D:/Android/Sdk
+
+# === API keys — NEVER commit real values ===
+
+# Build-time only: needed ONLY when running `./gradlew resolveVisionModels`.
+# Normal app builds do NOT need these (they read gradle/visionModels.generated.json).
+GEMINI_API_KEY=
+OPENAI_API_KEY=
+
+# Runtime: injected into BuildConfig (Geocoding via REST, Places via Places.initialize)
+# and the manifest (Maps via meta-data placeholder).
+MAPS_API_KEY=
+PLACES_API_KEY=
+GEOCODING_API_KEY=

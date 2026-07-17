@@ -1,0 +1,141 @@
+import com.traveltrace.build.ModelIdGuardTask
+import com.traveltrace.build.StalenessGuardTask
+import com.traveltrace.build.Constants
+import com.traveltrace.build.VisionModelsFile
+
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.hilt)
+}
+
+// ---------------------------------------------------------------------------
+// A2: read the COMMITTED, machine-generated vision model IDs at CONFIGURATION
+// time (AGP buildConfigField must be registered during configuration — it is
+// NOT fed by an execution-time task). Ordinary builds need no network / no API
+// keys; they only read this committed file, so builds are reproducible & offline.
+// ---------------------------------------------------------------------------
+Map readVisionModels() {
+    // Missing-file / blank-id hard-fail lives in VisionModelsFile (buildSrc) — single,
+    // unit-tested source of truth (see VisionModelsFileTest). Any exception it throws
+    // propagates out of configuration and aborts the build (PRD §4.3).
+    def r = VisionModelsFile.read(rootProject.file("gradle/visionModels.generated.json"))
+    if (r.rulesetVersion != Constants.RULESET_VERSION) {
+        logger.warn("WARNING: vision model ruleset (${r.rulesetVersion}) != code (${Constants.RULESET_VERSION}). "
+                + "Run ./gradlew resolveVisionModels. (Hard-fails on the 'check' lifecycle.)")
+    }
+    return [gemini: r.gemini, openai: r.openAi]
+}
+
+String localProp(String key) {
+    def f = rootProject.file("local.properties")
+    if (!f.exists()) return ""
+    def props = new Properties()
+    f.withInputStream { props.load(it) }
+    return props.getProperty(key, "")
+}
+
+/** Runtime key: blank is allowed (build still succeeds) but warned about. */
+String runtimeKey(String key) {
+    def v = localProp(key)
+    if (!v) {
+        logger.warn("WARNING: ${key} is blank in local.properties — runtime calls using it will fail until set.")
+    }
+    return v
+}
+
+def vision = readVisionModels()
+
+android {
+    namespace 'com.traveltrace.app'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.traveltrace.app'
+        minSdk 33
+        targetSdk 35
+        versionCode 1
+        versionName '0.1.0'
+
+        // A2: resolved vision model IDs (from committed generated file).
+        buildConfigField "String", "GEMINI_VISION_MODEL", "\"${vision.gemini}\""
+        buildConfigField "String", "OPENAI_VISION_MODEL", "\"${vision.openai}\""
+
+        // A3: API keys. Vision keys used at RUNTIME by Epic D providers; Geocoding is a
+        // REST key; Places via Places.initialize(); Maps via manifest meta-data.
+        buildConfigField "String", "GEMINI_API_KEY", "\"${runtimeKey('GEMINI_API_KEY')}\""
+        buildConfigField "String", "OPENAI_API_KEY", "\"${runtimeKey('OPENAI_API_KEY')}\""
+        buildConfigField "String", "PLACES_API_KEY", "\"${runtimeKey('PLACES_API_KEY')}\""
+        buildConfigField "String", "GEOCODING_API_KEY", "\"${runtimeKey('GEOCODING_API_KEY')}\""
+
+        manifestPlaceholders = [MAPS_API_KEY: localProp('MAPS_API_KEY')]
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+        encoding 'UTF-8'
+    }
+
+    buildFeatures {
+        viewBinding true
+        buildConfig true
+    }
+}
+
+dependencies {
+    implementation libs.androidx.core
+    implementation libs.androidx.appcompat
+    implementation libs.material
+    implementation libs.androidx.constraintlayout
+    implementation libs.androidx.fragment
+    implementation libs.androidx.lifecycle.viewmodel
+    implementation libs.androidx.lifecycle.livedata
+    implementation libs.androidx.navigation.fragment
+    implementation libs.androidx.navigation.ui
+
+    implementation libs.hilt.android
+    annotationProcessor libs.hilt.compiler
+
+    implementation libs.retrofit
+    implementation libs.retrofit.converter.gson
+    implementation libs.gson
+    implementation libs.okhttp
+    debugImplementation libs.okhttp.logging
+
+    implementation libs.room.runtime
+    annotationProcessor libs.room.compiler
+
+    implementation libs.androidx.exifinterface
+    implementation libs.play.services.maps
+    implementation libs.places
+
+    testImplementation libs.junit
+}
+
+// ---------------------------------------------------------------------------
+// A2 foundation guards, wired into the `check` lifecycle (run by CI/release).
+// ---------------------------------------------------------------------------
+tasks.register("modelIdGuard", ModelIdGuardTask) {
+    group = "verification"
+    description = "Fail the build if a model-ID literal is hardcoded in app sources."
+    sources.from(fileTree("src/main").matching { include "**/*.java", "**/*.xml" })
+}
+
+tasks.register("visionModelStalenessGuard", StalenessGuardTask) {
+    group = "verification"
+    description = "Fail (ruleset mismatch) / warn (age) on the committed vision model resolution."
+    generatedFile.set(rootProject.file("gradle/visionModels.generated.json"))
+    expectedRulesetVersion.set(Constants.RULESET_VERSION)
+    maxAgeDays.set(30L)
+}
+
+tasks.named("check") {
+    dependsOn "modelIdGuard", "visionModelStalenessGuard"
+}

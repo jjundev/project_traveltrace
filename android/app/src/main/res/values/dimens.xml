@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  타입 스케일(sp)·radius(dp)·spacing(dp)·컴포넌트 치수.
+  출처: tokens/typography.css, tokens/spacing.css, 프로토타입 인라인 스타일.
+  390x844 기준 → 1 CSS px ≈ 1 dp. 하드 px 금지.
+-->
+<resources>
+    <!-- Type scale (sp) — typography.css -->
+    <dimen name="text_display">30sp</dimen>
+    <dimen name="text_title_1">24sp</dimen>
+    <dimen name="text_title_2">20sp</dimen>
+    <dimen name="text_title_3">17sp</dimen>
+    <dimen name="text_body">15sp</dimen>
+    <dimen name="text_label">14sp</dimen>
+    <dimen name="text_caption">13sp</dimen>
+    <dimen name="text_small">12sp</dimen>
+    <dimen name="text_micro">10sp</dimen>
+    <!-- 버튼 텍스트(프로토타입 Primary CTA 16px) -->
+    <dimen name="text_button">16sp</dimen>
+
+    <!-- Line heights (sp) — size x leading, 반올림. android:lineHeight(API28+) 경로 사용 -->
+    <dimen name="line_display">36sp</dimen>   <!-- 30 x1.2 -->
+    <dimen name="line_title_1">32sp</dimen>   <!-- 24 x1.35 -->
+    <dimen name="line_title_2">27sp</dimen>   <!-- 20 x1.35 -->
+    <dimen name="line_title_3">23sp</dimen>   <!-- 17 x1.35 -->
+    <dimen name="line_body">22sp</dimen>      <!-- 15 x1.45 -->
+    <dimen name="line_label">17sp</dimen>     <!-- 14 x1.2 -->
+    <dimen name="line_caption">19sp</dimen>   <!-- 13 x1.45 -->
+    <dimen name="line_small">17sp</dimen>     <!-- 12 x1.45 -->
+    <dimen name="line_micro">12sp</dimen>     <!-- 10 x1.2 -->
+
+    <!-- Radii (dp) — 프로토타입 실측 -->
+    <dimen name="radius_11">11dp</dimen>  <!-- 소형 아이콘 타일/사진 그리드 -->
+    <dimen name="radius_12">12dp</dimen>
+    <dimen name="radius_14">14dp</dimen>  <!-- 버튼/아이콘 타일 -->
+    <dimen name="radius_18">18dp</dimen>  <!-- 카드 -->
+    <dimen name="radius_20">20dp</dimen>  <!-- cinema 카드 -->
+    <dimen name="radius_22">22dp</dimen>  <!-- 모달/드로어 바텀시트 -->
+    <dimen name="radius_24">24dp</dimen>  <!-- 맵 상시 바텀시트 -->
+
+    <!-- Spacing (dp, 4px base) — spacing.css -->
+    <dimen name="space_1">4dp</dimen>
+    <dimen name="space_2">8dp</dimen>
+    <dimen name="space_3">12dp</dimen>
+    <dimen name="space_4">16dp</dimen>
+    <dimen name="space_5">20dp</dimen>
+    <dimen name="space_6">24dp</dimen>
+    <dimen name="space_8">32dp</dimen>
+
+    <!-- Component -->
+    <dimen name="btn_height_primary">54dp</dimen>
+    <dimen name="btn_elevation_primary">6dp</dimen>
+    <dimen name="card_elevation">1dp</dimen>
+    <dimen name="sheet_corner">22dp</dimen>       <!-- 모달/드로어 시트(L295·427) -->
+    <dimen name="sheet_corner_map">24dp</dimen>   <!-- 맵 상시 바텀시트(L335, 에픽 12) -->
+    <dimen name="sheet_handle_width">40dp</dimen>
+    <dimen name="sheet_handle_height">4dp</dimen>
+</resources>

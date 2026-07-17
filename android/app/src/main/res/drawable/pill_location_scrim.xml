@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 위치 라벨 pill: 다크 스크림 캡슐 (프로토타입 L235 rgba(25,31,40,.9)). real blur는 post-v1. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/pill_location_scrim" />
+    <corners android:radius="999dp" />
+</shape>

@@ -1,0 +1,29 @@
+import com.traveltrace.build.ResolveVisionModelsTask
+import com.traveltrace.build.Constants
+
+plugins {
+    alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.hilt) apply false
+}
+
+/** Reads a key from the gitignored local.properties; returns "" when absent. */
+String localProp(String key) {
+    def f = rootProject.file("local.properties")
+    if (!f.exists()) return ""
+    def props = new Properties()
+    f.withInputStream { props.load(it) }
+    return props.getProperty(key, "")
+}
+
+// A2 — EXPLICIT, decoupled resolve step (NOT part of every build).
+// Run manually / in CI:  ./gradlew resolveVisionModels
+// Hits the live provider model lists and rewrites the committed
+// gradle/visionModels.generated.json. Normal builds never run this.
+tasks.register("resolveVisionModels", ResolveVisionModelsTask) {
+    group = "traveltrace"
+    description = "Resolve current vision model IDs from live Gemini/OpenAI model lists and rewrite gradle/visionModels.generated.json"
+    geminiApiKey.set(localProp("GEMINI_API_KEY"))
+    openAiApiKey.set(localProp("OPENAI_API_KEY"))
+    rulesetVersion.set(Constants.RULESET_VERSION)
+    outputFile.set(rootProject.file("gradle/visionModels.generated.json"))
+}

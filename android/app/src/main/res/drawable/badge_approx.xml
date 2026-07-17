@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 근사 위치 배지: grey-500 반투명 fill + 흰색 점선 테두리 (프로토타입 L348) -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/badge_approx_fill" />
+    <corners android:radius="999dp" />
+    <stroke
+        android:width="1.5dp"
+        android:color="@color/badge_approx_stroke"
+        android:dashWidth="3dp"
+        android:dashGap="2dp" />
+</shape>

@@ -1,0 +1,30 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!--
+      Material 3 (Views/XML) 앱 테마 — 라이트 고정(v1).
+      values-night 미제공 + TravelTraceApp 에서 MODE_NIGHT_NO 로 잠근다.
+      시맨틱 색을 Material 색 역할에 매핑 → 스톡 MaterialButton/CardView 가 브랜드 자동 상속.
+      기본 fontFamily 를 Pretendard 로 지정 → 스타일 미적용 뷰도 폴백 폰트 방지.
+    -->
+    <style name="Theme.TravelTrace" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Brand / surfaces -->
+        <item name="colorPrimary">@color/fill_brand</item>
+        <item name="colorOnPrimary">@color/text_on_fill</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        <item name="colorOnSurfaceVariant">@color/text_secondary</item>
+        <item name="android:colorBackground">@color/bg_screen</item>
+        <item name="colorOutline">@color/border_default</item>
+        <item name="colorOutlineVariant">@color/divider</item>
+
+        <!-- 기본 폰트 -->
+        <item name="android:fontFamily">@font/pretendard</item>
+        <item name="fontFamily">@font/pretendard</item>
+
+        <!-- 시스템 바 (라이트) -->
+        <item name="android:statusBarColor">@color/bg_screen</item>
+        <item name="android:windowLightStatusBar">true</item>
+
+        <!-- 바텀시트 셸 테마 -->
+        <item name="bottomSheetDialogTheme">@style/ThemeOverlay.TravelTrace.BottomSheet</item>
+    </style>
+</resources>

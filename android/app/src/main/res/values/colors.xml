@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  시맨틱 색 별칭 (출처: tokens/colors.css SEMANTIC ALIASES).
+  화면/스타일은 이 이름만 참조한다. 반투명 rgba는 #AARRGGBB 로 사전계산
+  (alpha = round(opacity * 255)).
+  색 이식 정책: v1 화면이 실제로 소비하는 토큰만 이식. 시장 up/down·red 스케일 제외.
+  semantic error/danger 는 첫 소비 화면(예: 05/11)에서 필요할 때 도입 — 여기선 미이식.
+-->
+<resources>
+    <!-- Surfaces & backgrounds -->
+    <color name="bg_screen">#F6F7F9</color>
+    <color name="bg_base">#F2F4F6</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="surface_alt">#FBFCFD</color>
+    <color name="overlay_dim">#33000000</color> <!-- rgba(0,0,0,.20) -->
+
+    <!-- Text -->
+    <color name="text_primary">@color/palette_grey_900</color>   <!-- #191F28 -->
+    <color name="text_secondary">@color/palette_grey_700</color> <!-- #4E5968 -->
+    <color name="text_tertiary">@color/palette_grey_600</color>  <!-- #6B7684 -->
+    <color name="text_disabled">@color/palette_grey_400</color>  <!-- #B0B8C1 -->
+    <color name="text_on_fill">@color/palette_white</color>
+    <color name="text_brand">@color/palette_blue_500</color>     <!-- #3182F6 -->
+
+    <!-- Borders & dividers -->
+    <color name="border_default">@color/palette_grey_200</color> <!-- #E5E8EB -->
+    <color name="border_strong">@color/palette_grey_300</color>  <!-- #D1D6DB -->
+    <color name="divider">#0D022047</color>                      <!-- rgba(2,32,71,.05) -->
+
+    <!-- Brand fills -->
+    <color name="fill_brand">@color/palette_blue_500</color>         <!-- #3182F6 -->
+    <color name="fill_brand_hover">@color/palette_blue_600</color>   <!-- #2272EB -->
+    <color name="fill_brand_pressed">@color/palette_blue_700</color> <!-- #1B64DA -->
+    <color name="fill_brand_weak">#173182F6</color>                  <!-- rgba(49,130,246,.09) -->
+
+    <!-- Neutral fills -->
+    <color name="fill_neutral">#0D022047</color>        <!-- rgba(2,32,71,.05) -->
+    <color name="fill_neutral_hover">#1A001B37</color>  <!-- rgba(0,27,55,.10) -->
+    <color name="fill_neutral_strong">@color/palette_grey_800</color> <!-- #333D4B -->
+
+    <!-- Status accents (여행 앱 선별) -->
+    <color name="success_green">@color/palette_green_500</color> <!-- 완료 체크 -->
+    <color name="unknown_yellow">@color/palette_yellow_400</color> <!-- 위치미상 아이콘 -->
+    <color name="location_approx">@color/palette_grey_500</color> <!-- AI 근사 위치 표식 #8B95A1 -->
+
+    <!-- 배지/pill 전용 반투명 (프로토타입 실측) -->
+    <color name="badge_approx_fill">#F28B95A1</color>   <!-- rgba(139,149,161,.95) 근사 배지 fill -->
+    <color name="badge_approx_stroke">#D9FFFFFF</color> <!-- rgba(255,255,255,.85) 흰 점선 -->
+    <color name="badge_unknown_fill">#D1191F28</color>  <!-- rgba(25,31,40,.82) 위치미상 배지 -->
+    <color name="pill_location_scrim">#E6191F28</color> <!-- rgba(25,31,40,.90) 위치 라벨 pill (real blur는 post-v1) -->
+</resources>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 위치 미상 배지: 다크 반투명 캡슐 (프로토타입 L327). 노란 아이콘은 뷰에서 조합. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/badge_unknown_fill" />
+    <corners android:radius="999dp" />
+</shape>

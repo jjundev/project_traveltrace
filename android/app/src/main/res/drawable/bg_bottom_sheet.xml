@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 바텀시트 셸 배경: surface, 상단 코너 22dp (모달/드로어 기본). 맵 시트(24dp)는 sheet_corner_map 참조. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/surface" />
+    <corners
+        android:topLeftRadius="@dimen/sheet_corner"
+        android:topRightRadius="@dimen/sheet_corner"
+        android:bottomLeftRadius="0dp"
+        android:bottomRightRadius="0dp" />
+</shape>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- DEBUG 전용 매니페스트: 스타일 갤러리 액티비티 등록 (릴리스 비포함). -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <activity
+            android:name="com.traveltrace.app.debug.DebugStyleGalleryActivity"
+            android:exported="true"
+            android:theme="@style/Theme.TravelTrace" />
+    </application>
+</manifest>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/photoSelectionFragment">
+
+    <!-- A1 스캐폴딩: 사진 선택 → 분석/진행 → 지도/리플레이 -->
+    <fragment
+        android:id="@+id/photoSelectionFragment"
+        android:name="com.traveltrace.app.ui.photo.PhotoSelectionFragment"
+        android:label="@string/screen_photo_title">
+        <action
+            android:id="@+id/action_photo_to_analysis"
+            app:destination="@id/analysisFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/analysisFragment"
+        android:name="com.traveltrace.app.ui.analysis.AnalysisFragment"
+        android:label="@string/screen_analysis_title">
+        <action
+            android:id="@+id/action_analysis_to_map"
+            app:destination="@id/mapReplayFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/mapReplayFragment"
+        android:name="com.traveltrace.app.ui.map.MapReplayFragment"
+        android:label="@string/screen_map_title" />
+</navigation>

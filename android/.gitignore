@@ -1,0 +1,23 @@
+# Gradle
+.gradle/
+build/
+/build
+app/build/
+buildSrc/build/
+!gradle-wrapper.jar
+
+# Secrets / local config (NEVER commit)
+local.properties
+*.keystore
+*.jks
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+captures/
+.externalNativeBuild
+.cxx
+
+# Keep the committed, machine-generated vision-model resolution tracked
+!gradle/visionModels.generated.json

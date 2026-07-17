@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Raw 팔레트 (출처: prototype .../tokens/colors.css).
+  화면/스타일에서 직접 참조 금지 — 시맨틱 별칭(colors.xml)을 통해서만 사용한다.
+  여행 앱에 무의미한 시장 up/down(red 스케일 등)은 이식하지 않는다.
+-->
+<resources>
+    <!-- Grey scale (neutral) -->
+    <color name="palette_grey_50">#F9FAFB</color>
+    <color name="palette_grey_100">#F2F4F6</color>
+    <color name="palette_grey_200">#E5E8EB</color>
+    <color name="palette_grey_300">#D1D6DB</color>
+    <color name="palette_grey_400">#B0B8C1</color>
+    <color name="palette_grey_500">#8B95A1</color>
+    <color name="palette_grey_600">#6B7684</color>
+    <color name="palette_grey_700">#4E5968</color>
+    <color name="palette_grey_800">#333D4B</color>
+    <color name="palette_grey_900">#191F28</color>
+    <color name="palette_black">#000000</color>
+    <color name="palette_white">#FFFFFF</color>
+
+    <!-- Brand blue scale (핵심만) -->
+    <color name="palette_blue_500">#3182F6</color>
+    <color name="palette_blue_600">#2272EB</color>
+    <color name="palette_blue_700">#1B64DA</color>
+    <color name="palette_navy">#022047</color>
+
+    <!-- Accent (선별: 완료 체크 / 위치미상 아이콘) -->
+    <color name="palette_green_500">#03B26C</color>
+    <color name="palette_yellow_400">#FFD158</color>
+</resources>

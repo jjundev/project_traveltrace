@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- CTA 그라데이션 배경: 위 투명 → 아래 bg_screen (플로팅 버튼 뒤 fade). CSS: to top, bg-screen 62% → 투명. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <gradient
+        android:angle="270"
+        android:startColor="#00F6F7F9"
+        android:centerColor="@color/bg_screen"
+        android:endColor="@color/bg_screen"
+        android:centerY="0.38" />
+</shape>

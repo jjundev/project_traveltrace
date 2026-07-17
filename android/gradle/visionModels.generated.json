@@ -1,0 +1,7 @@
+{
+  "geminiModel": "gemini-2.0-flash",
+  "openAiModel": "gpt-4.1",
+  "rulesetVersion": "2026-01",
+  "resolvedAtIso": "2026-01-01T00:00:00Z",
+  "_note": "PLACEHOLDER seed. GENERATED FILE — regenerate with ./gradlew resolveVisionModels before release. Do not hand-edit."
+}

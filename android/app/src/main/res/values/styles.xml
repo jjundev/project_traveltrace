@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  타이포 스타일(TextAppearance.TravelTrace.*)과 공용 컴포넌트(Widget.TravelTrace.*).
+  가중치는 android:textFontWeight 로 @font/pretendard 의 최근접 정적 폰트를 선택.
+  letterSpacing 은 em 단위(-0.02 == CSS -0.02em). lineHeight 는 sp(API28+ 경로).
+-->
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- ============ TYPOGRAPHY ============ -->
+    <style name="TextAppearance.TravelTrace" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:fontFamily">@font/pretendard</item>
+        <item name="fontFamily">@font/pretendard</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+
+    <!-- Headings: weight 700, tracking -0.02em -->
+    <style name="TextAppearance.TravelTrace.Display">
+        <item name="android:textSize">@dimen/text_display</item>
+        <item name="android:textFontWeight">700</item>
+        <item name="android:lineHeight">@dimen/line_display</item>
+        <item name="android:letterSpacing">-0.02</item>
+    </style>
+
+    <style name="TextAppearance.TravelTrace.Title1">
+        <item name="android:textSize">@dimen/text_title_1</item>
+        <item name="android:textFontWeight">700</item>
+        <item name="android:lineHeight">@dimen/line_title_1</item>
+        <item name="android:letterSpacing">-0.02</item>
+    </style>
+
+    <style name="TextAppearance.TravelTrace.Title2">
+        <item name="android:textSize">@dimen/text_title_2</item>
+        <item name="android:textFontWeight">700</item>
+        <item name="android:lineHeight">@dimen/line_title_2</item>
+        <item name="android:letterSpacing">-0.02</item>
+    </style>
+
+    <style name="TextAppearance.TravelTrace.Title3">
+        <item name="android:textSize">@dimen/text_title_3</item>
+        <item name="android:textFontWeight">700</item>
+        <item name="android:lineHeight">@dimen/line_title_3</item>
+        <item name="android:letterSpacing">-0.02</item>
+    </style>
+
+    <!-- Body/labels: 500/600 기조 -->
+    <style name="TextAppearance.TravelTrace.Body">
+        <item name="android:textSize">@dimen/text_body</item>
+        <item name="android:textFontWeight">500</item>
+        <item name="android:lineHeight">@dimen/line_body</item>
+    </style>
+
+    <style name="TextAppearance.TravelTrace.Label">
+        <item name="android:textSize">@dimen/text_label</item>
+        <item name="android:textFontWeight">600</item>
+        <item name="android:lineHeight">@dimen/line_label</item>
+    </style>
+
+    <style name="TextAppearance.TravelTrace.Caption">
+        <item name="android:textSize">@dimen/text_caption</item>
+        <item name="android:textFontWeight">500</item>
+        <item name="android:lineHeight">@dimen/line_caption</item>
+        <item name="android:textColor">@color/text_tertiary</item>
+    </style>
+
+    <style name="TextAppearance.TravelTrace.Small">
+        <item name="android:textSize">@dimen/text_small</item>
+        <item name="android:textFontWeight">500</item>
+        <item name="android:lineHeight">@dimen/line_small</item>
+        <item name="android:textColor">@color/text_tertiary</item>
+    </style>
+
+    <style name="TextAppearance.TravelTrace.Micro">
+        <item name="android:textSize">@dimen/text_micro</item>
+        <item name="android:textFontWeight">500</item>
+        <item name="android:lineHeight">@dimen/line_micro</item>
+        <item name="android:textColor">@color/text_tertiary</item>
+    </style>
+
+    <!-- 숫자(날짜/카운트) tabular figures. Pretendard 에 tnum OT 피처 없으면 무해한 no-op. -->
+    <style name="TextAppearance.TravelTrace.Numeric" parent="TextAppearance.TravelTrace.Body">
+        <item name="android:fontFeatureSettings">tnum</item>
+    </style>
+
+    <!-- ============ SHAPE ============ -->
+    <style name="ShapeAppearance.TravelTrace.BottomSheet" parent="ShapeAppearance.Material3.LargeComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopLeft">@dimen/sheet_corner</item>
+        <item name="cornerSizeTopRight">@dimen/sheet_corner</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+    </style>
+
+    <style name="ThemeOverlay.TravelTrace.BottomSheet" parent="ThemeOverlay.Material3.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/Widget.TravelTrace.BottomSheet</item>
+    </style>
+
+    <style name="Widget.TravelTrace.BottomSheet" parent="Widget.Material3.BottomSheet.Modal">
+        <item name="shapeAppearance">@style/ShapeAppearance.TravelTrace.BottomSheet</item>
+        <item name="backgroundTint">@color/surface</item>
+    </style>
+
+    <!-- ============ BUTTONS ============ -->
+    <style name="Widget.TravelTrace.Button.Primary" parent="Widget.Material3.Button">
+        <item name="android:minHeight">@dimen/btn_height_primary</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="cornerRadius">@dimen/radius_14</item>
+        <item name="backgroundTint">@color/btn_primary_bg</item>
+        <item name="android:textColor">@color/text_on_fill</item>
+        <item name="android:textSize">@dimen/text_button</item>
+        <item name="android:textFontWeight">700</item>
+        <item name="android:fontFamily">@font/pretendard</item>
+        <item name="fontFamily">@font/pretendard</item>
+        <item name="android:letterSpacing">-0.02</item>
+        <item name="android:elevation">@dimen/btn_elevation_primary</item>
+        <!-- 브랜드 틴트 그림자(API28+). 네이티브 elevation 그림자는 CSS 소프트 글로우와 완전 동일치 않음(알려진 충실도 격차). -->
+        <item name="android:outlineSpotShadowColor">@color/fill_brand</item>
+        <item name="android:outlineAmbientShadowColor">@color/fill_brand</item>
+    </style>
+
+    <style name="Widget.TravelTrace.Button.Neutral" parent="Widget.Material3.Button.TextButton">
+        <item name="android:minHeight">@dimen/btn_height_primary</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="cornerRadius">@dimen/radius_14</item>
+        <item name="backgroundTint">@color/fill_neutral</item>
+        <item name="android:textColor">@color/text_brand</item>
+        <item name="android:textSize">@dimen/text_button</item>
+        <item name="android:textFontWeight">600</item>
+        <item name="android:fontFamily">@font/pretendard</item>
+        <item name="fontFamily">@font/pretendard</item>
+        <item name="android:letterSpacing">-0.02</item>
+        <item name="android:elevation">0dp</item>
+    </style>
+
+    <!-- ============ CARD ============ -->
+    <style name="Widget.TravelTrace.Card" parent="Widget.Material3.CardView.Elevated">
+        <item name="cardCornerRadius">@dimen/radius_18</item>
+        <item name="cardBackgroundColor">@color/surface</item>
+        <item name="cardElevation">@dimen/card_elevation</item>
+        <item name="strokeWidth">0dp</item>
+    </style>
+
+    <!-- ============ BADGES ============ -->
+    <style name="Widget.TravelTrace.Badge" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:gravity">center</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:textAppearance">@style/TextAppearance.TravelTrace.Small</item>
+        <item name="android:fontFamily">@font/pretendard</item>
+        <item name="android:paddingStart">@dimen/space_3</item>
+        <item name="android:paddingEnd">@dimen/space_3</item>
+        <item name="android:paddingTop">@dimen/space_1</item>
+        <item name="android:paddingBottom">@dimen/space_1</item>
+    </style>
+
+    <style name="Widget.TravelTrace.Badge.Gps">
+        <item name="android:background">@drawable/badge_gps</item>
+        <item name="android:textColor">@color/text_on_fill</item>
+        <item name="android:textFontWeight">700</item>
+    </style>
+
+    <style name="Widget.TravelTrace.Badge.Approx">
+        <item name="android:background">@drawable/badge_approx</item>
+        <item name="android:textColor">@color/text_on_fill</item>
+        <item name="android:textFontWeight">700</item>
+    </style>
+
+    <style name="Widget.TravelTrace.Badge.Unknown">
+        <item name="android:background">@drawable/badge_unknown</item>
+        <item name="android:textColor">@color/text_on_fill</item>
+        <item name="android:textFontWeight">700</item>
+    </style>
+
+    <!-- 위치 라벨 pill (real blur는 post-v1, 불투명 스크림 폴백) -->
+    <style name="Widget.TravelTrace.Pill.Location" parent="Widget.TravelTrace.Badge">
+        <item name="android:background">@drawable/pill_location_scrim</item>
+        <item name="android:textColor">@color/text_on_fill</item>
+        <item name="android:textFontWeight">700</item>
+    </style>
+
+    <!-- ============ SPINNER (분석 진행) ============ -->
+    <style name="Widget.TravelTrace.Spinner" parent="Widget.Material3.CircularProgressIndicator">
+        <item name="indicatorColor">@color/fill_brand</item>
+        <item name="trackColor">@color/fill_brand_weak</item>
+    </style>
+</resources>

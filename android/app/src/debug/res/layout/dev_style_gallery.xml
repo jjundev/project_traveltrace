@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  DoD 검증용 스타일 갤러리 (DEBUG 전용 소스셋 — 릴리스 비포함).
+  토큰/스타일/컴포넌트를 프로토타입과 육안 대조하기 위한 화면.
+  하드코딩 문자열은 dev 전용이라 의도적 허용.
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_screen"
+    tools:ignore="HardcodedText">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/space_5">
+
+        <!-- ===== Typography ===== -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Display 30/700"
+            android:textAppearance="@style/TextAppearance.TravelTrace.Display" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_2"
+            android:text="Title1 24/700"
+            android:textAppearance="@style/TextAppearance.TravelTrace.Title1" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_2"
+            android:text="Title3 17/700 카드 제목"
+            android:textAppearance="@style/TextAppearance.TravelTrace.Title3" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_2"
+            android:text="Body 15/500 — 다람쥐 헌 쳇바퀴에 타고파 The quick brown fox"
+            android:textAppearance="@style/TextAppearance.TravelTrace.Body" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_2"
+            android:text="Caption 13/500 · 2024.07.01 · 12장"
+            android:textAppearance="@style/TextAppearance.TravelTrace.Caption" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_2"
+            android:text="Numeric(tnum) 1234567890"
+            android:textAppearance="@style/TextAppearance.TravelTrace.Numeric" />
+
+        <!-- ===== Buttons ===== -->
+        <com.google.android.material.button.MaterialButton
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_5"
+            android:text="분석 시작"
+            style="@style/Widget.TravelTrace.Button.Primary" />
+
+        <com.google.android.material.button.MaterialButton
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_3"
+            android:text="지도 보기"
+            style="@style/Widget.TravelTrace.Button.Neutral" />
+
+        <!-- ===== Travel card ===== -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_5"
+            style="@style/Widget.TravelTrace.Card">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="120dp"
+                    android:background="@color/bg_base" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/space_4">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="2024 파리 여행"
+                        android:textAppearance="@style/TextAppearance.TravelTrace.Title3" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_1"
+                        android:text="2024.07.01 – 07.08 · 사진 82장 · 경로 6"
+                        android:textAppearance="@style/TextAppearance.TravelTrace.Caption" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ===== Badges ===== -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_5"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:text="GPS"
+                android:layout_marginEnd="@dimen/space_2"
+                style="@style/Widget.TravelTrace.Badge.Gps" />
+
+            <TextView
+                android:text="근사 위치"
+                android:layout_marginEnd="@dimen/space_2"
+                style="@style/Widget.TravelTrace.Badge.Approx" />
+
+            <TextView
+                android:text="위치 미상 5"
+                android:drawablePadding="4dp"
+                app:drawableStartCompat="@drawable/ic_location_unknown"
+                style="@style/Widget.TravelTrace.Badge.Unknown" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_3"
+            android:text="에펠탑"
+            style="@style/Widget.TravelTrace.Pill.Location" />
+
+        <!-- ===== Pins + check + spinner ===== -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_5"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/space_3"
+                android:contentDescription="GPS 핀"
+                android:src="@drawable/pin_gps" />
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/space_3"
+                android:contentDescription="근사 핀"
+                android:src="@drawable/pin_approx" />
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="@dimen/space_3"
+                android:contentDescription="완료"
+                android:src="@drawable/ic_check" />
+
+            <com.google.android.material.progressindicator.CircularProgressIndicator
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:indeterminate="true"
+                app:indicatorSize="28dp"
+                style="@style/Widget.TravelTrace.Spinner" />
+        </LinearLayout>
+
+        <!-- ===== Bottom sheet shell preview ===== -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_5"
+            android:background="@drawable/bg_bottom_sheet"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:paddingTop="@dimen/space_2"
+            android:paddingBottom="@dimen/space_6">
+
+            <View
+                android:layout_width="@dimen/sheet_handle_width"
+                android:layout_height="@dimen/sheet_handle_height"
+                android:background="@drawable/handle_bottom_sheet" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_4"
+                android:text="바텀시트 셸 (radius 22dp · 40x4 핸들)"
+                android:textAppearance="@style/TextAppearance.TravelTrace.Label" />
+        </LinearLayout>
+
+        <!-- CTA fade preview -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="72dp"
+            android:layout_marginTop="@dimen/space_5"
+            android:background="@drawable/bg_cta_fade" />
+    </LinearLayout>
+</ScrollView>

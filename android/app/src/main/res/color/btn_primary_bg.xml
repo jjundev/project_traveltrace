@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Primary 버튼 배경 틴트: 눌림 시 fill_brand_pressed 로 전환 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_enabled="false" android:color="@color/border_default" />
+    <item android:state_pressed="true" android:color="@color/fill_brand_pressed" />
+    <item android:color="@color/fill_brand" />
+</selector>

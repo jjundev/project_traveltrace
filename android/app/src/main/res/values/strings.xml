@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">TravelTrace</string>
+
+    <string name="screen_photo_title">1. 사진 선택 (Epic B)</string>
+    <string name="screen_analysis_title">2. 분석 / 진행 (Epic C~G)</string>
+    <string name="screen_map_title">3. 지도 / 리플레이 (Epic J·K)</string>
+    <string name="action_to_analysis">분석 진행 →</string>
+    <string name="action_to_map">지도 보기 →</string>
+</resources>
