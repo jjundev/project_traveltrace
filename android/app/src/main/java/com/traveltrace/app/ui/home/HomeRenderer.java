@@ -21,6 +21,7 @@ public final class HomeRenderer {
         TripCardAdapter adapter;
         if (binding.tripList.getAdapter() instanceof TripCardAdapter) {
             adapter = (TripCardAdapter) binding.tripList.getAdapter();
+            adapter.setListener(listener);
         } else {
             adapter = new TripCardAdapter(listener);
             binding.tripList.setLayoutManager(

@@ -54,6 +54,7 @@ public class HomeFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
+        ToastPresenter.cancel(binding.getRoot());
         super.onDestroyView();
         binding = null;
     }

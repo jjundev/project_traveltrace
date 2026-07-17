@@ -21,10 +21,7 @@ public final class ToastPresenter {
         if (pill == null) return;
 
         // 연속 토스트가 겹치면 앞선 숨김 예약이 새 토스트를 조기에 지운다 → 예약을 갈아끼운다.
-        Object pending = pill.getTag(R.id.toastPill);
-        if (pending instanceof Runnable) {
-            pill.removeCallbacks((Runnable) pending);
-        }
+        cancel(anchorRoot);
 
         pill.setText(message);
         pill.setVisibility(View.VISIBLE);
@@ -32,5 +29,16 @@ public final class ToastPresenter {
         Runnable hide = () -> pill.setVisibility(View.GONE);
         pill.setTag(R.id.toastPill, hide);
         pill.postDelayed(hide, DURATION_MS);
+    }
+
+    /** 화면이 사라질 때 예약된 숨김을 취소한다 — 파괴된 뷰로 콜백이 튀지 않게. */
+    public static void cancel(View anchorRoot) {
+        TextView pill = anchorRoot.findViewById(R.id.toastPill);
+        if (pill == null) return;
+        Object pending = pill.getTag(R.id.toastPill);
+        if (pending instanceof Runnable) {
+            pill.removeCallbacks((Runnable) pending);
+            pill.setTag(R.id.toastPill, null);
+        }
     }
 }

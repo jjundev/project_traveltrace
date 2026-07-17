@@ -21,9 +21,13 @@ public class TripCardAdapter extends RecyclerView.Adapter<TripCardAdapter.VH> {
     }
 
     private final List<HomeUiState.TripCard> items = new ArrayList<>();
-    private final Listener listener;
+    private Listener listener;
 
     public TripCardAdapter(Listener listener) {
+        this.listener = listener;
+    }
+
+    public void setListener(Listener listener) {
         this.listener = listener;
     }
 
