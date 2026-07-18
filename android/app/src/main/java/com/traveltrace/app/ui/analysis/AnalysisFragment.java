@@ -14,7 +14,6 @@ import androidx.navigation.fragment.NavHostFragment;
 import com.traveltrace.app.R;
 import com.traveltrace.app.databinding.FragmentAnalysisBinding;
 import com.traveltrace.app.ui.common.ToastPresenter;
-import com.traveltrace.app.ui.preview.ScreenFixtures;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -49,7 +48,7 @@ public class AnalysisFragment extends Fragment implements TimezoneSheetFragment.
         // 회전 등으로 재생성될 때 두 번 띄우지 않도록 savedInstanceState 로 가드한다.
         if (savedInstanceState == null
                 && getChildFragmentManager().findFragmentByTag(TimezoneSheetFragment.TAG) == null) {
-            TimezoneSheetFragment.newInstance(ScreenFixtures.cityLabel())
+            TimezoneSheetFragment.newInstance(vm.city())
                     .show(getChildFragmentManager(), TimezoneSheetFragment.TAG);
         }
     }

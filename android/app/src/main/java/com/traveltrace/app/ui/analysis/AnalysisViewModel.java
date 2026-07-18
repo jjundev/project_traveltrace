@@ -31,6 +31,11 @@ public class AnalysisViewModel extends ViewModel {
         return state;
     }
 
+    /** 타임존 시트에 넣을 도시명. 로직 단계에서 이 공급원이 리포지토리로 교체된다. */
+    public String city() {
+        return ScreenFixtures.cityLabel();
+    }
+
     /** 완료형 디자인 확인용 토글. */
     public void setDone(boolean done) {
         state.setValue(done
