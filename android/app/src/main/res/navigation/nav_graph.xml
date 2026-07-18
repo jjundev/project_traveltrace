@@ -30,7 +30,7 @@
     <fragment
         android:id="@+id/analysisFragment"
         android:name="com.traveltrace.app.ui.analysis.AnalysisFragment"
-        android:label="@string/screen_analysis_title">
+        android:label="@string/analyze_title">
         <action
             android:id="@+id/action_analysis_to_map"
             app:destination="@id/mapReplayFragment" />

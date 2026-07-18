@@ -78,4 +78,11 @@
     <dimen name="photo_tile_stroke_selected">3dp</dimen>
     <dimen name="photo_tile_stroke_unselected">1dp</dimen>
     <dimen name="check_badge_size">20dp</dimen>
+
+    <!-- 진행 카드 radius 16dp — 기존 Radii 목록(11/12/14/18/20/22/24)에 없어 신규 추가 -->
+    <dimen name="radius_16">16dp</dimen>
+    <dimen name="progress_bar_height">6dp</dimen>
+    <dimen name="spinner_size">18dp</dimen>
+    <dimen name="spinner_thickness">2.5dp</dimen>
+    <dimen name="done_check_size">22dp</dimen>
 </resources>

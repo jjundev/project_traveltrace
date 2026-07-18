@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 진행 카드 배경: radius 16, 반투명 흰색(blur 폴백). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/glass_card_bg" />
+    <corners android:radius="@dimen/radius_16" />
+</shape>

@@ -16,6 +16,7 @@ import com.traveltrace.app.databinding.FragmentAnalysisBinding;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
+/** ANALYZE: 진행 카드 + 완료 전환. */
 @AndroidEntryPoint
 public class AnalysisFragment extends Fragment {
 
@@ -32,9 +33,15 @@ public class AnalysisFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        new ViewModelProvider(this).get(AnalysisViewModel.class);
-        binding.nextButton.setOnClickListener(v ->
+        AnalysisViewModel vm = new ViewModelProvider(this).get(AnalysisViewModel.class);
+
+        binding.analyzeBack.setOnClickListener(v ->
+                NavHostFragment.findNavController(this).popBackStack());
+        binding.gotoMapButton.setOnClickListener(v ->
                 NavHostFragment.findNavController(this).navigate(R.id.action_analysis_to_map));
+
+        vm.state().observe(getViewLifecycleOwner(), state ->
+                AnalysisRenderer.render(binding, state));
     }
 
     @Override
