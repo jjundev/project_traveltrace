@@ -25,7 +25,6 @@
         style="@style/TextAppearance.TravelTrace.Title2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="@dimen/text_empty_title"
         tools:text="위치 미상 · 5장" />
 
     <TextView
