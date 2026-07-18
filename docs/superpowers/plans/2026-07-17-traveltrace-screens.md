@@ -4345,7 +4345,7 @@ git commit -m "feat: add timeline scrubber custom view"
 - Consumes: `MapUiState` / `.activeStop()` / `.Speed` (Task 2), `TimelineScrubberView` (Task 8), `MapRenderer.renderTopBar` (Task 7), `ToastPresenter` (Task 3)
 - Produces:
   - `MapRenderer.renderSheet(ViewMapBottomSheetBinding binding, MapUiState state)` — static void.
-  - `MapReplayViewModel`: `void togglePlay()`, `void setSpeed(MapUiState.Speed)`, `void jumpTo(int index)`, `void next()`, `void prev()`, `void setCinema(boolean)`, `void detachActive()`
+  - `MapReplayViewModel`: `void togglePlay()`, `void setSpeed(MapUiState.Speed)`, `void jumpTo(int index)`, `void next()`, `void prev()`, `void setCinema(boolean)` — "빼기"는 Step 9에서 토스트로만 처리하므로 `detachActive()` 는 만들지 않는다(실제 핀 제거는 로직 에픽 13).
   - `MapUiState.Stop` 의 `extra`/`ai`/`toneColor` 소비 지점 확정.
 
 - [ ] **Step 1: 문자열·치수·색 추가**
@@ -5121,7 +5121,7 @@ git commit -m "feat: implement MAP bottom sheet (photo banner, scrubber, control
 
     <FrameLayout
         android:id="@+id/cinemaCard"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="@dimen/cinema_card_height"
         android:layout_gravity="center_horizontal"
         android:layout_marginStart="24dp"
