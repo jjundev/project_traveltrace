@@ -5380,8 +5380,10 @@ git commit -m "feat: add cinema mode overlay to MAP"
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <!-- 위치 미상 드로어: 핸들 + 제목 + 본문 + 4열 썸네일 + 닫기.
-     썸네일 5개는 고정 개수라 GridLayout 으로 충분하다(RecyclerView 불필요). -->
+     썸네일 5개는 고정 개수라 GridLayout 으로 충분하다(RecyclerView 불필요).
+     app: 네임스페이스는 닫기 버튼의 app:cornerRadius 에 필요하다(빠뜨리면 빌드 실패). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
