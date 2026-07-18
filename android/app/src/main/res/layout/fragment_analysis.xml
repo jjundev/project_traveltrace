@@ -87,8 +87,10 @@
             android:layout_marginTop="11dp"
             android:max="100"
             app:indicatorColor="@color/fill_brand"
+            app:indicatorTrackGapSize="0dp"
             app:trackColor="@color/progress_track"
             app:trackCornerRadius="3dp"
+            app:trackStopIndicatorSize="0dp"
             app:trackThickness="@dimen/progress_bar_height"
             tools:progress="50" />
 
