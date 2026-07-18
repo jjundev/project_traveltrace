@@ -85,4 +85,8 @@
     <dimen name="spinner_size">18dp</dimen>
     <dimen name="spinner_thickness">2.5dp</dimen>
     <dimen name="done_check_size">22dp</dimen>
+
+    <!-- 시트 내 버튼: 52dp / radius 13 (프로토타입 실측, CTA 54/14 와 다름) -->
+    <dimen name="btn_height_sheet">52dp</dimen>
+    <dimen name="radius_13">13dp</dimen>
 </resources>

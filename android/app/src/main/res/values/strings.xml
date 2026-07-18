@@ -35,4 +35,12 @@
     <string name="analyze_done">분석 완료</string>
     <string name="analyze_done_summary">경로 %1$d · 위치 미상 %2$d</string>
     <string name="analyze_goto_map">지도에서 여행 보기</string>
+
+    <!-- ANALYZE · 타임존 시트 -->
+    <string name="tz_title_prefix">"이 여행, "</string>
+    <string name="tz_title_suffix">" 기준이 맞죠?"</string>
+    <string name="tz_body">사진 시각을 %1$s 시간대로 맞춰 정확한 순서로 정렬해요. 다른 도시라면 바꿔 주세요.</string>
+    <string name="tz_confirm">네, %1$s 기준이 맞아요</string>
+    <string name="tz_change_city">다른 도시 선택</string>
+    <string name="tz_change_city_toast">도시 선택은 데모에서 생략돼요</string>
 </resources>
