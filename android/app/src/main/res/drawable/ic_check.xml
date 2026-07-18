@@ -1,9 +1,12 @@
+<!--
+  범용 체크 아이콘 — tint 중립(흰 fill). 색은 사용처에서 app:tint 로 준다.
+  (초록 tint 를 박아두면 완료 상태의 초록 원 위에서 초록 체크가 보이지 않는다.)
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
-    android:viewportHeight="24"
-    android:tint="@color/success_green">
+    android:viewportHeight="24">
     <path
         android:fillColor="@android:color/white"
         android:pathData="M9,16.17L4.83,12l-1.42,1.41L9,19 21,7l-1.41,-1.41z" />
