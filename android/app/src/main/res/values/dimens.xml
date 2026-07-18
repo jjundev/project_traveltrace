@@ -94,4 +94,11 @@
     <dimen name="map_bar_height">40dp</dimen>
     <dimen name="map_segment_height">34dp</dimen>
     <dimen name="map_chip_height">32dp</dimen>
+
+    <!-- 타임라인 스크러버 (프로토타입 실측: 선 3dp, 도트 11dp, 활성 15dp) -->
+    <dimen name="scrubber_line_height">3dp</dimen>
+    <dimen name="scrubber_dot">11dp</dimen>
+    <dimen name="scrubber_dot_active">15dp</dimen>
+    <dimen name="scrubber_dot_stroke">2dp</dimen>
+    <dimen name="scrubber_height">24dp</dimen>
 </resources>
