@@ -48,6 +48,7 @@ public class TimelineScrubberView extends View {
     private final float lineHeight;
     private final float dotRadius;
     private final float dotRadiusActive;
+    private final DashPathEffect dashPathEffect;
 
     public TimelineScrubberView(Context context) {
         this(context, null);
@@ -64,6 +65,8 @@ public class TimelineScrubberView extends View {
         lineHeight = res(R.dimen.scrubber_line_height);
         dotRadius = res(R.dimen.scrubber_dot) / 2f;
         dotRadiusActive = res(R.dimen.scrubber_dot_active) / 2f;
+        dashPathEffect = new DashPathEffect(
+                new float[]{res(R.dimen.scrubber_dash_on), res(R.dimen.scrubber_dash_off)}, 0f);
 
         linePaint.setStyle(Paint.Style.FILL);
         dotFillPaint.setStyle(Paint.Style.FILL);
@@ -160,9 +163,7 @@ public class TimelineScrubberView extends View {
                 canvas.drawCircle(dotCx, cy, r, dotFillPaint);
                 dotStrokePaint.setColor(stops.get(i).ai ? colorApprox : colorTrack);
                 // AI 근사 정차점은 점선 테두리 (프로토타입 dotBorder: 2px dashed).
-                dotStrokePaint.setPathEffect(stops.get(i).ai
-                        ? new DashPathEffect(new float[]{4f, 3f}, 0f)
-                        : null);
+                dotStrokePaint.setPathEffect(stops.get(i).ai ? dashPathEffect : null);
             }
             canvas.drawCircle(dotCx, cy, r, dotStrokePaint);
         }

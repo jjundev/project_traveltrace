@@ -69,6 +69,15 @@ public class TimelineScrubberViewTest {
     }
 
     @Test
+    public void indexAtReturnsNoSelectionWhenNotLaidOut() {
+        TimelineScrubberView notLaidOut =
+                new TimelineScrubberView(ApplicationProvider.getApplicationContext());
+        notLaidOut.setStops(ScreenFixtures.map().stops);
+        // measure()/layout() never called → getWidth() stays 0.
+        assertEquals(TimelineScrubberView.NO_SELECTION, notLaidOut.indexAt(10f));
+    }
+
+    @Test
     public void tapNotifiesListenerWithStopIndex() {
         final int[] notified = {-1};
         view.setOnStopSelectedListener(index -> notified[0] = index);

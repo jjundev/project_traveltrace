@@ -101,4 +101,6 @@
     <dimen name="scrubber_dot_active">15dp</dimen>
     <dimen name="scrubber_dot_stroke">2dp</dimen>
     <dimen name="scrubber_height">24dp</dimen>
+    <dimen name="scrubber_dash_on">2dp</dimen>
+    <dimen name="scrubber_dash_off">1.5dp</dimen>
 </resources>
