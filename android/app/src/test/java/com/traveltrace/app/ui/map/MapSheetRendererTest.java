@@ -12,6 +12,8 @@ import com.traveltrace.app.R;
 import com.traveltrace.app.databinding.ViewMapBottomSheetBinding;
 import com.traveltrace.app.ui.preview.ScreenFixtures;
 
+import java.util.Collections;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -96,5 +98,20 @@ public class MapSheetRendererTest {
         assertEquals(ctx.getColor(R.color.text_tertiary),
                 binding.speedRelaxed.getCurrentTextColor());
         assertEquals(ctx.getColor(R.color.text_tertiary), binding.speedFast.getCurrentTextColor());
+    }
+
+    @Test
+    public void noStops_hidesBannerScrubberAndControlsWithoutThrowing() {
+        // 사진이 전부 위치 미상이면 정차 지점이 없다 — activeStop() 은 이 경우 던진다.
+        // 픽스처는 항상 6개 정류장을 갖고 있어 이 상태는 여기서 직접 만든다
+        // (ScreenFixtures 에 빈 픽스처를 추가하지 않는다).
+        MapUiState empty = new MapUiState("여행", 0, Collections.emptyList(), 0,
+                false, false, false, MapUiState.Speed.NORMAL);
+
+        MapRenderer.renderSheet(binding, empty);
+
+        assertEquals(View.GONE, binding.photoBanner.getVisibility());
+        assertEquals(View.GONE, binding.scrubber.getVisibility());
+        assertEquals(View.GONE, binding.controlsRow.getVisibility());
     }
 }

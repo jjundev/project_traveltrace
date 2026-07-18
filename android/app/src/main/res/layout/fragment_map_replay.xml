@@ -64,8 +64,9 @@
         style="@style/TextAppearance.TravelTrace.Caption"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/toast_bottom_margin"
+        android:layout_marginBottom="12dp"
         android:background="@drawable/bg_toast_pill"
+        android:elevation="10dp"
         android:paddingStart="18dp"
         android:paddingTop="11dp"
         android:paddingEnd="18dp"
@@ -73,7 +74,7 @@
         android:textColor="@color/text_on_fill"
         android:textFontWeight="600"
         android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/mapBottomSheet"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

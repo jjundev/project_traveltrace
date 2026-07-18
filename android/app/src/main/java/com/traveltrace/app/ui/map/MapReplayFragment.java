@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.graphics.Insets;
@@ -40,6 +41,7 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
     private FragmentMapReplayBinding binding;
     private MapReplayViewModel vm;
     private GoogleMap map;
+    private OnBackPressedCallback cinemaBackCallback;
 
     @Nullable
     @Override
@@ -54,10 +56,24 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
         super.onViewCreated(view, savedInstanceState);
         vm = new ViewModelProvider(this).get(MapReplayViewModel.class);
 
-        // 지도는 전체 화면을 덮으므로 상단바에만 상태바 인셋을 준다.
-        ViewCompat.setOnApplyWindowInsetsListener(binding.mapTopBar.topBarRoot, (v, insets) -> {
+        // 지도는 전체 화면을 덮으므로(fitsSystemWindows 불가) 상단바엔 상태바, 하단시트엔
+        // 내비게이션 바 인셋을 직접 준다 — 디자인된 패딩(8dp/24dp)에 더하고, 덮어쓰지 않는다.
+        // 인셋 콜백은 반복 호출될 수 있어 원래 패딩은 리스너 등록 전에 한 번만 캡처한다.
+        View topBarRoot = binding.mapTopBar.topBarRoot;
+        int topBarOriginalPaddingTop = topBarRoot.getPaddingTop();
+        ViewCompat.setOnApplyWindowInsetsListener(topBarRoot, (v, insets) -> {
             Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(v.getPaddingLeft(), bars.top, v.getPaddingRight(), v.getPaddingBottom());
+            v.setPadding(v.getPaddingLeft(), topBarOriginalPaddingTop + bars.top,
+                    v.getPaddingRight(), v.getPaddingBottom());
+            return insets;
+        });
+
+        View sheetRoot = binding.mapBottomSheet.sheetRoot;
+        int sheetOriginalPaddingBottom = sheetRoot.getPaddingBottom();
+        ViewCompat.setOnApplyWindowInsetsListener(sheetRoot, (v, insets) -> {
+            Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(),
+                    sheetOriginalPaddingBottom + bars.bottom);
             return insets;
         });
 
@@ -75,6 +91,10 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
         binding.mapTopBar.unknownChip.setOnClickListener(v -> {
             MapUiState state = vm.state().getValue();
             if (state == null) return;
+            // 빠른 연타로 두 번 뜨지 않도록 가드 (AnalysisFragment 의 TimezoneSheetFragment 가드와 동일 패턴).
+            if (getChildFragmentManager().findFragmentByTag(UnknownPhotosSheetFragment.TAG) != null) {
+                return;
+            }
             // 톤은 VM 이 공급한다 (seam 규칙 — Fragment/시트는 ScreenFixtures 를 직접 부르지 않는다).
             UnknownPhotosSheetFragment.newInstance(state.unknownCount, vm.unknownThumbTones())
                     .show(getChildFragmentManager(), UnknownPhotosSheetFragment.TAG);
@@ -94,10 +114,22 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
 
         binding.cinemaOverlay.cinemaRoot.setOnClickListener(v -> vm.setCinema(false));
 
+        // 상영 모드에선 상단바가 숨어 탭-해제가 유일한 탈출구다 — Back 도 같은 동작을 하게 한다.
+        // 상영 모드가 아닐 때는 비활성화해 Back 이 평소처럼 화면을 나가게 둔다.
+        cinemaBackCallback = new OnBackPressedCallback(false) {
+            @Override
+            public void handleOnBackPressed() {
+                vm.setCinema(false);
+            }
+        };
+        requireActivity().getOnBackPressedDispatcher()
+                .addCallback(getViewLifecycleOwner(), cinemaBackCallback);
+
         vm.state().observe(getViewLifecycleOwner(), this::render);
     }
 
     private void render(MapUiState state) {
+        if (binding == null) return;
         MapRenderer.renderTopBar(binding.mapTopBar, state);
         MapRenderer.renderSheet(binding.mapBottomSheet, state);
         binding.satelliteScrim.setVisibility(state.satellite ? View.VISIBLE : View.GONE);
@@ -109,10 +141,15 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
         int chromeVis = state.cinema ? View.GONE : View.VISIBLE;
         binding.mapTopBar.topBarRoot.setVisibility(chromeVis);
         binding.mapBottomSheet.sheetRoot.setVisibility(chromeVis);
+
+        if (cinemaBackCallback != null) {
+            cinemaBackCallback.setEnabled(state.cinema);
+        }
     }
 
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
+        if (binding == null) return;
         map = googleMap;
         map.getUiSettings().setMapToolbarEnabled(false);
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(PARIS, STATIC_ZOOM));

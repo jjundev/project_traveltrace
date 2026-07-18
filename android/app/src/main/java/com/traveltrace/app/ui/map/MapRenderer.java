@@ -43,6 +43,18 @@ public final class MapRenderer {
 
     public static void renderSheet(ViewMapBottomSheetBinding binding, MapUiState state) {
         Context ctx = binding.getRoot().getContext();
+
+        if (state.stops.isEmpty()) {
+            // 사진이 전부 위치 미상이면 정차 지점이 없다 — activeStop() 은 여기서 던진다.
+            binding.photoBanner.setVisibility(View.GONE);
+            binding.scrubber.setVisibility(View.GONE);
+            binding.controlsRow.setVisibility(View.GONE);
+            return;
+        }
+        binding.photoBanner.setVisibility(View.VISIBLE);
+        binding.scrubber.setVisibility(View.VISIBLE);
+        binding.controlsRow.setVisibility(View.VISIBLE);
+
         MapUiState.Stop stop = state.activeStop();
 
         binding.photoTone.setBackgroundColor(stop.toneColor);

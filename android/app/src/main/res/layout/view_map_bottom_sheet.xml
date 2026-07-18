@@ -140,6 +140,7 @@
 
     <!-- 컨트롤 -->
     <LinearLayout
+        android:id="@+id/controlsRow"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="14dp"
@@ -169,7 +170,8 @@
             android:layout_width="26dp"
             android:layout_height="26dp"
             android:contentDescription="@string/map_prev_desc"
-            android:src="@drawable/ic_prev" />
+            android:src="@drawable/ic_prev"
+            app:tint="@color/text_primary" />
 
         <FrameLayout
             android:layout_width="@dimen/play_button_size"
@@ -194,7 +196,8 @@
             android:layout_width="26dp"
             android:layout_height="26dp"
             android:contentDescription="@string/map_next_desc"
-            android:src="@drawable/ic_next" />
+            android:src="@drawable/ic_next"
+            app:tint="@color/text_primary" />
 
         <Space
             android:layout_width="0dp"
