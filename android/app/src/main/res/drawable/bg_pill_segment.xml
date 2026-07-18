@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 지도/위성 세그먼트 컨테이너 + 제목 pill 공용 배경 (blur 폴백). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/glass_bar_bg" />
+    <corners android:radius="@dimen/radius_full" />
+</shape>

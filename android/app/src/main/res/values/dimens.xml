@@ -89,4 +89,9 @@
     <!-- 시트 내 버튼: 52dp / radius 13 (프로토타입 실측, CTA 54/14 와 다름) -->
     <dimen name="btn_height_sheet">52dp</dimen>
     <dimen name="radius_13">13dp</dimen>
+
+    <!-- MAP -->
+    <dimen name="map_bar_height">40dp</dimen>
+    <dimen name="map_segment_height">34dp</dimen>
+    <dimen name="map_chip_height">32dp</dimen>
 </resources>

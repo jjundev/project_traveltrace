@@ -39,5 +39,5 @@
     <fragment
         android:id="@+id/mapReplayFragment"
         android:name="com.traveltrace.app.ui.map.MapReplayFragment"
-        android:label="@string/screen_map_title" />
+        android:label="@string/map_title" />
 </navigation>

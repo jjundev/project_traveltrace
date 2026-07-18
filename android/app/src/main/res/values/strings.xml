@@ -1,9 +1,6 @@
 <resources>
     <string name="app_name">TravelTrace</string>
 
-    <string name="screen_map_title">3. 지도 / 리플레이 (Epic J·K)</string>
-    <string name="action_to_map">지도 보기 →</string>
-
     <!-- HOME -->
     <string name="home_title">여행</string>
     <string name="home_subtitle">다녀온 길을 다시 떠나요</string>
@@ -43,4 +40,10 @@
     <string name="tz_confirm">네, %1$s 기준이 맞아요</string>
     <string name="tz_change_city">다른 도시 선택</string>
     <string name="tz_change_city_toast">도시 선택은 데모에서 생략돼요</string>
+
+    <!-- MAP -->
+    <string name="map_title">지도</string>
+    <string name="map_tab_map">지도</string>
+    <string name="map_tab_satellite">위성</string>
+    <string name="map_unknown_chip">위치 미상 %1$d</string>
 </resources>

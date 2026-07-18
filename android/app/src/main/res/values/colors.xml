@@ -75,4 +75,10 @@
     <color name="glass_circle_bg">#D9FFFFFF</color>
     <!-- 진행바 트랙: grey-100 -->
     <color name="progress_track">@color/palette_grey_100</color>
+
+    <!-- MAP 상단바 pill: rgba(255,255,255,.92) (blur 폴백) -->
+    <color name="glass_bar_bg">#EBFFFFFF</color>
+    <!-- 위성 뷰 스크림: 상단 밝게 → 하단 어둡게 (프로토타입 linear-gradient) -->
+    <color name="satellite_scrim_top">#1A7896AA</color>
+    <color name="satellite_scrim_bottom">#38000000</color>
 </resources>

@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MAP 상단바: 뒤로 + 제목 pill + 지도/위성 세그먼트 + 위치 미상 칩.
+     지도 레이아웃과 분리해 Robolectric 이 단독 인플레이트할 수 있게 한다. -->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/topBarRoot"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingStart="14dp"
+    android:paddingTop="8dp"
+    android:paddingEnd="14dp">
+
+    <ImageView
+        android:id="@+id/mapBack"
+        android:layout_width="@dimen/map_bar_height"
+        android:layout_height="@dimen/map_bar_height"
+        android:background="@drawable/bg_circle_glass"
+        android:contentDescription="@string/select_back_desc"
+        android:elevation="@dimen/card_elevation"
+        android:padding="9dp"
+        android:src="@drawable/ic_arrow_back"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="@color/text_primary" />
+
+    <TextView
+        android:id="@+id/mapTitle"
+        style="@style/TextAppearance.TravelTrace.Body"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/map_bar_height"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:background="@drawable/bg_pill_segment"
+        android:elevation="@dimen/card_elevation"
+        android:gravity="center_vertical"
+        android:letterSpacing="-0.02"
+        android:paddingStart="15dp"
+        android:paddingEnd="15dp"
+        android:singleLine="true"
+        android:textFontWeight="800"
+        app:layout_constraintEnd_toStartOf="@id/viewSegment"
+        app:layout_constraintStart_toEndOf="@id/mapBack"
+        app:layout_constraintTop_toTopOf="@id/mapBack"
+        tools:text="2024 파리 여행" />
+
+    <LinearLayout
+        android:id="@+id/viewSegment"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/map_bar_height"
+        android:background="@drawable/bg_pill_segment"
+        android:elevation="@dimen/card_elevation"
+        android:orientation="horizontal"
+        android:padding="3dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/mapBack">
+
+        <TextView
+            android:id="@+id/tabMap"
+            style="@style/TextAppearance.TravelTrace.Caption"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/map_segment_height"
+            android:gravity="center"
+            android:paddingStart="13dp"
+            android:paddingEnd="13dp"
+            android:text="@string/map_tab_map"
+            android:textFontWeight="700" />
+
+        <TextView
+            android:id="@+id/tabSatellite"
+            style="@style/TextAppearance.TravelTrace.Caption"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/map_segment_height"
+            android:gravity="center"
+            android:paddingStart="13dp"
+            android:paddingEnd="13dp"
+            android:text="@string/map_tab_satellite"
+            android:textFontWeight="700" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/unknownChip"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/map_chip_height"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/bg_chip_unknown"
+        android:elevation="@dimen/card_elevation"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/mapBack">
+
+        <ImageView
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_info"
+            app:tint="@color/unknown_yellow" />
+
+        <TextView
+            android:id="@+id/unknownChipText"
+            style="@style/TextAppearance.TravelTrace.Small"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:textColor="@color/text_on_fill"
+            android:textFontWeight="700"
+            tools:text="위치 미상 5" />
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
