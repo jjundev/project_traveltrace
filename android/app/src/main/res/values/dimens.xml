@@ -25,6 +25,7 @@
     <dimen name="line_title_3">23sp</dimen>   <!-- 17 x1.35 -->
     <dimen name="line_body">22sp</dimen>      <!-- 15 x1.45 -->
     <dimen name="line_label">17sp</dimen>     <!-- 14 x1.2 -->
+    <dimen name="line_label_relaxed">21sp</dimen>  <!-- 14 x1.5 — 시트 본문처럼 여유 있는 줄간격이 필요한 14sp 텍스트용 -->
     <dimen name="line_caption">19sp</dimen>   <!-- 13 x1.45 -->
     <dimen name="line_small">17sp</dimen>     <!-- 12 x1.45 -->
     <dimen name="line_micro">12sp</dimen>     <!-- 10 x1.2 -->

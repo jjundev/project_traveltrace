@@ -32,7 +32,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:lineHeight="@dimen/line_body"
+        android:lineHeight="@dimen/line_label_relaxed"
         android:textColor="@color/text_secondary"
         android:textFontWeight="500"
         tools:text="사진 시각을 파리 시간대로 맞춰 정확한 순서로 정렬해요. 다른 도시라면 바꿔 주세요." />
