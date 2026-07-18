@@ -1,11 +1,11 @@
 package com.traveltrace.app.ui;
 
-import android.app.Activity;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
 
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.test.core.app.ApplicationProvider;
 
 import com.github.takahirom.roborazzi.RoborazziKt;
@@ -13,13 +13,17 @@ import com.github.takahirom.roborazzi.RoborazziOptions;
 import com.traveltrace.app.R;
 
 import org.robolectric.Robolectric;
+import org.robolectric.android.controller.ActivityController;
 
 /**
  * Shared plumbing for the View-based Roborazzi screenshot tests: builds a themed Robolectric
- * {@link Activity}, attaches a root view as its content, measures/lays it out at a chosen frame,
- * and captures the result to a named golden file. Individual *ScreenshotTest classes own what
- * gets rendered (fixture + Renderer/Fragment call) and what file name it lands in; this class
- * only de-duplicates the boilerplate around that.
+ * {@link AppCompatActivity}, attaches a root view as its content, measures/lays it out at a
+ * chosen frame, and captures the result to a named golden file. The host must be AppCompat (not
+ * a plain {@code android.app.Activity}) so the {@link LayoutInflater} it hands out installs
+ * AppCompat's view-inflater factory, upgrading {@code <ImageView>} to {@code AppCompatImageView}
+ * so {@code app:tint} is honored the same way it is in the real app. Individual *ScreenshotTest
+ * classes own what gets rendered (fixture + Renderer/Fragment call) and what file name it lands
+ * in; this class only de-duplicates the boilerplate around that.
  *
  * <p>Two framings are supported (see {@link #captureFixedFrame} and
  * {@link #captureWrapContentHeight}): a fixed 390x844dp phone frame for full-screen captures, and
@@ -47,30 +51,44 @@ public final class ScreenshotHarness {
     private static final String OUTPUT_DIR =
             System.getProperty("roborazzi.output.dir", "build/outputs/roborazzi");
 
-    private final Activity activity;
+    private final AppCompatActivity activity;
     private final Context ctx;
 
-    private ScreenshotHarness(Activity activity) {
+    private ScreenshotHarness(AppCompatActivity activity) {
         this.activity = activity;
         this.ctx = activity;
     }
 
-    /** Builds a themed {@link Activity}, ready to host a view for capture. */
+    /**
+     * Builds a themed {@link AppCompatActivity}, ready to host a view for capture.
+     *
+     * <p>Must be an AppCompat host, not a plain {@code android.app.Activity}: only AppCompat
+     * installs its view-inflater factory on the {@link LayoutInflater}, which is what upgrades
+     * {@code <ImageView>} to {@code AppCompatImageView} and makes {@code app:tint} take effect.
+     * The theme has to be set before {@link ActivityController#setup()} runs {@code onCreate()},
+     * since that's when {@code AppCompatDelegate} reads it.
+     */
     public static ScreenshotHarness create() {
         Context appCtx = ApplicationProvider.getApplicationContext();
         appCtx.setTheme(R.style.Theme_TravelTrace);
-        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        ActivityController<AppCompatActivity> controller =
+                Robolectric.buildActivity(AppCompatActivity.class);
+        AppCompatActivity activity = controller.get();
         activity.setTheme(R.style.Theme_TravelTrace);
+        controller.setup();
         return new ScreenshotHarness(activity);
     }
 
-    /** A {@link LayoutInflater} bound to the harness's themed activity. */
+    /**
+     * A {@link LayoutInflater} bound to the harness's themed AppCompat activity, so inflated
+     * {@code <ImageView>}s come back as {@code AppCompatImageView} and honor {@code app:tint}.
+     */
     public LayoutInflater inflater() {
         return LayoutInflater.from(activity);
     }
 
     /** The harness's themed activity, for tests that need it directly (e.g. fragments). */
-    public Activity activity() {
+    public AppCompatActivity activity() {
         return activity;
     }
 
