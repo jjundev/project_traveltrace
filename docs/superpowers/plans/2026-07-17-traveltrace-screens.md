@@ -1743,7 +1743,8 @@ git commit -m "feat: implement HOME screen (trip list, empty state, CTA, toast)"
     <string name="select_start_analyze">분석 시작</string>
     <string name="select_hint">최대 %1$d장 · 탭하여 제외</string>
     <!-- %1$d = 선택 장수. 숫자만 브랜드 색으로 강조하므로 Renderer 에서 Spannable 로 조립한다. -->
-    <string name="select_count_prefix">선택한 사진 </string>
+    <!-- 끝 공백은 반드시 따옴표로 감싼다 — 없으면 aapt 가 잘라내 "선택한 사진16장" 이 된다. -->
+    <string name="select_count_prefix">"선택한 사진 "</string>
     <string name="select_count_suffix">장</string>
     <string name="select_tile_desc">사진 타일</string>
     <string name="select_tile_checked_desc">선택됨</string>
@@ -2174,9 +2175,14 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<PhotoGridAdapter.VH> 
     private static final float ALPHA_UNSELECTED = 0.5f;
 
     private final List<PhotoSelectionUiState.Tile> items = new ArrayList<>();
-    private final Listener listener;
+    private Listener listener;
 
     public PhotoGridAdapter(Listener listener) {
+        this.listener = listener;
+    }
+
+    /** 재사용 경로에서 Renderer 가 현재 리스너로 갱신한다 (final 이면 옛 리스너가 남는다). */
+    public void setListener(Listener listener) {
         this.listener = listener;
     }
 
@@ -2273,6 +2279,8 @@ public final class PhotoSelectionRenderer {
         PhotoGridAdapter adapter;
         if (binding.photoGrid.getAdapter() instanceof PhotoGridAdapter) {
             adapter = (PhotoGridAdapter) binding.photoGrid.getAdapter();
+            // 이번 호출의 리스너가 항상 이긴다 (HomeRenderer 와 동일한 재사용-경로 처리).
+            adapter.setListener(listener);
         } else {
             adapter = new PhotoGridAdapter(listener);
             binding.photoGrid.setLayoutManager(new GridLayoutManager(ctx, SPAN_COUNT));
