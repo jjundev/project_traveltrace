@@ -83,7 +83,7 @@
         android:id="@+id/unknownChip"
         android:layout_width="wrap_content"
         android:layout_height="@dimen/map_chip_height"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="2dp"
         android:background="@drawable/bg_chip_unknown"
         android:elevation="@dimen/card_elevation"
         android:gravity="center_vertical"
