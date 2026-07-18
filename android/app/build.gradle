@@ -6,6 +6,9 @@ import com.traveltrace.build.VisionModelsFile
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.hilt)
+    // Roborazzi 의 Gradle 플러그인은 Kotlin Gradle 플러그인(KotlinTarget)을 요구한다.
+    // 이 앱은 Java 전용이라 플러그인은 적용하지 않고, 라이브러리 + 시스템 프로퍼티로
+    // captureRoboImage() 를 직접 호출해 스크린샷을 기록한다(아래 testOptions).
 }
 
 // ---------------------------------------------------------------------------
@@ -92,6 +95,16 @@ android {
     testOptions {
         unitTests {
             includeAndroidResources = true
+            all {
+                // Roborazzi 스크린샷 캡처(플러그인 없이 라이브러리 직접 호출):
+                //  - pixelCopyRenderMode=hardware : NATIVE 그래픽스 모드의 하드웨어 렌더 경로.
+                //  - roborazzi.test.record=true : captureRoboImage() 가 실제로 PNG 를 기록.
+                //  - roborazzi.output.dir : 기록 위치(플러그인이 없으니 명시).
+                it.systemProperty 'robolectric.pixelCopyRenderMode', 'hardware'
+                it.systemProperty 'roborazzi.test.record', 'true'
+                it.systemProperty 'roborazzi.output.dir',
+                        "${projectDir}/build/outputs/roborazzi".toString()
+            }
         }
     }
 }
@@ -127,6 +140,7 @@ dependencies {
     testImplementation libs.junit
     testImplementation libs.robolectric
     testImplementation libs.androidx.test.core
+    testImplementation libs.roborazzi
 }
 
 // ---------------------------------------------------------------------------
