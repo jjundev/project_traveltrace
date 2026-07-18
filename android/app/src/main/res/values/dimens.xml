@@ -103,4 +103,12 @@
     <dimen name="scrubber_height">24dp</dimen>
     <dimen name="scrubber_dash_on">2dp</dimen>
     <dimen name="scrubber_dash_off">1.5dp</dimen>
+
+    <!-- MAP 하단 시트 (프로토타입 실측) -->
+    <dimen name="photo_banner_height">180dp</dimen>
+    <dimen name="map_badge_height">26dp</dimen>
+    <dimen name="play_button_size">58dp</dimen>
+    <dimen name="speed_pill_height">30dp</dimen>
+    <dimen name="control_button_size">40dp</dimen>
+    <dimen name="text_stop_name">21sp</dimen>
 </resources>

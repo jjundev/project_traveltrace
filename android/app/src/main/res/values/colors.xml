@@ -81,4 +81,16 @@
     <!-- 위성 뷰 스크림: 상단 밝게 → 하단 어둡게 (프로토타입 linear-gradient) -->
     <color name="satellite_scrim_top">#1A7896AA</color>
     <color name="satellite_scrim_bottom">#38000000</color>
+
+    <!-- MAP 사진 배너 스크림: 아래로 갈수록 어두워짐 (프로토타입 to top, rgba(0,0,0,.45)) -->
+    <color name="photo_scrim_bottom">#73000000</color>
+    <!-- GPS 배지 fill: rgba(49,130,246,.95) -->
+    <color name="badge_gps_fill">#F23182F6</color>
+    <!-- 배너 위 흰 pill: rgba(255,255,255,.92) -->
+    <color name="pill_white_bg">#EBFFFFFF</color>
+    <!-- 그라데이션의 투명 정지점 (하드코딩 hex 금지 규칙 준수) -->
+    <color name="transparent">#00000000</color>
+    <!-- 배너/상영 카드 위 흰 글자의 그림자 (프로토타입 text-shadow 실측) -->
+    <color name="text_shadow_soft">#4D000000</color>
+    <color name="text_shadow_strong">#59000000</color>
 </resources>

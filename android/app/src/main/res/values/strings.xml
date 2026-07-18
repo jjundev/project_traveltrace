@@ -46,4 +46,20 @@
     <string name="map_tab_map">지도</string>
     <string name="map_tab_satellite">위성</string>
     <string name="map_unknown_chip">위치 미상 %1$d</string>
+
+    <!-- MAP · 하단 시트 -->
+    <string name="map_badge_gps">GPS</string>
+    <string name="map_badge_approx">근사 위치</string>
+    <string name="map_detach">빼기</string>
+    <string name="map_extra_photos">+%1$d장</string>
+    <string name="map_stop_meta">%1$s · %2$d/%3$d번째</string>
+    <string name="map_cinema_mode">상영 모드</string>
+    <string name="map_speed_relaxed">느긋이</string>
+    <string name="map_speed_normal">보통</string>
+    <string name="map_speed_fast">빠르게</string>
+    <string name="map_play_desc">재생</string>
+    <string name="map_pause_desc">일시정지</string>
+    <string name="map_prev_desc">이전 장소</string>
+    <string name="map_next_desc">다음 장소</string>
+    <string name="map_detach_toast">핀을 위치 미상으로 옮겼어요</string>
 </resources>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- GPS 배지: 브랜드 파랑 캡슐 (프로토타입 실측 rgba(49,130,246,.95) — 살짝 비침) -->
+<!-- 선택된 속도 프리셋: 흰 pill (컨테이너는 bg_base). -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <solid android:color="@color/badge_gps_fill" />
+    <solid android:color="@color/surface" />
     <corners android:radius="@dimen/radius_full" />
 </shape>

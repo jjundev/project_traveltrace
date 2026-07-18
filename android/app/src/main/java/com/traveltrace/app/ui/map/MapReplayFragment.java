@@ -19,7 +19,10 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.traveltrace.app.R;
 import com.traveltrace.app.databinding.FragmentMapReplayBinding;
+import com.traveltrace.app.databinding.ViewMapBottomSheetBinding;
+import com.traveltrace.app.ui.common.ToastPresenter;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -70,11 +73,24 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
         binding.mapTopBar.tabMap.setOnClickListener(v -> vm.setSatellite(false));
         binding.mapTopBar.tabSatellite.setOnClickListener(v -> vm.setSatellite(true));
 
+        ViewMapBottomSheetBinding sheet = binding.mapBottomSheet;
+        sheet.playButton.setOnClickListener(v -> vm.togglePlay());
+        sheet.prevButton.setOnClickListener(v -> vm.prev());
+        sheet.nextButton.setOnClickListener(v -> vm.next());
+        sheet.cinemaButton.setOnClickListener(v -> vm.setCinema(true));
+        sheet.scrubber.setOnStopSelectedListener(vm::jumpTo);
+        sheet.speedRelaxed.setOnClickListener(v -> vm.setSpeed(MapUiState.Speed.RELAXED));
+        sheet.speedNormal.setOnClickListener(v -> vm.setSpeed(MapUiState.Speed.NORMAL));
+        sheet.speedFast.setOnClickListener(v -> vm.setSpeed(MapUiState.Speed.FAST));
+        sheet.detachButton.setOnClickListener(v ->
+                ToastPresenter.show(binding.getRoot(), getString(R.string.map_detach_toast)));
+
         vm.state().observe(getViewLifecycleOwner(), this::render);
     }
 
     private void render(MapUiState state) {
         MapRenderer.renderTopBar(binding.mapTopBar, state);
+        MapRenderer.renderSheet(binding.mapBottomSheet, state);
         binding.satelliteScrim.setVisibility(state.satellite ? View.VISIBLE : View.GONE);
         if (map != null) {
             map.setMapType(state.satellite ? GoogleMap.MAP_TYPE_SATELLITE : GoogleMap.MAP_TYPE_NORMAL);
@@ -93,6 +109,7 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
 
     @Override
     public void onDestroyView() {
+        ToastPresenter.cancel(binding.getRoot());
         super.onDestroyView();
         map = null;
         binding = null;

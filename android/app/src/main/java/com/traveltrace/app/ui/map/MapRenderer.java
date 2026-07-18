@@ -1,12 +1,14 @@
 package com.traveltrace.app.ui.map;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.view.View;
 import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
 
 import com.traveltrace.app.R;
+import com.traveltrace.app.databinding.ViewMapBottomSheetBinding;
 import com.traveltrace.app.databinding.ViewMapTopBarBinding;
 
 /**
@@ -35,5 +37,55 @@ public final class MapRenderer {
         tab.setBackgroundResource(selected ? R.drawable.bg_segment_selected : 0);
         tab.setTextColor(ContextCompat.getColor(ctx,
                 selected ? R.color.text_on_fill : R.color.text_tertiary));
+    }
+
+    public static void renderSheet(ViewMapBottomSheetBinding binding, MapUiState state) {
+        Context ctx = binding.getRoot().getContext();
+        MapUiState.Stop stop = state.activeStop();
+
+        binding.photoTone.setBackgroundColor(stop.toneColor);
+        binding.stopName.setText(stop.name);
+        binding.stopMeta.setText(ctx.getString(R.string.map_stop_meta,
+                stop.time, state.activeIndex + 1, state.stops.size()));
+
+        binding.badgeGps.setVisibility(stop.ai ? View.GONE : View.VISIBLE);
+        binding.badgeApprox.setVisibility(stop.ai ? View.VISIBLE : View.GONE);
+        // "빼기"는 AI 근사 위치에만 뜬다 — GPS 좌표는 뺄 이유가 없다.
+        binding.detachButton.setVisibility(stop.ai ? View.VISIBLE : View.GONE);
+
+        if (stop.extra > 0) {
+            binding.extraBadge.setVisibility(View.VISIBLE);
+            binding.extraBadge.setText(ctx.getString(R.string.map_extra_photos, stop.extra));
+        } else {
+            binding.extraBadge.setVisibility(View.GONE);
+        }
+
+        binding.scrubber.setStops(state.stops);
+        binding.scrubber.setActiveIndex(state.activeIndex);
+
+        binding.playButton.setImageResource(state.playing ? R.drawable.ic_pause : R.drawable.ic_play);
+        binding.playButton.setContentDescription(ctx.getString(
+                state.playing ? R.string.map_pause_desc : R.string.map_play_desc));
+
+        // 양 끝에서는 이전/다음을 흐리게 (프로토타입 prevColor/nextColor).
+        binding.prevButton.setImageTintList(tint(ctx, state.activeIndex > 0));
+        binding.nextButton.setImageTintList(
+                tint(ctx, state.activeIndex < state.stops.size() - 1));
+
+        applySpeed(ctx, binding.speedRelaxed, state.speed == MapUiState.Speed.RELAXED);
+        applySpeed(ctx, binding.speedNormal, state.speed == MapUiState.Speed.NORMAL);
+        applySpeed(ctx, binding.speedFast, state.speed == MapUiState.Speed.FAST);
+    }
+
+    private static ColorStateList tint(Context ctx, boolean enabled) {
+        return ColorStateList.valueOf(ContextCompat.getColor(ctx,
+                enabled ? R.color.text_primary : R.color.border_strong));
+    }
+
+    /** 선택 속도 = 흰 pill + primary 글자 / 비선택 = 투명 + tertiary 글자. */
+    private static void applySpeed(Context ctx, TextView pill, boolean selected) {
+        pill.setBackgroundResource(selected ? R.drawable.bg_speed_selected : 0);
+        pill.setTextColor(ContextCompat.getColor(ctx,
+                selected ? R.color.text_primary : R.color.text_tertiary));
     }
 }

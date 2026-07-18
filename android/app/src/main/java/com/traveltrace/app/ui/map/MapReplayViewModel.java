@@ -31,7 +31,48 @@ public class MapReplayViewModel extends ViewModel {
     public void setSatellite(boolean satellite) {
         MapUiState s = state.getValue();
         if (s == null) return;
-        state.setValue(new MapUiState(s.tripTitle, s.unknownCount, s.stops, s.activeIndex,
-                s.playing, satellite, s.cinema, s.speed));
+        state.setValue(copy(s, s.activeIndex, s.playing, satellite, s.cinema, s.speed));
+    }
+
+    /** 재생 아이콘 토글만 — 실제 리플레이 진행은 로직 에픽 13 소관. */
+    public void togglePlay() {
+        MapUiState s = state.getValue();
+        if (s == null) return;
+        state.setValue(copy(s, s.activeIndex, !s.playing, s.satellite, s.cinema, s.speed));
+    }
+
+    public void setSpeed(MapUiState.Speed speed) {
+        MapUiState s = state.getValue();
+        if (s == null) return;
+        state.setValue(copy(s, s.activeIndex, s.playing, s.satellite, s.cinema, speed));
+    }
+
+    public void jumpTo(int index) {
+        MapUiState s = state.getValue();
+        if (s == null) return;
+        int clamped = Math.min(Math.max(index, 0), s.stops.size() - 1);
+        state.setValue(copy(s, clamped, false, s.satellite, s.cinema, s.speed));
+    }
+
+    public void next() {
+        MapUiState s = state.getValue();
+        if (s != null) jumpTo(s.activeIndex + 1);
+    }
+
+    public void prev() {
+        MapUiState s = state.getValue();
+        if (s != null) jumpTo(s.activeIndex - 1);
+    }
+
+    public void setCinema(boolean cinema) {
+        MapUiState s = state.getValue();
+        if (s == null) return;
+        state.setValue(copy(s, s.activeIndex, s.playing, s.satellite, cinema, s.speed));
+    }
+
+    private static MapUiState copy(MapUiState s, int activeIndex, boolean playing,
+                                   boolean satellite, boolean cinema, MapUiState.Speed speed) {
+        return new MapUiState(s.tripTitle, s.unknownCount, s.stops, activeIndex,
+                playing, satellite, cinema, speed);
     }
 }
