@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 위치 미상 드로어: 핸들 + 제목 + 본문 + 4열 썸네일 + 닫기.
+     썸네일 5개는 고정 개수라 GridLayout 으로 충분하다(RecyclerView 불필요). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/surface"
+    android:orientation="vertical"
+    android:paddingStart="20dp"
+    android:paddingTop="22dp"
+    android:paddingEnd="20dp"
+    android:paddingBottom="28dp">
+
+    <View
+        android:layout_width="@dimen/sheet_handle_width"
+        android:layout_height="@dimen/sheet_handle_height"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/handle_bottom_sheet" />
+
+    <TextView
+        android:id="@+id/unknownTitle"
+        style="@style/TextAppearance.TravelTrace.Title2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/text_empty_title"
+        tools:text="위치 미상 · 5장" />
+
+    <TextView
+        style="@style/TextAppearance.TravelTrace.Caption"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="@string/unknown_sheet_body"
+        android:textColor="@color/text_secondary"
+        android:textFontWeight="500" />
+
+    <GridLayout
+        android:id="@+id/unknownGrid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:columnCount="4" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/unknownClose"
+        style="@style/Widget.TravelTrace.Button.Neutral"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="20dp"
+        android:text="@string/unknown_sheet_close"
+        app:cornerRadius="@dimen/radius_13" />
+</LinearLayout>

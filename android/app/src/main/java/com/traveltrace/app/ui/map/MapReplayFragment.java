@@ -72,6 +72,13 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
                 NavHostFragment.findNavController(this).popBackStack());
         binding.mapTopBar.tabMap.setOnClickListener(v -> vm.setSatellite(false));
         binding.mapTopBar.tabSatellite.setOnClickListener(v -> vm.setSatellite(true));
+        binding.mapTopBar.unknownChip.setOnClickListener(v -> {
+            MapUiState state = vm.state().getValue();
+            if (state == null) return;
+            // 톤은 VM 이 공급한다 (seam 규칙 — Fragment/시트는 ScreenFixtures 를 직접 부르지 않는다).
+            UnknownPhotosSheetFragment.newInstance(state.unknownCount, vm.unknownThumbTones())
+                    .show(getChildFragmentManager(), UnknownPhotosSheetFragment.TAG);
+        });
 
         ViewMapBottomSheetBinding sheet = binding.mapBottomSheet;
         sheet.playButton.setOnClickListener(v -> vm.togglePlay());

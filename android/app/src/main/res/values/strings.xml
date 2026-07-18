@@ -66,4 +66,9 @@
     <!-- MAP · 상영 모드 -->
     <string name="cinema_hint">화면을 누르면 컨트롤이 나와요</string>
     <string name="cinema_meta">%1$s · %2$s</string>
+
+    <!-- MAP · 위치 미상 드로어 -->
+    <string name="unknown_sheet_title">위치 미상 · %1$d장</string>
+    <string name="unknown_sheet_body">GPS도 없고 장소도 알아내지 못한 사진이에요. 시각이 있는 사진은 경로 흐름에 끼워 보여주고, 나머지는 마지막 에필로그에 모아둬요.</string>
+    <string name="unknown_sheet_close">닫기</string>
 </resources>

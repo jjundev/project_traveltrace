@@ -33,6 +33,11 @@ public class MapReplayViewModel extends ViewModel {
         return ScreenFixtures.cityLabel();
     }
 
+    /** 위치 미상 드로어의 썸네일 톤. 로직 단계에서 이 공급원이 리포지토리로 교체된다. */
+    public int[] unknownThumbTones() {
+        return ScreenFixtures.unknownThumbTones();
+    }
+
     public void setSatellite(boolean satellite) {
         MapUiState s = state.getValue();
         if (s == null) return;
