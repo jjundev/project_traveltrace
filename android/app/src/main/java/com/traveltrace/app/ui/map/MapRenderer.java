@@ -2,8 +2,10 @@ package com.traveltrace.app.ui.map;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.graphics.Outline;
 import android.graphics.drawable.GradientDrawable;
 import android.view.View;
+import android.view.ViewOutlineProvider;
 import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
@@ -104,6 +106,14 @@ public final class MapRenderer {
         tone.setColor(stop.toneColor);
         tone.setCornerRadius(ctx.getResources().getDimension(R.dimen.radius_20));
         binding.cinemaTone.setBackground(tone);
+
+        int cornerRadiusPx = ctx.getResources().getDimensionPixelSize(R.dimen.radius_20);
+        binding.cinemaCard.setOutlineProvider(new ViewOutlineProvider() {
+            @Override
+            public void getOutline(View view, Outline outline) {
+                outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), cornerRadiusPx);
+            }
+        });
         binding.cinemaCard.setClipToOutline(true);
 
         binding.cinemaName.setText(stop.name);
