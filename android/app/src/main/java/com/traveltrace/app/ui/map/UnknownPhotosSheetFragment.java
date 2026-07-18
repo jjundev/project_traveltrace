@@ -57,12 +57,18 @@ public class UnknownPhotosSheetFragment extends BottomSheetDialogFragment {
             bg.setCornerRadius(radius);
             tile.setBackground(bg);
 
+            int col = i % COLUMNS;
+            int row = i / COLUMNS;
+
             GridLayout.LayoutParams lp = new GridLayout.LayoutParams();
             lp.width = 0;
             lp.height = GridLayout.LayoutParams.WRAP_CONTENT;
-            lp.columnSpec = GridLayout.spec(i % COLUMNS, 1f);
-            lp.rowSpec = GridLayout.spec(i / COLUMNS);
-            lp.setMargins(gap / 2, gap / 2, gap / 2, gap / 2);
+            lp.columnSpec = GridLayout.spec(col, 1f);
+            lp.rowSpec = GridLayout.spec(row);
+            // 그리드 바깥 테두리엔 margin 없음 — 시트 자체 padding 에 맞닿게.
+            // top/left 만 gap 을 지므로 내부 인접 타일 사이는 정확히 gap 만큼만 벌어진다
+            // (모든 타일이 gap/2 씩 나눠 지면 2배가 된다).
+            lp.setMargins(col == 0 ? 0 : gap / 2, row == 0 ? 0 : gap / 2, 0, 0);
             tile.setLayoutParams(lp);
 
             binding.unknownGrid.addView(tile);
