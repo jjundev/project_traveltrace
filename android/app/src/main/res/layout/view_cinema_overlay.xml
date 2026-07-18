@@ -14,7 +14,7 @@
 
     <FrameLayout
         android:id="@+id/cinemaCard"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="@dimen/cinema_card_height"
         android:layout_gravity="center_horizontal"
         android:layout_marginStart="24dp"
