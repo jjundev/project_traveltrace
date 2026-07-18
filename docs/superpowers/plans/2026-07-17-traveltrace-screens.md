@@ -1045,6 +1045,7 @@ androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview"
     android:layout_height="wrap_content"
     android:clickable="true"
     android:focusable="true"
+    android:layout_marginBottom="@dimen/space_4"
     app:cardPreventCornerOverlap="true">
 
     <LinearLayout
@@ -1711,6 +1712,7 @@ git commit -m "feat: implement HOME screen (trip list, empty state, CTA, toast)"
 - Modify: `android/app/src/main/res/values/dimens.xml`
 - Modify: `android/app/src/main/res/values/colors.xml`
 - Modify: `android/app/src/main/res/values/styles.xml`
+- Create: `android/app/src/main/res/drawable/bg_icon_tile_glass.xml`
 - Create: `android/app/src/main/res/drawable/bg_check_badge.xml`
 - Create: `android/app/src/main/res/drawable/bg_label_pill.xml`
 - Create: `android/app/src/main/res/layout/item_photo_tile.xml`
@@ -1800,6 +1802,21 @@ git commit -m "feat: implement HOME screen (trip list, empty state, CTA, toast)"
 ```
 
 - [ ] **Step 3: 배지·라벨 드로어블 작성**
+
+`android/app/src/main/res/drawable/bg_icon_tile_glass.xml` (신규):
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  기간 카드 아이콘 타일. bg_pill_glass 와 동일한 반투명 흰색이지만
+  radius_full 이 아닌 radius_12 를 써서 프로토타입의 42x42 squircle(11px)을 재현한다.
+  bg_pill_glass 는 완전한 원/pill 이 필요한 곳(예: HOME 위치 배지)에만 쓴다.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/pill_glass_bg" />
+    <corners android:radius="@dimen/radius_12" />
+</shape>
+```
 
 `android/app/src/main/res/drawable/bg_check_badge.xml` (신규):
 
@@ -1953,10 +1970,12 @@ git commit -m "feat: implement HOME screen (trip list, empty state, CTA, toast)"
             android:paddingEnd="16dp"
             android:paddingBottom="14dp">
 
+            <!-- bg_pill_glass 가 아니다 — radius_full(999dp)이라 42dp 박스에서 완전한 원이 된다.
+                 프로토타입은 11px(≈radius_12) 라운드 사각형이므로 전용 드로어블을 쓴다. -->
             <ImageView
                 android:layout_width="@dimen/select_icon_tile"
                 android:layout_height="@dimen/select_icon_tile"
-                android:background="@drawable/bg_pill_glass"
+                android:background="@drawable/bg_icon_tile_glass"
                 android:backgroundTint="@color/fill_brand_weak"
                 android:contentDescription="@null"
                 android:padding="10dp"
@@ -2676,6 +2695,8 @@ git commit -m "feat: implement SELECT screen (period card, 3-col photo grid)"
                 tools:text="41 / 82" />
         </LinearLayout>
 
+        <!-- Material 1.12 M3-expressive 기본값(트랙 갭·종단 점)을 0으로 꺼야 프로토타입의
+             끊김 없는 pill 이 된다 — 안 끄면 채움-트랙 사이 틈 + 끝단 점이 보인다. -->
         <com.google.android.material.progressindicator.LinearProgressIndicator
             android:id="@+id/analyzeProgress"
             android:layout_width="match_parent"
@@ -2683,8 +2704,10 @@ git commit -m "feat: implement SELECT screen (period card, 3-col photo grid)"
             android:layout_marginTop="11dp"
             android:max="100"
             app:indicatorColor="@color/fill_brand"
+            app:indicatorTrackGapSize="0dp"
             app:trackColor="@color/progress_track"
             app:trackCornerRadius="3dp"
+            app:trackStopIndicatorSize="0dp"
             app:trackThickness="@dimen/progress_bar_height"
             tools:progress="50" />
 
@@ -3607,7 +3630,7 @@ git commit -m "feat: add timezone confirm sheet to ANALYZE"
         android:id="@+id/unknownChip"
         android:layout_width="wrap_content"
         android:layout_height="@dimen/map_chip_height"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="2dp"
         android:background="@drawable/bg_chip_unknown"
         android:elevation="@dimen/card_elevation"
         android:gravity="center_vertical"
@@ -5286,6 +5309,17 @@ public class CinemaOverlayRendererTest {
         tone.setColor(stop.toneColor);
         tone.setCornerRadius(ctx.getResources().getDimension(R.dimen.radius_20));
         binding.cinemaTone.setBackground(tone);
+
+        // setClipToOutline(true) 만으로는 부족하다 — cinemaCard 자신은 라운드 배경/아웃라인이
+        // 없어 기본(사각) 아웃라인을 클립할 뿐이다. cinemaTone 이 아니라 cinemaCard 자체에
+        // 같은 반지름의 outline provider 를 줘야, 위에 겹치는 스크림의 각진 모서리까지 잘린다.
+        int cornerRadiusPx = ctx.getResources().getDimensionPixelSize(R.dimen.radius_20);
+        binding.cinemaCard.setOutlineProvider(new ViewOutlineProvider() {
+            @Override
+            public void getOutline(View view, Outline outline) {
+                outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), cornerRadiusPx);
+            }
+        });
         binding.cinemaCard.setClipToOutline(true);
 
         binding.cinemaName.setText(stop.name);
@@ -5296,7 +5330,9 @@ public class CinemaOverlayRendererTest {
 import 추가:
 
 ```java
+import android.graphics.Outline;
 import android.graphics.drawable.GradientDrawable;
+import android.view.ViewOutlineProvider;
 import com.traveltrace.app.databinding.ViewCinemaOverlayBinding;
 ```
 
@@ -5413,12 +5449,13 @@ git commit -m "feat: add cinema mode overlay to MAP"
         android:layout_marginBottom="16dp"
         android:background="@drawable/handle_bottom_sheet" />
 
+    <!-- text_empty_title(21sp)로 덮지 않는다 — 그건 HOME 빈 상태 전용 크기다. 이 시트는
+         타임존 시트와 동일하게 Title2 기본값(20sp)을 그대로 쓴다(프로토타입 19px에 더 가깝다). -->
     <TextView
         android:id="@+id/unknownTitle"
         style="@style/TextAppearance.TravelTrace.Title2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="@dimen/text_empty_title"
         tools:text="위치 미상 · 5장" />
 
     <TextView
@@ -5573,12 +5610,19 @@ public class UnknownPhotosSheetFragment extends BottomSheetDialogFragment {
             bg.setCornerRadius(radius);
             tile.setBackground(bg);
 
+            int col = i % COLUMNS;
+            int row = i / COLUMNS;
+
             GridLayout.LayoutParams lp = new GridLayout.LayoutParams();
             lp.width = 0;
             lp.height = GridLayout.LayoutParams.WRAP_CONTENT;
-            lp.columnSpec = GridLayout.spec(i % COLUMNS, 1f);
-            lp.rowSpec = GridLayout.spec(i / COLUMNS);
-            lp.setMargins(gap / 2, gap / 2, gap / 2, gap / 2);
+            lp.columnSpec = GridLayout.spec(col, 1f);
+            lp.rowSpec = GridLayout.spec(row);
+            // CSS gap 은 셀 "사이"에만 붙는다 — 사방에 gap/2 를 다 주면 그리드 바깥 테두리에
+            // 불필요한 4dp 여백이 생겨 본문 텍스트와 좌측이 안 맞는다. 각 타일은 자기 왼쪽/위쪽
+            // 이웃과의 간격만 짊어진다(오른쪽/아래쪽 이웃의 왼쪽/위쪽 마진이 그 몫을 채운다) —
+            // 시트 경계에 닿는 첫 행·첫 열은 0.
+            lp.setMargins(col == 0 ? 0 : gap / 2, row == 0 ? 0 : gap / 2, 0, 0);
             tile.setLayoutParams(lp);
 
             binding.unknownGrid.addView(tile);
