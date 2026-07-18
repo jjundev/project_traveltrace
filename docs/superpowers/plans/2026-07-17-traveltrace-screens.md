@@ -12,6 +12,7 @@
 
 - **Java + View/XML 전용.** Kotlin·Compose 도입 금지 (`plan/00-overview.md` 공통 DoD).
 - **이 계획의 범위는 화면(정적 UI)뿐이다.** 사진 로딩·EXIF·AI·지오코딩·리플레이 애니메이션·Room 저장 로직은 **구현하지 않는다.** 데이터는 전부 `ScreenFixtures`에서 온다.
+- **`ScreenFixtures` 는 오직 `ViewModel`(과 테스트)에서만 참조한다.** `Fragment`·`Renderer`·`Adapter`·시트는 절대 직접 부르지 않는다 — 도시명·톤·개수 등 필요한 값은 host `ViewModel` 이 getter 나 UiState 필드로 공급한다. 이게 seam 의 핵심이다: 로직 단계에서 각 ViewModel 의 공급원만 리포지토리로 바꾸면 나머지는 그대로다. (Task 6 리뷰에서 실제로 잡힌 규칙 — Task 10·11 의 시트/오버레이도 반드시 이 규칙을 따른다.)
 - **디자인 토큰은 기존 리소스만 사용한다.** 색은 `colors.xml` 시맨틱 별칭만 참조(`color_palette.xml` 직접 참조 금지), 치수는 `dimens.xml`, 타이포/컴포넌트는 `styles.xml`의 `TextAppearance.TravelTrace.*` / `Widget.TravelTrace.*`. 하드코딩 hex·px 금지.
 - **사용자 대면 문자열은 전부 `strings.xml`(한국어)로 분리.**
 - **기준 해상도**: 390x844 (1 CSS px ≈ 1 dp).
@@ -3319,12 +3320,22 @@ public class AnalysisFragment extends Fragment implements TimezoneSheetFragment.
 ```java
         // 프로토타입 startAnalyze: ANALYZE 진입 직후 타임존 확인 시트가 뜬다.
         // 회전 등으로 재생성될 때 두 번 띄우지 않도록 savedInstanceState 로 가드한다.
+        // 도시명은 VM 이 공급한다 — Fragment 는 ScreenFixtures 를 직접 부르지 않는다(seam 규칙).
         if (savedInstanceState == null
                 && getChildFragmentManager().findFragmentByTag(TimezoneSheetFragment.TAG) == null) {
-            TimezoneSheetFragment.newInstance(ScreenFixtures.cityLabel())
+            TimezoneSheetFragment.newInstance(vm.city())
                     .show(getChildFragmentManager(), TimezoneSheetFragment.TAG);
         }
 ```
+
+> `AnalysisViewModel` 에 도시 공급 getter 를 추가한다 (로직 단계에서 이 자리가 리포지토리로 바뀐다):
+>
+> ```java
+>     /** 타임존 시트에 넣을 도시명. 로직 단계에서 이 공급원이 리포지토리로 교체된다. */
+>     public String city() {
+>         return ScreenFixtures.cityLabel();
+>     }
+> ```
 
 클래스 끝(`onDestroyView` 앞)에 리스너 구현 추가:
 
@@ -3340,11 +3351,10 @@ public class AnalysisFragment extends Fragment implements TimezoneSheetFragment.
     }
 ```
 
-import 추가:
+import 추가 (`ScreenFixtures` 는 넣지 않는다 — Fragment 는 이제 `vm.city()` 만 쓴다):
 
 ```java
 import com.traveltrace.app.ui.common.ToastPresenter;
-import com.traveltrace.app.ui.preview.ScreenFixtures;
 ```
 
 > `newInstance` 는 **child** FragmentManager 로 띄운다 — `onAttach` 의 `getParentFragment() instanceof Listener` 가 성립해야 리스너가 붙는다.
@@ -5303,17 +5313,22 @@ import com.traveltrace.app.databinding.ViewCinemaOverlayBinding;
 `MapReplayFragment.render(MapUiState)` — 본문에 추가. 상영 모드에서는 상단바·시트를 숨긴다(프로토타입 `notCinema`):
 
 ```java
-        MapRenderer.renderCinema(binding.cinemaOverlay, state, ScreenFixtures.cityLabel());
+        MapRenderer.renderCinema(binding.cinemaOverlay, state, vm.city());
         int chromeVis = state.cinema ? View.GONE : View.VISIBLE;
         binding.mapTopBar.topBarRoot.setVisibility(chromeVis);
         binding.mapBottomSheet.sheetRoot.setVisibility(chromeVis);
 ```
 
-import 추가:
-
-```java
-import com.traveltrace.app.ui.preview.ScreenFixtures;
-```
+> 도시명은 VM 이 공급한다 (seam 규칙 — Fragment 는 `ScreenFixtures` 를 직접 부르지 않는다). `MapReplayViewModel` 에 getter 를 추가한다:
+>
+> ```java
+>     /** 상영 모드 카드의 도시명. 로직 단계에서 이 공급원이 리포지토리로 교체된다. */
+>     public String city() {
+>         return ScreenFixtures.cityLabel();
+>     }
+> ```
+>
+> (`MapReplayViewModel` 은 이미 `ScreenFixtures` 를 import 하고 있다. `MapReplayFragment` 에는 `ScreenFixtures` import 를 추가하지 않는다.)
 
 - [ ] **Step 6: 테스트 실행 — 통과 확인**
 
@@ -5501,21 +5516,23 @@ import androidx.annotation.Nullable;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.traveltrace.app.R;
 import com.traveltrace.app.databinding.SheetUnknownPhotosBinding;
-import com.traveltrace.app.ui.preview.ScreenFixtures;
 
 /** 위치 미상 드로어 (프로토타입 sheet:'unknown'). */
 public class UnknownPhotosSheetFragment extends BottomSheetDialogFragment {
 
     public static final String TAG = "unknown_sheet";
     private static final String ARG_COUNT = "count";
+    private static final String ARG_TONES = "tones";
     private static final int COLUMNS = 4;
 
     private SheetUnknownPhotosBinding binding;
 
-    public static UnknownPhotosSheetFragment newInstance(int count) {
+    // 톤은 호출자(host VM)가 넘긴다 — 시트는 ScreenFixtures 를 직접 부르지 않는다(seam 규칙).
+    public static UnknownPhotosSheetFragment newInstance(int count, int[] tones) {
         UnknownPhotosSheetFragment f = new UnknownPhotosSheetFragment();
         Bundle args = new Bundle();
         args.putInt(ARG_COUNT, count);
+        args.putIntArray(ARG_TONES, tones);
         f.setArguments(args);
         return f;
     }
@@ -5566,7 +5583,7 @@ public class UnknownPhotosSheetFragment extends BottomSheetDialogFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         bindContent(binding, requireArguments().getInt(ARG_COUNT),
-                ScreenFixtures.unknownThumbTones());
+                requireArguments().getIntArray(ARG_TONES));
         binding.unknownClose.setOnClickListener(v -> dismiss());
     }
 
@@ -5610,10 +5627,20 @@ public class UnknownPhotosSheetFragment extends BottomSheetDialogFragment {
         binding.mapTopBar.unknownChip.setOnClickListener(v -> {
             MapUiState state = vm.state().getValue();
             if (state == null) return;
-            UnknownPhotosSheetFragment.newInstance(state.unknownCount)
+            // 톤은 VM 이 공급한다 (seam 규칙 — Fragment/시트는 ScreenFixtures 를 직접 부르지 않는다).
+            UnknownPhotosSheetFragment.newInstance(state.unknownCount, vm.unknownThumbTones())
                     .show(getChildFragmentManager(), UnknownPhotosSheetFragment.TAG);
         });
 ```
+
+> `MapReplayViewModel` 에 톤 공급 getter 를 추가한다 (로직 단계에서 이 자리가 리포지토리로 교체된다):
+>
+> ```java
+>     /** 위치 미상 드로어의 썸네일 톤. 로직 단계에서 이 공급원이 리포지토리로 교체된다. */
+>     public int[] unknownThumbTones() {
+>         return ScreenFixtures.unknownThumbTones();
+>     }
+> ```
 
 - [ ] **Step 8: 전체 테스트 실행 — 통과 확인**
 
