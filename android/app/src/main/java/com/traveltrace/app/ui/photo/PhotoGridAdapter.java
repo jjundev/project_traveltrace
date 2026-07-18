@@ -28,9 +28,14 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<PhotoGridAdapter.VH> 
     private static final float ALPHA_UNSELECTED = 0.5f;
 
     private final List<PhotoSelectionUiState.Tile> items = new ArrayList<>();
-    private final Listener listener;
+    private Listener listener;
 
     public PhotoGridAdapter(Listener listener) {
+        this.listener = listener;
+    }
+
+    /** 재사용 경로에서 Renderer 가 현재 리스너로 갱신한다 (final 이면 옛 리스너가 남는다). */
+    public void setListener(Listener listener) {
         this.listener = listener;
     }
 

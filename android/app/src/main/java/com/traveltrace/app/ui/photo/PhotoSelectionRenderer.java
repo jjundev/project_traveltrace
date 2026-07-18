@@ -30,6 +30,7 @@ public final class PhotoSelectionRenderer {
         PhotoGridAdapter adapter;
         if (binding.photoGrid.getAdapter() instanceof PhotoGridAdapter) {
             adapter = (PhotoGridAdapter) binding.photoGrid.getAdapter();
+            adapter.setListener(listener);
         } else {
             adapter = new PhotoGridAdapter(listener);
             binding.photoGrid.setLayoutManager(new GridLayoutManager(ctx, SPAN_COUNT));
