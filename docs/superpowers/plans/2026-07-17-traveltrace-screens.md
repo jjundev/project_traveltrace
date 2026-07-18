@@ -4640,23 +4640,35 @@ git commit -m "feat: add timeline scrubber custom view"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/cinemaButton"
-            style="@style/TextAppearance.TravelTrace.Caption"
-            android:layout_width="wrap_content"
-            android:layout_height="@dimen/control_button_size"
-            android:layout_weight="1"
-            android:background="@drawable/bg_pill_glass"
-            android:backgroundTint="@color/fill_neutral"
-            android:drawablePadding="5dp"
-            android:gravity="center_vertical"
-            android:paddingStart="13dp"
-            android:paddingEnd="13dp"
-            android:text="@string/map_cinema_mode"
-            android:textColor="@color/text_secondary"
-            android:textFontWeight="700"
-            app:drawableStartCompat="@drawable/ic_cinema"
-            app:drawableTint="@color/text_secondary" />
+        <!--
+          프로토타입은 이 자리가 flex:1(flex-basis:0%) 인 보이지 않는 wrapper 이고, 그 안의
+          버튼은 flex:0 1 auto 로 자기 콘텐츠 크기만 차지하며 좌측 정렬된다 — 남는 폭은 wrapper
+          쪽에 생기지, 버튼(pill) 자체가 늘어나지 않는다. TextView 에 layout_weight=1 을 직접
+          주면(= wrap_content+weight) 뷰 자체가 그 몫만큼 늘어나 재생 버튼이 pill 텍스트 폭의
+          절반만큼 오른쪽으로 밀린다(실측 47.75dp) — 0dp+weight 인 래퍼로 감싸야 한다. -->
+        <FrameLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
+
+            <TextView
+                android:id="@+id/cinemaButton"
+                style="@style/TextAppearance.TravelTrace.Caption"
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/control_button_size"
+                android:layout_gravity="start|center_vertical"
+                android:background="@drawable/bg_pill_glass"
+                android:backgroundTint="@color/fill_neutral"
+                android:drawablePadding="5dp"
+                android:gravity="center_vertical"
+                android:paddingStart="13dp"
+                android:paddingEnd="13dp"
+                android:text="@string/map_cinema_mode"
+                android:textColor="@color/text_secondary"
+                android:textFontWeight="700"
+                app:drawableStartCompat="@drawable/ic_cinema"
+                app:drawableTint="@color/text_secondary" />
+        </FrameLayout>
 
         <ImageView
             android:id="@+id/prevButton"
