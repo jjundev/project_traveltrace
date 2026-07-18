@@ -61,7 +61,7 @@
             <ImageView
                 android:layout_width="@dimen/select_icon_tile"
                 android:layout_height="@dimen/select_icon_tile"
-                android:background="@drawable/bg_pill_glass"
+                android:background="@drawable/bg_icon_tile_glass"
                 android:backgroundTint="@color/fill_brand_weak"
                 android:contentDescription="@null"
                 android:padding="10dp"
