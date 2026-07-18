@@ -28,6 +28,11 @@ public class MapReplayViewModel extends ViewModel {
         return state;
     }
 
+    /** 상영 모드 카드의 도시명. 로직 단계에서 이 공급원이 리포지토리로 교체된다. */
+    public String city() {
+        return ScreenFixtures.cityLabel();
+    }
+
     public void setSatellite(boolean satellite) {
         MapUiState s = state.getValue();
         if (s == null) return;

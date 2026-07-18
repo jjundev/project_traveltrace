@@ -2,12 +2,14 @@ package com.traveltrace.app.ui.map;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.graphics.drawable.GradientDrawable;
 import android.view.View;
 import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
 
 import com.traveltrace.app.R;
+import com.traveltrace.app.databinding.ViewCinemaOverlayBinding;
 import com.traveltrace.app.databinding.ViewMapBottomSheetBinding;
 import com.traveltrace.app.databinding.ViewMapTopBarBinding;
 
@@ -75,6 +77,25 @@ public final class MapRenderer {
         applySpeed(ctx, binding.speedRelaxed, state.speed == MapUiState.Speed.RELAXED);
         applySpeed(ctx, binding.speedNormal, state.speed == MapUiState.Speed.NORMAL);
         applySpeed(ctx, binding.speedFast, state.speed == MapUiState.Speed.FAST);
+    }
+
+    public static void renderCinema(ViewCinemaOverlayBinding binding, MapUiState state,
+                                    String cityLabel) {
+        binding.cinemaRoot.setVisibility(state.cinema ? View.VISIBLE : View.GONE);
+        if (!state.cinema) return;
+
+        Context ctx = binding.getRoot().getContext();
+        MapUiState.Stop stop = state.activeStop();
+
+        // 톤 배경 + 20dp 라운드: 톤 색이 상태마다 달라 드로어블 리소스로 고정할 수 없다.
+        GradientDrawable tone = new GradientDrawable();
+        tone.setColor(stop.toneColor);
+        tone.setCornerRadius(ctx.getResources().getDimension(R.dimen.radius_20));
+        binding.cinemaTone.setBackground(tone);
+        binding.cinemaCard.setClipToOutline(true);
+
+        binding.cinemaName.setText(stop.name);
+        binding.cinemaMeta.setText(ctx.getString(R.string.cinema_meta, stop.time, cityLabel));
     }
 
     private static ColorStateList tint(Context ctx, boolean enabled) {

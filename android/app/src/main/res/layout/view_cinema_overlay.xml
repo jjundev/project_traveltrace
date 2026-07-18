@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 상영 모드: 암전 배경 + 88% 카드 + 힌트. 어디를 눌러도 해제된다. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/cinemaRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/cinema_backdrop"
+    android:clickable="true"
+    android:focusable="true"
+    android:gravity="center_horizontal|bottom"
+    android:orientation="vertical"
+    android:paddingBottom="60dp">
+
+    <FrameLayout
+        android:id="@+id/cinemaCard"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/cinema_card_height"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp">
+
+        <View
+            android:id="@+id/cinemaTone"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_scrim_photo_banner" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|start"
+            android:layout_marginStart="18dp"
+            android:layout_marginBottom="18dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/cinemaName"
+                style="@style/TextAppearance.TravelTrace.Display"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:shadowColor="@color/text_shadow_strong"
+                android:shadowDy="1"
+                android:shadowRadius="6"
+                android:textColor="@color/text_on_fill"
+                android:textSize="@dimen/text_cinema_name"
+                tools:text="개선문" />
+
+            <TextView
+                android:id="@+id/cinemaMeta"
+                style="@style/TextAppearance.TravelTrace.Numeric"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:textColor="@color/text_on_fill"
+                android:textFontWeight="600"
+                android:textSize="@dimen/text_label"
+                tools:text="10:12 · 파리" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/cinemaHint"
+        style="@style/TextAppearance.TravelTrace.Small"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:background="@drawable/bg_cinema_hint"
+        android:paddingStart="14dp"
+        android:paddingTop="7dp"
+        android:paddingEnd="14dp"
+        android:paddingBottom="7dp"
+        android:text="@string/cinema_hint"
+        android:textColor="@color/cinema_hint_text"
+        android:textFontWeight="600" />
+</LinearLayout>

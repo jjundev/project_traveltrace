@@ -93,4 +93,9 @@
     <!-- 배너/상영 카드 위 흰 글자의 그림자 (프로토타입 text-shadow 실측) -->
     <color name="text_shadow_soft">#4D000000</color>
     <color name="text_shadow_strong">#59000000</color>
+
+    <!-- 상영 모드: 배경 암전 + 힌트 pill rgba(0,0,0,.4) -->
+    <color name="cinema_backdrop">#B3000000</color>
+    <color name="cinema_hint_bg">#66000000</color>
+    <color name="cinema_hint_text">#D9FFFFFF</color>
 </resources>

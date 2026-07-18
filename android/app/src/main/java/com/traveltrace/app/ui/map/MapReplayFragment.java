@@ -85,6 +85,8 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
         sheet.detachButton.setOnClickListener(v ->
                 ToastPresenter.show(binding.getRoot(), getString(R.string.map_detach_toast)));
 
+        binding.cinemaOverlay.cinemaRoot.setOnClickListener(v -> vm.setCinema(false));
+
         vm.state().observe(getViewLifecycleOwner(), this::render);
     }
 
@@ -95,6 +97,11 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
         if (map != null) {
             map.setMapType(state.satellite ? GoogleMap.MAP_TYPE_SATELLITE : GoogleMap.MAP_TYPE_NORMAL);
         }
+
+        MapRenderer.renderCinema(binding.cinemaOverlay, state, vm.city());
+        int chromeVis = state.cinema ? View.GONE : View.VISIBLE;
+        binding.mapTopBar.topBarRoot.setVisibility(chromeVis);
+        binding.mapBottomSheet.sheetRoot.setVisibility(chromeVis);
     }
 
     @Override

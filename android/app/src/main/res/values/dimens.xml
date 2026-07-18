@@ -111,4 +111,8 @@
     <dimen name="speed_pill_height">30dp</dimen>
     <dimen name="control_button_size">40dp</dimen>
     <dimen name="text_stop_name">21sp</dimen>
+
+    <!-- MAP 상영 모드 -->
+    <dimen name="cinema_card_height">340dp</dimen>
+    <dimen name="text_cinema_name">26sp</dimen>
 </resources>
