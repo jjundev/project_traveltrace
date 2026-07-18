@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 선택 체크 배지: 20dp 파란 원. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
+    <solid android:color="@color/fill_brand" />
+    <size android:width="@dimen/check_badge_size" android:height="@dimen/check_badge_size" />
+</shape>

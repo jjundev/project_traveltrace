@@ -21,7 +21,7 @@
     <fragment
         android:id="@+id/photoSelectionFragment"
         android:name="com.traveltrace.app.ui.photo.PhotoSelectionFragment"
-        android:label="@string/screen_photo_title">
+        android:label="@string/select_title">
         <action
             android:id="@+id/action_photo_to_analysis"
             app:destination="@id/analysisFragment" />

@@ -64,4 +64,8 @@
     <color name="toast_pill_bg">#EB191F28</color>
     <!-- hero 위 위치 라벨 pill: rgba(255,255,255,.72) — 실제 blur 는 post-v1, 불투명 폴백 -->
     <color name="pill_glass_bg">#B8FFFFFF</color>
+
+    <!-- SELECT 그리드: 라벨 pill rgba(255,255,255,.7) / 라벨 글자 rgba(25,31,40,.6) -->
+    <color name="label_pill_bg">#B3FFFFFF</color>
+    <color name="label_pill_text">#99191F28</color>
 </resources>

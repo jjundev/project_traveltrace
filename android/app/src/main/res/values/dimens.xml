@@ -72,4 +72,10 @@
     <dimen name="trip_hero_height">140dp</dimen>
     <dimen name="cta_fade_height">120dp</dimen>
     <dimen name="toast_bottom_margin">110dp</dimen>
+
+    <dimen name="select_icon_tile">42dp</dimen>
+    <dimen name="photo_grid_gap">6dp</dimen>
+    <dimen name="photo_tile_stroke_selected">3dp</dimen>
+    <dimen name="photo_tile_stroke_unselected">1dp</dimen>
+    <dimen name="check_badge_size">20dp</dimen>
 </resources>

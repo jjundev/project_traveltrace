@@ -1,29 +1,170 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- SELECT: 상단바 + 기간 카드 + 카운터 + 3열 그리드 + CTA. -->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="24dp">
+    android:background="@color/bg_screen"
+    android:fitsSystemWindows="true">
 
-    <TextView
-        android:id="@+id/title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/screen_photo_title"
-        app:layout_constraintBottom_toTopOf="@id/nextButton"
-        app:layout_constraintEnd_toEndOf="parent"
+    <ImageView
+        android:id="@+id/selectBack"
+        android:layout_width="@dimen/home_header_icon"
+        android:layout_height="@dimen/home_header_icon"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="6dp"
+        android:contentDescription="@string/select_back_desc"
+        android:padding="8dp"
+        android:src="@drawable/ic_arrow_back"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_chainStyle="packed" />
+        app:tint="@color/text_primary" />
 
-    <Button
-        android:id="@+id/nextButton"
+    <TextView
+        android:id="@+id/selectTitle"
+        style="@style/TextAppearance.TravelTrace.Title3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="@string/action_to_analysis"
+        android:layout_marginStart="4dp"
+        android:text="@string/select_title"
+        android:textSize="@dimen/text_card_title"
+        app:layout_constraintBottom_toBottomOf="@id/selectBack"
+        app:layout_constraintStart_toEndOf="@id/selectBack"
+        app:layout_constraintTop_toTopOf="@id/selectBack" />
+
+    <!-- 여행 기간 카드 -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/periodCard"
+        style="@style/Widget.TravelTrace.Card"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="18dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="18dp"
+        app:cardCornerRadius="@dimen/radius_14"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/selectBack">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="16dp"
+            android:paddingTop="14dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="14dp">
+
+            <ImageView
+                android:layout_width="@dimen/select_icon_tile"
+                android:layout_height="@dimen/select_icon_tile"
+                android:background="@drawable/bg_pill_glass"
+                android:backgroundTint="@color/fill_brand_weak"
+                android:contentDescription="@null"
+                android:padding="10dp"
+                android:src="@drawable/ic_calendar"
+                app:tint="@color/fill_brand" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="13dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    style="@style/TextAppearance.TravelTrace.Body"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/select_period_title"
+                    android:textFontWeight="700" />
+
+                <TextView
+                    android:id="@+id/periodLabel"
+                    style="@style/TextAppearance.TravelTrace.Numeric"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textColor="@color/text_tertiary"
+                    android:textSize="@dimen/text_caption"
+                    tools:text="2024. 6. 12 – 6. 15 · 사진 94장" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/periodChange"
+                style="@style/TextAppearance.TravelTrace.Caption"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/select_period_change"
+                android:textColor="@color/text_brand"
+                android:textFontWeight="700" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- 카운터 행 -->
+    <TextView
+        android:id="@+id/selectCount"
+        style="@style/TextAppearance.TravelTrace.Label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="22dp"
+        android:layout_marginTop="14dp"
+        android:textColor="@color/text_secondary"
+        android:textFontWeight="700"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/periodCard"
+        tools:text="선택한 사진 16장" />
+
+    <TextView
+        android:id="@+id/selectHint"
+        style="@style/TextAppearance.TravelTrace.Small"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="22dp"
+        app:layout_constraintBottom_toBottomOf="@id/selectCount"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/selectCount"
+        tools:text="최대 100장 · 탭하여 제외" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/photoGrid"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="10dp"
+        android:clipToPadding="false"
+        android:paddingStart="18dp"
+        android:paddingEnd="18dp"
+        android:paddingBottom="100dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/title" />
+        app:layout_constraintTop_toBottomOf="@id/selectCount"
+        tools:itemCount="9"
+        tools:listitem="@layout/item_photo_tile"
+        tools:spanCount="3" />
+
+    <View
+        android:id="@+id/selectCtaFade"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/cta_fade_height"
+        android:background="@drawable/bg_cta_fade"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/startAnalyzeButton"
+        style="@style/Widget.TravelTrace.Button.Primary"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/btn_height_primary"
+        android:layout_marginStart="18dp"
+        android:layout_marginEnd="18dp"
+        android:layout_marginBottom="26dp"
+        android:text="@string/select_start_analyze"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

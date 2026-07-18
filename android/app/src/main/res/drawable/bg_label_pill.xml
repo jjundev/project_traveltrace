@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 그리드 타일 라벨 pill: 반투명 흰 배경. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/label_pill_bg" />
+    <corners android:radius="@dimen/radius_full" />
+</shape>

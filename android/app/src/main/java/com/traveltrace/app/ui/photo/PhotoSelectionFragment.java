@@ -16,6 +16,7 @@ import com.traveltrace.app.databinding.FragmentPhotoSelectionBinding;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
+/** SELECT: 기간 카드 + 3열 선택 그리드. */
 @AndroidEntryPoint
 public class PhotoSelectionFragment extends Fragment {
 
@@ -32,10 +33,15 @@ public class PhotoSelectionFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        // ViewModel은 Hilt로 주입됨 (A1 골격에선 미사용).
-        new ViewModelProvider(this).get(PhotoSelectionViewModel.class);
-        binding.nextButton.setOnClickListener(v ->
+        PhotoSelectionViewModel vm = new ViewModelProvider(this).get(PhotoSelectionViewModel.class);
+
+        binding.selectBack.setOnClickListener(v ->
+                NavHostFragment.findNavController(this).popBackStack());
+        binding.startAnalyzeButton.setOnClickListener(v ->
                 NavHostFragment.findNavController(this).navigate(R.id.action_photo_to_analysis));
+
+        vm.state().observe(getViewLifecycleOwner(), state ->
+                PhotoSelectionRenderer.render(binding, state, vm::toggle));
     }
 
     @Override

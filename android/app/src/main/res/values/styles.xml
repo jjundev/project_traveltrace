@@ -141,6 +141,12 @@
         <item name="strokeWidth">0dp</item>
     </style>
 
+    <!-- 사진 그리드 타일: radius 12, 그림자 없음. 톤/링은 어댑터가 코드로 지정. -->
+    <style name="Widget.TravelTrace.PhotoTile" parent="Widget.Material3.CardView.Outlined">
+        <item name="cardCornerRadius">@dimen/radius_12</item>
+        <item name="cardElevation">0dp</item>
+    </style>
+
     <!-- ============ BADGES ============ -->
     <style name="Widget.TravelTrace.Badge" parent="">
         <item name="android:layout_width">wrap_content</item>

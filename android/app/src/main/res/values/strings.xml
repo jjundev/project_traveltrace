@@ -1,10 +1,8 @@
 <resources>
     <string name="app_name">TravelTrace</string>
 
-    <string name="screen_photo_title">1. 사진 선택 (Epic B)</string>
     <string name="screen_analysis_title">2. 분석 / 진행 (Epic C~G)</string>
     <string name="screen_map_title">3. 지도 / 리플레이 (Epic J·K)</string>
-    <string name="action_to_analysis">분석 진행 →</string>
     <string name="action_to_map">지도 보기 →</string>
 
     <!-- HOME -->
@@ -16,4 +14,17 @@
     <string name="home_empty_body">갤러리에서 여행 사진을 고르면\n지도 위에 그날의 경로가 그려져요.</string>
     <string name="home_trip_locked_toast">데모에선 파리 여행만 열려요</string>
     <string name="home_trip_hero_desc">여행 경로 미리보기</string>
+
+    <!-- SELECT -->
+    <string name="select_title">사진 선택</string>
+    <string name="select_back_desc">뒤로</string>
+    <string name="select_period_title">여행 기간</string>
+    <string name="select_period_change">변경</string>
+    <string name="select_start_analyze">분석 시작</string>
+    <string name="select_hint">최대 %1$d장 · 탭하여 제외</string>
+    <!-- %1$d = 선택 장수. 숫자만 브랜드 색으로 강조하므로 Renderer 에서 Spannable 로 조립한다. -->
+    <string name="select_count_prefix">"선택한 사진 "</string>
+    <string name="select_count_suffix">장</string>
+    <string name="select_tile_desc">사진 타일</string>
+    <string name="select_tile_checked_desc">선택됨</string>
 </resources>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 3열 그리드 타일 1개. 1:1 비율 고정 + 톤 배경 + 선택 링/체크 배지 + 라벨 pill. -->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/photoTile"
+        style="@style/Widget.TravelTrace.PhotoTile"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clickable="true"
+        android:contentDescription="@string/select_tile_desc"
+        android:focusable="true"
+        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/tileLabel"
+                style="@style/TextAppearance.TravelTrace.Micro"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|start"
+                android:layout_margin="@dimen/photo_grid_gap"
+                android:background="@drawable/bg_label_pill"
+                android:paddingStart="6dp"
+                android:paddingTop="1dp"
+                android:paddingEnd="6dp"
+                android:paddingBottom="1dp"
+                android:textColor="@color/label_pill_text"
+                android:textFontWeight="700"
+                android:visibility="gone"
+                tools:text="개선문"
+                tools:visibility="visible" />
+
+            <ImageView
+                android:id="@+id/tileCheck"
+                android:layout_width="@dimen/check_badge_size"
+                android:layout_height="@dimen/check_badge_size"
+                android:layout_gravity="top|end"
+                android:layout_margin="@dimen/photo_grid_gap"
+                android:background="@drawable/bg_check_badge"
+                android:contentDescription="@string/select_tile_checked_desc"
+                android:padding="3dp"
+                android:src="@drawable/ic_check"
+                app:tint="@color/text_on_fill" />
+        </FrameLayout>
+    </com.google.android.material.card.MaterialCardView>
+</androidx.constraintlayout.widget.ConstraintLayout>
