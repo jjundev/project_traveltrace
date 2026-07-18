@@ -98,12 +98,21 @@ android {
             all {
                 // Roborazzi 스크린샷 캡처(플러그인 없이 라이브러리 직접 호출):
                 //  - pixelCopyRenderMode=hardware : NATIVE 그래픽스 모드의 하드웨어 렌더 경로.
-                //  - roborazzi.test.record=true : captureRoboImage() 가 실제로 PNG 를 기록.
-                //  - roborazzi.output.dir : 기록 위치(플러그인이 없으니 명시).
+                //  - roborazzi.output.dir : 골든 위치. src/test/screenshots 에 커밋되어 있다.
+                //    (ScreenshotHarness 가 이 프로퍼티를 직접 읽어 파일 경로를 만든다 - 우리가
+                //    쓰는 captureRoboImage(View, String, RoborazziOptions) 오버로드는 이 값을
+                //    자동으로 참조하지 않는다.)
+                //  - roborazzi.test.record / roborazzi.test.verify : 기본은 verify 모드
+                //    (골든과 다르면 AssertionError 로 테스트가 FAIL). `-Proborazzi.record` 를
+                //    주면 record 모드로 전환되어 골든을 무조건 다시 기록한다(비교/실패 없음).
+                //    두 모드는 상호배타적으로 유지한다 - 둘 다 true 면 Roborazzi 가
+                //    VerifyAndRecord 로 취급해 검증 없이 계속 덮어쓴다.
                 it.systemProperty 'robolectric.pixelCopyRenderMode', 'hardware'
-                it.systemProperty 'roborazzi.test.record', 'true'
+                boolean recordScreenshots = project.hasProperty('roborazzi.record')
+                it.systemProperty 'roborazzi.test.record', recordScreenshots ? 'true' : 'false'
+                it.systemProperty 'roborazzi.test.verify', recordScreenshots ? 'false' : 'true'
                 it.systemProperty 'roborazzi.output.dir',
-                        "${projectDir}/build/outputs/roborazzi".toString()
+                        "${projectDir}/src/test/screenshots".toString()
             }
         }
     }
