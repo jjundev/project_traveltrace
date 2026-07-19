@@ -25,8 +25,10 @@ import javax.inject.Inject;
 import dagger.hilt.android.lifecycle.HiltViewModel;
 
 /**
- * 화면-우선 단계: 정지된 지도 상태를 공급한다. 리플레이 진행·카메라 이동은
- * 로직 에픽 12~14 소관 — 여기서 만들지 않는다.
+ * 저장된 여행을 TripRepository 에서 불러와 지도 화면 상태(MapUiState)로 공급한다.
+ * 재생/속도/위성/상영 전환, 스크럽 같은 사용자 조작은 여기서 상태만 갱신하고, 실제
+ * 마커·경로 렌더링과 카메라 이동은 MapReplayFragment 가 맡는다 — Fragment 는 stops 가
+ * 실제로 바뀐 emission(여행을 새로 열었을 때)에서만 다시 그리고 카메라를 맞춘다.
  */
 @HiltViewModel
 public class MapReplayViewModel extends ViewModel {

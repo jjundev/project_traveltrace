@@ -25,6 +25,8 @@ import com.traveltrace.app.databinding.FragmentMapReplayBinding;
 import com.traveltrace.app.databinding.ViewMapBottomSheetBinding;
 import com.traveltrace.app.ui.common.ToastPresenter;
 
+import java.util.List;
+
 import dagger.hilt.android.AndroidEntryPoint;
 
 /**
@@ -44,6 +46,14 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
     private MapReplayViewModel vm;
     private GoogleMap map;
     private OnBackPressedCallback cinemaBackCallback;
+
+    /**
+     * 마지막으로 지도에 그린 stops. togglePlay/setSpeed/setSatellite/setCinema/jumpTo/
+     * next/prev 는 전부 같은 경로를 그대로 들고 새 MapUiState 를 내보내므로, 매 emission
+     * 마다 다시 그리고 카메라를 whole-route bounds 로 되돌리면 사용자가 손으로 옮긴
+     * 카메라 위치가 사라진다 — 이 필드는 그 사용자 카메라 위치를 지키는 가드다.
+     */
+    private List<MapUiState.Stop> lastDrawnStops;
 
     /** MAP 진입 인자. tripId 하나뿐이라 nav argument 로 나른다(사진 목록은 SelectionSession). */
     public static Bundle argsFor(String tripId) {
@@ -145,16 +155,26 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
         binding.satelliteScrim.setVisibility(state.satellite ? View.VISIBLE : View.GONE);
         if (map != null) {
             map.setMapType(state.satellite ? GoogleMap.MAP_TYPE_SATELLITE : GoogleMap.MAP_TYPE_NORMAL);
-            MapRouteRenderer.draw(map, state.stops, requireContext());
-            com.google.android.gms.maps.CameraUpdate camera = MapRouteRenderer.cameraFor(
-                    state.stops,
-                    getResources().getDimensionPixelSize(R.dimen.map_camera_padding));
-            if (camera != null) {
-                // 맵뷰 크기가 0인 콜드 스타트에 newLatLngBounds 를 쓰면 SDK 가 던진다 —
-                // 레이아웃이 끝난 뒤로 미룬다.
-                binding.mapContainer.post(() -> {
-                    if (map != null) map.moveCamera(camera);
-                });
+            // 재생/속도/위성/상영/스크럽은 전부 "같은 경로, 다른 UI 상태" 인 emission 이다 —
+            // MapUiState 생성자가 매번 unmodifiableList(new ArrayList<>(...)) 로 감싸므로 리스트
+            // 참조는 항상 새것이지만(sameInstance 비교 불가), MapReplayViewModel.copy() 는 그 안의
+            // Stop 인스턴스 자체는 복사하지 않고 그대로 넘긴다. 그래서 원소 참조 동일성으로
+            // "경로가 실제로 바뀌었는가"를 판별한다 — 여행을 새로 열 때만 toState() 가 Stop 을
+            // 통째로 새로 만들어서 이 비교가 깨진다. 경로가 안 바뀌었으면 다시 그리지도, 카메라를
+            // whole-route bounds 로 되돌리지도 않는다 — 그게 사용자가 방금 옮긴 카메라를 지킨다.
+            if (lastDrawnStops == null || !sameRoute(lastDrawnStops, state.stops)) {
+                MapRouteRenderer.draw(map, state.stops, requireContext());
+                lastDrawnStops = state.stops;
+                com.google.android.gms.maps.CameraUpdate camera = MapRouteRenderer.cameraFor(
+                        state.stops,
+                        getResources().getDimensionPixelSize(R.dimen.map_camera_padding));
+                if (camera != null) {
+                    // 맵뷰 크기가 0인 콜드 스타트에 newLatLngBounds 를 쓰면 SDK 가 던진다 —
+                    // 레이아웃이 끝난 뒤로 미룬다.
+                    binding.mapContainer.post(() -> {
+                        if (map != null) map.moveCamera(camera);
+                    });
+                }
             }
         }
 
@@ -166,6 +186,20 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
         if (cinemaBackCallback != null) {
             cinemaBackCallback.setEnabled(state.cinema);
         }
+    }
+
+    /**
+     * 두 stops 리스트가 "같은 경로"인지 — 리스트 컨테이너가 아니라 그 안의 Stop 인스턴스
+     * 참조를 비교한다. MapUiState 가 매번 리스트를 새로 감싸기 때문에 컨테이너 참조 비교는
+     * 항상 false 가 되어 무의미하다. GoogleMap 을 전혀 건드리지 않는 순수 판별이라 SDK 없이
+     * 단위 테스트할 수 있도록 package-private 으로 둔다.
+     */
+    static boolean sameRoute(List<MapUiState.Stop> a, List<MapUiState.Stop> b) {
+        if (a.size() != b.size()) return false;
+        for (int i = 0; i < a.size(); i++) {
+            if (a.get(i) != b.get(i)) return false;
+        }
+        return true;
     }
 
     @Override
@@ -190,5 +224,9 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
         super.onDestroyView();
         map = null;
         binding = null;
+        // 뷰(따라서 GoogleMap)가 새로 만들어지면 그 위엔 아직 아무것도 그려져 있지 않다 —
+        // 캐시된 last-drawn 경로를 버려서 다음 onMapReady 가 (VM 의 Stop 인스턴스가 그대로여도)
+        // 반드시 다시 그리게 한다.
+        lastDrawnStops = null;
     }
 }
