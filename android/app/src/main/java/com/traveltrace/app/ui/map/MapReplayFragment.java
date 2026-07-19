@@ -107,17 +107,15 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
                 NavHostFragment.findNavController(this).popBackStack());
         binding.mapTopBar.tabMap.setOnClickListener(v -> vm.setSatellite(false));
         binding.mapTopBar.tabSatellite.setOnClickListener(v -> vm.setSatellite(true));
-        binding.mapTopBar.unknownChip.setOnClickListener(v -> {
-            MapUiState state = vm.state().getValue();
-            if (state == null) return;
-            // 빠른 연타로 두 번 뜨지 않도록 가드 (AnalysisFragment 의 TimezoneSheetFragment 가드와 동일 패턴).
-            if (getChildFragmentManager().findFragmentByTag(UnknownPhotosSheetFragment.TAG) != null) {
-                return;
-            }
-            // 톤은 VM 이 공급한다 (seam 규칙 — Fragment/시트는 ScreenFixtures 를 직접 부르지 않는다).
-            UnknownPhotosSheetFragment.newInstance(state.unknownCount, vm.unknownThumbTones())
-                    .show(getChildFragmentManager(), UnknownPhotosSheetFragment.TAG);
-        });
+        // finding 6(제품 결정): unknownCount 는 이제 진짜 Room 데이터라 칩 자체는 진짜
+        // 여행에 맞게 뜨지만, 탭해서 여는 UnknownPhotosSheetFragment 는 아직
+        // ScreenFixtures.unknownThumbTones() 의 하드코딩된 파스텔 6개짜리 draw다 —
+        // 실제 위치 미상 사진(예: 12장)이어도 항상 6개의 가짜 스와치만 보여준다. 그래서
+        // 이번 슬라이스에선 칩을 보이게는 두되(실제 개수 안내는 유효하다) 탭 핸들러는
+        // 붙이지 않아 그 가짜 드로어에 닿을 길을 없앤다. UnknownPhotosSheetFragment 와
+        // 그 스크린샷 커버리지는 다음 슬라이스가 실 데이터로 채울 때까지 그대로 둔다 —
+        // 다음 사람이 "실수로 빠졌나 보다" 하고 다시 잇지 않도록, 이 주석이 그 이유를
+        // 명시적으로 남긴다. 이 핸들러를 되살리려면 먼저 시트를 실 데이터로 채워야 한다.
 
         ViewMapBottomSheetBinding sheet = binding.mapBottomSheet;
         sheet.playButton.setOnClickListener(v -> vm.togglePlay());
