@@ -39,6 +39,7 @@
     <string name="analyze_done">분석 완료</string>
     <string name="analyze_done_summary">경로 %1$d · 위치 미상 %2$d</string>
     <string name="analyze_goto_map">지도에서 여행 보기</string>
+    <string name="analyze_trip_name">%1$d년 %2$d월 여행</string>
 
     <!-- ANALYZE · 타임존 시트 -->
     <string name="tz_title_prefix">"이 여행, "</string>

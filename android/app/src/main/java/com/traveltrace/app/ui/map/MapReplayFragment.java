@@ -38,10 +38,19 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
     public static final LatLng PARIS = new LatLng(48.8566, 2.3522);
     public static final float STATIC_ZOOM = 12f;
 
+    public static final String ARG_TRIP_ID = "tripId";
+
     private FragmentMapReplayBinding binding;
     private MapReplayViewModel vm;
     private GoogleMap map;
     private OnBackPressedCallback cinemaBackCallback;
+
+    /** MAP 진입 인자. tripId 하나뿐이라 nav argument 로 나른다(사진 목록은 SelectionSession). */
+    public static Bundle argsFor(String tripId) {
+        Bundle args = new Bundle();
+        args.putString(ARG_TRIP_ID, tripId);
+        return args;
+    }
 
     @Nullable
     @Override
