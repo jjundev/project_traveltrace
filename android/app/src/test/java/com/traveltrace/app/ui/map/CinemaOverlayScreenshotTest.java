@@ -36,7 +36,7 @@ public class CinemaOverlayScreenshotTest {
         MapUiState cinema = new MapUiState(b.tripTitle, b.unknownCount, b.stops, 0,
                 b.playing, b.satellite, true, b.speed);
 
-        MapRenderer.renderCinema(binding, cinema, ScreenFixtures.cityLabel());
+        MapRenderer.renderCinema(binding, cinema);
         harness.captureFixedFrame(binding.getRoot(), "map_cinema.png");
     }
 }

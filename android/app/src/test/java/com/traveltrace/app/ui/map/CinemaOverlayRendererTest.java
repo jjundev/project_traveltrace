@@ -37,24 +37,25 @@ public class CinemaOverlayRendererTest {
 
     @Test
     public void hiddenWhenCinemaIsOff() {
-        MapRenderer.renderCinema(binding, ScreenFixtures.map(), ScreenFixtures.cityLabel());
+        MapRenderer.renderCinema(binding, ScreenFixtures.map());
         assertEquals(View.GONE, binding.cinemaRoot.getVisibility());
     }
 
     @Test
-    public void visibleWithActiveStopNameAndCityMeta() {
-        MapRenderer.renderCinema(binding, cinemaAt(0), ScreenFixtures.cityLabel());
+    public void visibleWithActiveStopNameAndTripTitleMeta() {
+        MapRenderer.renderCinema(binding, cinemaAt(0));
 
         assertEquals(View.VISIBLE, binding.cinemaRoot.getVisibility());
         assertEquals("개선문", binding.cinemaName.getText().toString());
-        assertEquals("10:12 · 파리", binding.cinemaMeta.getText().toString());
+        assertEquals("S1 은 역지오코딩이 없어 도시명 대신 여행 이름을 쓴다",
+                "10:12 · 2024 파리 여행", binding.cinemaMeta.getText().toString());
     }
 
     @Test
     public void followsActiveStop() {
-        MapRenderer.renderCinema(binding, cinemaAt(5), ScreenFixtures.cityLabel());
+        MapRenderer.renderCinema(binding, cinemaAt(5));
 
         assertEquals("몽마르트", binding.cinemaName.getText().toString());
-        assertEquals("18:30 · 파리", binding.cinemaMeta.getText().toString());
+        assertEquals("18:30 · 2024 파리 여행", binding.cinemaMeta.getText().toString());
     }
 }

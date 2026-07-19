@@ -93,8 +93,7 @@ public final class MapRenderer {
         applySpeed(ctx, binding.speedFast, state.speed == MapUiState.Speed.FAST);
     }
 
-    public static void renderCinema(ViewCinemaOverlayBinding binding, MapUiState state,
-                                    String cityLabel) {
+    public static void renderCinema(ViewCinemaOverlayBinding binding, MapUiState state) {
         binding.cinemaRoot.setVisibility(state.cinema ? View.VISIBLE : View.GONE);
         if (!state.cinema) return;
 
@@ -117,7 +116,8 @@ public final class MapRenderer {
         binding.cinemaCard.setClipToOutline(true);
 
         binding.cinemaName.setText(stop.name);
-        binding.cinemaMeta.setText(ctx.getString(R.string.cinema_meta, stop.time, cityLabel));
+        // 도시명은 역지오코딩이 필요해 S1 범위 밖이다 — 여행 이름을 쓴다.
+        binding.cinemaMeta.setText(ctx.getString(R.string.cinema_meta, stop.time, state.tripTitle));
     }
 
     private static ColorStateList tint(Context ctx, boolean enabled) {

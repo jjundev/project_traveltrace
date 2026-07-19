@@ -146,7 +146,7 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
             map.setMapType(state.satellite ? GoogleMap.MAP_TYPE_SATELLITE : GoogleMap.MAP_TYPE_NORMAL);
         }
 
-        MapRenderer.renderCinema(binding.cinemaOverlay, state, vm.city());
+        MapRenderer.renderCinema(binding.cinemaOverlay, state);
         int chromeVis = state.cinema ? View.GONE : View.VISIBLE;
         binding.mapTopBar.topBarRoot.setVisibility(chromeVis);
         binding.mapBottomSheet.sheetRoot.setVisibility(chromeVis);

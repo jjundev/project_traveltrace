@@ -28,11 +28,6 @@ public class MapReplayViewModel extends ViewModel {
         return state;
     }
 
-    /** 상영 모드 카드의 도시명. 로직 단계에서 이 공급원이 리포지토리로 교체된다. */
-    public String city() {
-        return ScreenFixtures.cityLabel();
-    }
-
     /** 위치 미상 드로어의 썸네일 톤. 로직 단계에서 이 공급원이 리포지토리로 교체된다. */
     public int[] unknownThumbTones() {
         return ScreenFixtures.unknownThumbTones();

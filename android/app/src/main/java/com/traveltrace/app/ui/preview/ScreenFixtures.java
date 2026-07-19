@@ -98,12 +98,18 @@ public final class ScreenFixtures {
 
     public static MapUiState map() {
         List<MapUiState.Stop> stops = new ArrayList<>();
-        stops.add(new MapUiState.Stop("arc", "개선문", "10:12", false, 0, 0xFFD9C9A8));
-        stops.add(new MapUiState.Stop("eiffel", "에펠탑", "11:05", false, 4, 0xFFB7C6D6));
-        stops.add(new MapUiState.Stop("seine", "센강 유람선", "13:20", false, 2, 0xFFA9C6DA));
-        stops.add(new MapUiState.Stop("louvre", "루브르 박물관", "15:40", true, 0, 0xFFCDBFA1));
-        stops.add(new MapUiState.Stop("notredame", "노트르담", "16:50", false, 0, 0xFFC3B69B));
-        stops.add(new MapUiState.Stop("sacre", "몽마르트", "18:30", false, 3, 0xFFD7D0BF));
+        stops.add(new MapUiState.Stop("arc", "개선문", "10:12", false, 0, 0xFFD9C9A8,
+                48.8738, 2.2950));
+        stops.add(new MapUiState.Stop("eiffel", "에펠탑", "11:05", false, 4, 0xFFB7C6D6,
+                48.8584, 2.2945));
+        stops.add(new MapUiState.Stop("seine", "센강 유람선", "13:20", false, 2, 0xFFA9C6DA,
+                48.8600, 2.3050));
+        stops.add(new MapUiState.Stop("louvre", "루브르 박물관", "15:40", true, 0, 0xFFCDBFA1,
+                48.8606, 2.3376));
+        stops.add(new MapUiState.Stop("notredame", "노트르담", "16:50", false, 0, 0xFFC3B69B,
+                48.8530, 2.3499));
+        stops.add(new MapUiState.Stop("sacre", "몽마르트", "18:30", false, 3, 0xFFD7D0BF,
+                48.8867, 2.3431));
         return new MapUiState("2024 파리 여행", 5, stops, 0, false, false, false,
                 MapUiState.Speed.NORMAL);
     }
@@ -113,7 +119,9 @@ public final class ScreenFixtures {
         return new int[]{0xFFE3D6C8, 0xFFD6DEE6, 0xFFE0DCE4, 0xFFDDE6DF, 0xFFE6DDD4};
     }
 
-    /** 상영 모드 카드의 도시 라벨 (프로토타입 "시각 · 파리"). */
+    // MAP 상영모드는 이제 이 메서드 대신 tripTitle 을 쓴다(Task 10) — 타임존 확인 시트가
+    // 여전히 도시명 픽스처로 쓰고 있어 메서드 자체는 남긴다.
+    /** 타임존 확인 시트용 도시 라벨 (프로토타입 "시각 · 파리"). */
     public static String cityLabel() {
         return "파리";
     }
