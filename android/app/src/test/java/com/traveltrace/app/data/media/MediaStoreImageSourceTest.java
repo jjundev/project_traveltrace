@@ -27,8 +27,11 @@ import org.robolectric.fakes.RoboCursor;
 import org.robolectric.shadows.ShadowContentResolver;
 import org.robolectric.shadows.ShadowLooper;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -135,6 +138,109 @@ public class MediaStoreImageSourceTest {
     public void emptyGalleryYieldsEmptyListNotNull() {
         seed();
         assertTrue(load(100).isEmpty());
+    }
+
+    /**
+     * loadByIds() 도 loadRecent() 와 같은 콜백 스레딩 계약(io 에서 실행, 메인 루퍼로 전달)을
+     * 따르므로 같은 폴링 방식으로 기다린다.
+     */
+    private List<GalleryImage> loadByIds(List<Long> ids) {
+        AtomicReference<List<GalleryImage>> box = new AtomicReference<>();
+        AtomicBoolean done = new AtomicBoolean(false);
+        Callback<List<GalleryImage>> callback = value -> {
+            box.set(value);
+            done.set(true);
+        };
+        source.loadByIds(ids, callback);
+
+        long deadline = System.currentTimeMillis() + 5_000L;
+        while (!done.get() && System.currentTimeMillis() < deadline) {
+            ShadowLooper.idleMainLooper();
+            if (!done.get()) {
+                try {
+                    Thread.sleep(5L);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new AssertionError(e);
+                }
+            }
+        }
+        assertTrue("콜백이 5초 안에 와야 한다", done.get());
+        return box.get();
+    }
+
+    /**
+     * ShadowContentResolver#setCursor 는 selection/selectionArgs 를 완전히 무시하고 등록된
+     * 커서를 그대로 돌려주므로(위 테스트들이 그 훅을 쓴다), loadByIds() 가 실제로
+     * "_ID IN (...)" 로 걸러 쿼리하는지는 그 훅으로는 검증할 수 없다. 대신
+     * securityExceptionOnQueryYieldsEmptyListNotCrash 와 같은 패턴으로 진짜 ContentProvider
+     * 를 등록해, 넘어온 selection/selectionArgs 를 실제로 해석해 걸러 돌려주는 최소 구현으로
+     * 프로덕션 SQL 필터링 계약을 재현한다 — "갤러리 전체가 아니라 요청한 id 만 온다"를
+     * 의미 있게 확인하는 유일한 방법이다(finding 5).
+     */
+    @Test
+    public void loadByIdsFiltersToOnlyTheRequestedIdsViaSqlSelection() {
+        List<Object[]> gallery = Arrays.asList(
+                new Object[]{1L, "a.jpg", 3_000L},
+                new Object[]{2L, "b.jpg", 2_000L},
+                new Object[]{3L, "c.jpg", 1_000L});
+
+        ShadowContentResolver.registerProviderInternal(MediaStore.AUTHORITY, new ContentProvider() {
+            @Override
+            public boolean onCreate() {
+                return true;
+            }
+
+            @Override
+            public Cursor query(Uri uri, String[] projection, String selection,
+                    String[] selectionArgs, String sortOrder) {
+                Set<Long> wanted = new HashSet<>();
+                for (String arg : selectionArgs) wanted.add(Long.parseLong(arg));
+
+                List<Object[]> filtered = new ArrayList<>();
+                for (Object[] row : gallery) {
+                    if (wanted.contains((Long) row[0])) filtered.add(row);
+                }
+                RoboCursor cursor = new RoboCursor();
+                cursor.setColumnNames(Arrays.asList(
+                        MediaStore.Images.Media._ID,
+                        MediaStore.Images.Media.DISPLAY_NAME,
+                        MediaStore.Images.Media.DATE_TAKEN));
+                cursor.setResults(filtered.toArray(new Object[0][]));
+                return cursor;
+            }
+
+            @Override
+            public String getType(Uri uri) {
+                return null;
+            }
+
+            @Override
+            public Uri insert(Uri uri, ContentValues values) {
+                return null;
+            }
+
+            @Override
+            public int delete(Uri uri, String selection, String[] selectionArgs) {
+                return 0;
+            }
+
+            @Override
+            public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+                return 0;
+            }
+        });
+
+        List<GalleryImage> images = loadByIds(Arrays.asList(1L, 3L));
+
+        assertEquals("요청한 id 2개만 와야 한다(전체 3장이 아니라)", 2, images.size());
+        assertEquals(1L, images.get(0).id);
+        assertEquals(3L, images.get(1).id);
+    }
+
+    @Test
+    public void loadByIdsWithNoIdsReturnsEmptyListWithoutCrashing() {
+        assertTrue("빈 id 목록이면 쿼리 없이 바로 빈 목록", loadByIds(new ArrayList<>()).isEmpty());
     }
 
     // MediaStoreImageSource#query() 는 SecurityException 을 잡아 빈 목록으로 조용히

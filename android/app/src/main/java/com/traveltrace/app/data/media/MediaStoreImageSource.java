@@ -6,6 +6,8 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore;
 
+import androidx.annotation.Nullable;
+
 import com.traveltrace.app.core.AppExecutors;
 import com.traveltrace.app.domain.Callback;
 
@@ -49,32 +51,72 @@ public class MediaStoreImageSource {
         });
     }
 
+    /**
+     * 이미 알고 있는 식별자 집합만 읽는다(ANALYZE 가 쓴다 — finding 5). SELECT 에서 이미
+     * 확정된 선택이라 "최근 N 장 전체를 훑어 그중에서 고른다"가 아니라 처음부터
+     * {@code _ID IN (...)} 로 걸러 쿼리한다 — 갤러리가 수만 장이어도 선택한 만큼만 읽는다.
+     * ids 가 비어 있으면 쿼리 자체를 생략하고 빈 목록을 돌려준다.
+     */
+    public void loadByIds(List<Long> ids, Callback<List<GalleryImage>> callback) {
+        executors.io().execute(() -> {
+            List<GalleryImage> images = queryByIds(ids);
+            executors.mainThread().execute(() -> callback.onResult(images));
+        });
+    }
+
     private List<GalleryImage> query(int limit) {
-        List<GalleryImage> images = new ArrayList<>();
         Uri collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
         String sort = MediaStore.Images.Media.DATE_TAKEN + " DESC";
 
         try (Cursor cursor = context.getContentResolver()
                 .query(collection, PROJECTION, null, null, sort)) {
-            if (cursor == null) return images;
-
-            int idCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
-            int nameCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DISPLAY_NAME);
-            int takenCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN);
-
-            while (cursor.moveToNext() && images.size() < limit) {
-                long id = cursor.getLong(idCol);
-                long taken = cursor.isNull(takenCol) ? 0L : cursor.getLong(takenCol);
-                images.add(new GalleryImage(
-                        id,
-                        ContentUris.withAppendedId(collection, id),
-                        cursor.getString(nameCol),
-                        // 0 은 "촬영 시각 모름"이다 — 1970년으로 저장하면 정렬이 망가진다.
-                        taken > 0L ? taken : null));
-            }
+            return readRows(cursor, limit);
         } catch (SecurityException denied) {
             // 권한이 아직 없거나 철회된 상태. 빈 목록으로 조용히 끝낸다 — 안내는 UI 소관.
             return new ArrayList<>();
+        }
+    }
+
+    private List<GalleryImage> queryByIds(List<Long> ids) {
+        if (ids.isEmpty()) return new ArrayList<>();
+
+        Uri collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        String sort = MediaStore.Images.Media.DATE_TAKEN + " DESC";
+        StringBuilder selection = new StringBuilder(MediaStore.Images.Media._ID).append(" IN (");
+        String[] args = new String[ids.size()];
+        for (int i = 0; i < ids.size(); i++) {
+            if (i > 0) selection.append(',');
+            selection.append('?');
+            args[i] = String.valueOf(ids.get(i));
+        }
+        selection.append(')');
+
+        try (Cursor cursor = context.getContentResolver()
+                .query(collection, PROJECTION, selection.toString(), args, sort)) {
+            return readRows(cursor, Integer.MAX_VALUE);
+        } catch (SecurityException denied) {
+            return new ArrayList<>();
+        }
+    }
+
+    private List<GalleryImage> readRows(@Nullable Cursor cursor, int limit) {
+        List<GalleryImage> images = new ArrayList<>();
+        if (cursor == null) return images;
+
+        Uri collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        int idCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
+        int nameCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DISPLAY_NAME);
+        int takenCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN);
+
+        while (cursor.moveToNext() && images.size() < limit) {
+            long id = cursor.getLong(idCol);
+            long taken = cursor.isNull(takenCol) ? 0L : cursor.getLong(takenCol);
+            images.add(new GalleryImage(
+                    id,
+                    ContentUris.withAppendedId(collection, id),
+                    cursor.getString(nameCol),
+                    // 0 은 "촬영 시각 모름"이다 — 1970년으로 저장하면 정렬이 망가진다.
+                    taken > 0L ? taken : null));
         }
         return images;
     }

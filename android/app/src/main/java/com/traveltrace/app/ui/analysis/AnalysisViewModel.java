@@ -18,9 +18,7 @@ import com.traveltrace.app.ui.selection.SelectionSession;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -102,12 +100,11 @@ public class AnalysisViewModel extends ViewModel {
         extractor.resetFailureCount();
         state.setValue(new AnalysisUiState(0, selectedIds.size(), false, "", 0, 0));
 
-        Set<Long> wanted = new HashSet<>(selectedIds);
-        imageSource.loadRecent(Integer.MAX_VALUE, images -> {
-            List<GalleryImage> targets = new ArrayList<>();
-            for (GalleryImage image : images) {
-                if (wanted.contains(image.id)) targets.add(image);
-            }
+        // 선택은 이미 SELECT 에서 확정됐다 — 갤러리 전체(수만 장일 수 있다)를 훑어 그중
+        // 골라내는 대신, 처음부터 선택된 id 만 걸러 쿼리한다(finding 5). 필터링 자체도
+        // MediaStoreImageSource.loadByIds() 가 io() 스레드에서 SQL 로 하므로, 메인 스레드는
+        // 결과를 그대로 받기만 한다.
+        imageSource.loadByIds(selectedIds, targets -> {
             if (targets.isEmpty()) {
                 abandoned.setValue(true);
                 return;
