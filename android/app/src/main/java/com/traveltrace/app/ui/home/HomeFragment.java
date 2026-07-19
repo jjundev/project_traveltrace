@@ -22,6 +22,7 @@ import dagger.hilt.android.AndroidEntryPoint;
 public class HomeFragment extends Fragment {
 
     private FragmentHomeBinding binding;
+    private HomeViewModel vm;
 
     @Nullable
     @Override
@@ -34,13 +35,20 @@ public class HomeFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        HomeViewModel vm = new ViewModelProvider(this).get(HomeViewModel.class);
+        vm = new ViewModelProvider(this).get(HomeViewModel.class);
 
         binding.newTripButton.setOnClickListener(v ->
                 NavHostFragment.findNavController(this).navigate(R.id.action_home_to_photo));
 
         vm.state().observe(getViewLifecycleOwner(), state ->
                 HomeRenderer.render(binding, state, this::onTripClick));
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // 분석을 마치고 돌아오면 새 여행이 즉시 보여야 한다.
+        vm.refresh();
     }
 
     private void onTripClick(HomeUiState.TripCard card) {

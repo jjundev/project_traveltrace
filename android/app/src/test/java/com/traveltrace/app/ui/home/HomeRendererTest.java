@@ -105,7 +105,7 @@ public class HomeRendererTest {
     @Test
     public void tripCardWithNullLocationLabel_hidesLocationPill() {
         HomeUiState.TripCard noLocation = new HomeUiState.TripCard(
-                "paris", "제목", "메타", null, true);
+                "paris", "제목", "메타", null, true, null);
         HomeUiState state = HomeUiState.trips(Collections.singletonList(noLocation));
 
         HomeRenderer.render(binding, state, card -> {});

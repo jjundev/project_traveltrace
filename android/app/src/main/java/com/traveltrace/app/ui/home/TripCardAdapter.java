@@ -14,7 +14,7 @@ import com.traveltrace.app.databinding.ItemTripCardBinding;
 import java.util.ArrayList;
 import java.util.List;
 
-/** HOME 여행 카드 목록. hero 일러스트는 카드 id 로 고른다(UiState 는 리소스를 모른다). */
+/** HOME 여행 카드 목록. hero 는 첫 사진 썸네일, 없으면 id 기반 일러스트로 폴백한다. */
 public class TripCardAdapter extends RecyclerView.Adapter<TripCardAdapter.VH> {
 
     public interface Listener {
@@ -38,8 +38,9 @@ public class TripCardAdapter extends RecyclerView.Adapter<TripCardAdapter.VH> {
         notifyDataSetChanged();
     }
 
+    /** heroPhotoUri 가 없을 때만 쓰는 폴백 일러스트(픽스처·썸네일 실패). */
     @DrawableRes
-    private static int heroFor(String id) {
+    private static int fallbackHero(String id) {
         return "paris".equals(id) ? R.drawable.hero_trip_paris : R.drawable.hero_trip_jeju;
     }
 
@@ -54,7 +55,17 @@ public class TripCardAdapter extends RecyclerView.Adapter<TripCardAdapter.VH> {
     @Override
     public void onBindViewHolder(@NonNull VH holder, int position) {
         HomeUiState.TripCard card = items.get(position);
-        holder.b.tripHero.setImageResource(heroFor(card.id));
+        if (card.heroPhotoUri == null) {
+            com.bumptech.glide.Glide.with(holder.b.tripHero).clear(holder.b.tripHero);
+            holder.b.tripHero.setImageResource(fallbackHero(card.id));
+        } else {
+            com.bumptech.glide.Glide.with(holder.b.tripHero)
+                    .load(card.heroPhotoUri)
+                    .centerCrop()
+                    .placeholder(fallbackHero(card.id))
+                    .error(fallbackHero(card.id))
+                    .into(holder.b.tripHero);
+        }
         holder.b.tripTitle.setText(card.title);
         holder.b.tripMeta.setText(card.meta);
         holder.b.tripLocation.setVisibility(card.locationLabel == null ? View.GONE : View.VISIBLE);

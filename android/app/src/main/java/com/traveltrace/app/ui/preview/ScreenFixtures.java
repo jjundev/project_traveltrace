@@ -27,11 +27,11 @@ public final class ScreenFixtures {
         List<HomeUiState.TripCard> trips = new ArrayList<>();
         trips.add(new HomeUiState.TripCard(
                 "paris", "2024 파리 여행", "82장 · 4일 · 2024. 6",
-                "🇫🇷 파리 · 프랑스", true));
+                "🇫🇷 파리 · 프랑스", true, null));
         // 제주 카드는 프로토타입에서 시각 전용(openTripLocked → 토스트).
         trips.add(new HomeUiState.TripCard(
                 "jeju", "2023 제주 가족여행", "63장 · 3일 · 2023. 10",
-                "🌋 제주 · 한국", false));
+                "🌋 제주 · 한국", false, null));
         return HomeUiState.trips(trips);
     }
 

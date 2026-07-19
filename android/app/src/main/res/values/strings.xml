@@ -10,6 +10,7 @@
     <string name="home_empty_body">갤러리에서 여행 사진을 고르면\n지도 위에 그날의 경로가 그려져요.</string>
     <string name="home_trip_locked_toast">데모에선 파리 여행만 열려요</string>
     <string name="home_trip_hero_desc">여행 경로 미리보기</string>
+    <string name="home_trip_meta">%1$d장 · %2$d일 · %3$s</string>
 
     <!-- SELECT -->
     <string name="select_title">사진 선택</string>
