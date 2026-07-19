@@ -65,8 +65,9 @@ public final class ScreenFixtures {
         return new PhotoSelectionUiState("2024. 6. 12 – 6. 15 · 사진 94장", 100, tiles);
     }
 
+    /** 픽스처는 실제 사진이 없다 — mediaStoreId 0, contentUri null 로 톤 색 경로를 탄다. */
     private static PhotoSelectionUiState.Tile tile(int tone, String label, boolean selected) {
-        return new PhotoSelectionUiState.Tile(tone, label, selected);
+        return new PhotoSelectionUiState.Tile(tone, label, selected, 0L, null);
     }
 
     // ---- ANALYZE ----

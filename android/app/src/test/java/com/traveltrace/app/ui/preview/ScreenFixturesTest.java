@@ -129,10 +129,10 @@ public class ScreenFixturesTest {
     @Test
     public void uiStateDoesNotAliasCallerList() {
         List<PhotoSelectionUiState.Tile> tiles = new ArrayList<>();
-        tiles.add(new PhotoSelectionUiState.Tile(0xFF000000, null, true));
+        tiles.add(new PhotoSelectionUiState.Tile(0xFF000000, null, true, 0L, null));
         PhotoSelectionUiState s = new PhotoSelectionUiState("p", 100, tiles);
 
-        tiles.add(new PhotoSelectionUiState.Tile(0xFFFFFFFF, null, true));
+        tiles.add(new PhotoSelectionUiState.Tile(0xFFFFFFFF, null, true, 0L, null));
 
         assertEquals("생성 후 호출자가 원본 리스트를 바꿔도 상태는 불변", 1, s.tiles.size());
     }
