@@ -2,6 +2,8 @@
 
 > 사진 → `{landmarkName, city, country, confidence}`를 반환하는 공통 인터페이스와 Gemini(메인)·OpenAI(폴백) 구현. AI는 이름/도시만 반환하고 좌표는 만들지 않는다.
 
+> **상태: ⬜ 미착수.**
+
 - **Epic**: Analysis
 - **Depends on**: 01(모델 확정·키), 07(업로드 이미지)
 - **PRD**: §4.3, §9 #4·#14
