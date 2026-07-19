@@ -39,5 +39,12 @@
     <fragment
         android:id="@+id/mapReplayFragment"
         android:name="com.traveltrace.app.ui.map.MapReplayFragment"
-        android:label="@string/map_title" />
+        android:label="@string/map_title">
+        <!-- 저장 여행 식별자. 없으면(디자인 프리뷰 진입) 픽스처 지도가 뜬다. -->
+        <argument
+            android:name="tripId"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
+    </fragment>
 </navigation>

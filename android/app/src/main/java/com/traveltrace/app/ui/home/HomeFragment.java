@@ -45,7 +45,9 @@ public class HomeFragment extends Fragment {
 
     private void onTripClick(HomeUiState.TripCard card) {
         if (card.enabled) {
-            NavHostFragment.findNavController(this).navigate(R.id.action_home_to_map);
+            NavHostFragment.findNavController(this).navigate(
+                    R.id.action_home_to_map,
+                    com.traveltrace.app.ui.map.MapReplayFragment.argsFor(card.id));
         } else {
             // 프로토타입 openTripLocked — 제주 카드는 데모에서 열리지 않는다.
             ToastPresenter.show(binding.getRoot(), getString(R.string.home_trip_locked_toast));

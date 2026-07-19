@@ -4,6 +4,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import androidx.lifecycle.SavedStateHandle;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
@@ -16,7 +18,7 @@ public class MapReplayViewModelTest {
 
     @Test
     public void jumpTo_clampsAtBothEnds() {
-        MapReplayViewModel vm = new MapReplayViewModel();
+        MapReplayViewModel vm = new MapReplayViewModel(new SavedStateHandle());
 
         vm.jumpTo(-3);
         assertEquals(0, vm.state().getValue().activeIndex);
@@ -27,7 +29,7 @@ public class MapReplayViewModelTest {
 
     @Test
     public void next_stopsAtLastIndexAndDoesNotWrap() {
-        MapReplayViewModel vm = new MapReplayViewModel();
+        MapReplayViewModel vm = new MapReplayViewModel(new SavedStateHandle());
 
         for (int i = 0; i < LAST_INDEX + 3; i++) {
             vm.next();
@@ -38,7 +40,7 @@ public class MapReplayViewModelTest {
 
     @Test
     public void prev_stopsAtFirstIndexAndDoesNotWrap() {
-        MapReplayViewModel vm = new MapReplayViewModel();
+        MapReplayViewModel vm = new MapReplayViewModel(new SavedStateHandle());
 
         for (int i = 0; i < 3; i++) {
             vm.prev();
@@ -49,7 +51,7 @@ public class MapReplayViewModelTest {
 
     @Test
     public void togglePlay_flipsPlaying() {
-        MapReplayViewModel vm = new MapReplayViewModel();
+        MapReplayViewModel vm = new MapReplayViewModel(new SavedStateHandle());
         assertFalse(vm.state().getValue().playing);
 
         vm.togglePlay();
@@ -61,7 +63,7 @@ public class MapReplayViewModelTest {
 
     @Test
     public void jumpTo_forcesPlayingFalse() {
-        MapReplayViewModel vm = new MapReplayViewModel();
+        MapReplayViewModel vm = new MapReplayViewModel(new SavedStateHandle());
         vm.togglePlay();
         assertTrue(vm.state().getValue().playing);
 
@@ -73,7 +75,7 @@ public class MapReplayViewModelTest {
 
     @Test
     public void setSpeed_producesNewImmutableStateWithoutMutatingPrevious() {
-        MapReplayViewModel vm = new MapReplayViewModel();
+        MapReplayViewModel vm = new MapReplayViewModel(new SavedStateHandle());
         MapUiState before = vm.state().getValue();
         assertEquals(MapUiState.Speed.NORMAL, before.speed);
 
@@ -87,7 +89,7 @@ public class MapReplayViewModelTest {
 
     @Test
     public void setSatellite_producesNewImmutableStateWithoutMutatingPrevious() {
-        MapReplayViewModel vm = new MapReplayViewModel();
+        MapReplayViewModel vm = new MapReplayViewModel(new SavedStateHandle());
         MapUiState before = vm.state().getValue();
         assertFalse(before.satellite);
 
@@ -101,7 +103,7 @@ public class MapReplayViewModelTest {
 
     @Test
     public void setCinema_producesNewImmutableStateWithoutMutatingPrevious() {
-        MapReplayViewModel vm = new MapReplayViewModel();
+        MapReplayViewModel vm = new MapReplayViewModel(new SavedStateHandle());
         MapUiState before = vm.state().getValue();
         assertFalse(before.cinema);
 

@@ -2,6 +2,7 @@ package com.traveltrace.app.ui.map;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
 
 import com.traveltrace.app.ui.preview.ScreenFixtures;
@@ -18,10 +19,21 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 public class MapReplayViewModel extends ViewModel {
 
     private final MutableLiveData<MapUiState> state = new MutableLiveData<>();
+    private final SavedStateHandle savedState;
 
     @Inject
-    public MapReplayViewModel() {
+    public MapReplayViewModel(SavedStateHandle savedState) {
+        this.savedState = savedState;
         state.setValue(ScreenFixtures.map());
+    }
+
+    /** nav argument 로 들어온 저장 여행 식별자. 없으면 null(프리뷰 진입). */
+    public static String tripIdOf(SavedStateHandle handle) {
+        return handle.get(MapReplayFragment.ARG_TRIP_ID);
+    }
+
+    public String tripId() {
+        return tripIdOf(savedState);
     }
 
     public LiveData<MapUiState> state() {
