@@ -20,6 +20,9 @@ import com.traveltrace.app.data.exif.ExifExtractor;
 import com.traveltrace.app.data.media.MediaStoreImageSource;
 import com.traveltrace.app.data.repo.RoomPhotoAnalysisRepository;
 import com.traveltrace.app.data.repo.RoomTripRepository;
+import com.traveltrace.app.domain.Callback;
+import com.traveltrace.app.domain.PhotoAnalysisRepository;
+import com.traveltrace.app.domain.model.PhotoAnalysis;
 import com.traveltrace.app.domain.model.TripDetail;
 import com.traveltrace.app.ui.selection.SelectionSession;
 
@@ -280,5 +283,76 @@ public class AnalysisPipelineTest {
 
         assertNotNull("취소 신호가 없으면 정상적으로 저장까지 끝난다", vm.savedTripId().getValue());
         assertEquals("여행 행이 정확히 하나 생긴다", 1, db.tripDao().listSummaries().size());
+    }
+
+    /**
+     * PhotoAnalysisRepository 페이크 — RoomPhotoAnalysisRepository 는 Room 트랜잭션을
+     * 커밋한 "뒤에"만 콜백을 메인 스레드로 올린다. 즉 "행은 이미 durable 하게 저장됐는데
+     * 콜백이 그 틈에 cancelled == true 를 보게 되는" 순간이 실제 존재하지만, 커밋과 콜백
+     * 사이에 정확히 취소를 끼워 넣을 훅이 실제 레포지토리엔 없어서 테스트에서 그 순간을
+     * 온디맨드로 재현할 방법이 없다(finding 2, out of bounds 라 원자적으로 만들지 않기로
+     * 합의된 수용된 레이스). 이 페이크는 saveTrip() 이 tripId 콜백을 부르기 "직전"에
+     * vm.cancel() 을 호출해 그 순간을 결정적으로 강제한다 — 실제 순서(커밋 완료 → 그
+     * 뒤에 취소 관찰)를 그대로 흉내 내는 것이다.
+     */
+    private static final class CommitThenCancelRepository implements PhotoAnalysisRepository {
+        private AnalysisViewModel viewModel;
+
+        /** saveTrip() 을 받을 ViewModel 이 이 페이크보다 나중에 생성되므로 뒤늦게 붙인다. */
+        void attachTo(AnalysisViewModel viewModel) {
+            this.viewModel = viewModel;
+        }
+
+        @Override
+        public void saveTrip(String name, String timeZoneId, java.util.List<PhotoAnalysis> results,
+                              Callback<String> callback) {
+            viewModel.cancel();
+            callback.onResult("fake-trip-id");
+        }
+    }
+
+    @Test
+    public void sessionClearOrderingSurvivesACommitThenCancelRace() {
+        // finding 2 가 지키려는 순서 그 자체를 핀으로 고정한다: session.clear() 는
+        // cancelled 가드 "밖"에 있어야 한다. 위 페이크로 "커밋은 이미 끝났는데 콜백이
+        // 그 직후 취소를 관찰하는" 상황을 강제로 만든 뒤, 계약의 두 절반을 함께 확인한다.
+        // (1) 세션은 그래도 비워진다 — 같은 선택으로 재진입해 두 번째 여행이 생기는 걸
+        // 막는 게 이 순서의 존재 이유다. (2) 하지만 화면은 이미 떠났으니 savedTripId 는
+        // 여전히 null 이고 state 도 done 으로 넘어가지 않는다 — 저장은 됐어도 UI 갱신은
+        // 계속 억제돼야 한다.
+        //
+        // session.clear() 를 다시 cancelled 가드 안으로 되돌리면: 페이크가 콜백을 부르기
+        // 전에 이미 vm.cancel() 을 호출해 두므로, 가드가 clear() 보다 먼저 걸려 세션이
+        // 전혀 비워지지 않는다 — 그래서 이 테스트는 그 회귀에서 반드시 실패한다.
+        CommitThenCancelRepository fakeRepo = new CommitThenCancelRepository();
+        AnalysisViewModel raceVm = new AnalysisViewModel(
+                ctx,
+                new MediaStoreImageSource(ctx, executors),
+                new ExifExtractor(ctx, TimeZone.getTimeZone("Asia/Seoul")),
+                fakeRepo,
+                session,
+                executors);
+        fakeRepo.attachTo(raceVm);
+
+        session.put(Arrays.asList(1L, 2L, 3L));
+        raceVm.start();
+
+        long deadline = System.currentTimeMillis() + 5_000L;
+        while (!session.isEmpty() && System.currentTimeMillis() < deadline) {
+            ShadowLooper.idleMainLooper();
+            try {
+                Thread.sleep(20L);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            ShadowLooper.idleMainLooper();
+        }
+
+        assertTrue("커밋 이후에 취소가 끼어들어도 세션은 비워 재진입 시 중복 저장을 막는다",
+                session.isEmpty());
+        assertNull("화면은 이미 사라졌으니 저장 완료 신호는 계속 억제된다",
+                raceVm.savedTripId().getValue());
+        AnalysisUiState raceState = raceVm.state().getValue();
+        assertTrue("state 도 done 으로 넘어가면 안 된다", raceState == null || !raceState.done);
     }
 }
