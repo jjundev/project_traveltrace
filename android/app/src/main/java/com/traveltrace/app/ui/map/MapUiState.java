@@ -40,7 +40,7 @@ public final class MapUiState {
         return stops.get(Math.max(0, Math.min(activeIndex, stops.size() - 1)));
     }
 
-    /** 경로 위 정차 지점 1곳. 좌표는 로직 단계(에픽 12)에서 붙는다. */
+    /** 경로 위 정차 지점 1곳. */
     public static final class Stop {
         public final String id;
         public final String name;
@@ -50,15 +50,20 @@ public final class MapUiState {
         /** 같은 지점의 추가 사진 수 ("+N장"). 0 이면 숨김. */
         public final int extra;
         @ColorInt public final int toneColor;
+        /** 지도에 찍을 좌표. PLACED 인 스톱만 여기 오므로 항상 유효하다. */
+        public final double lat;
+        public final double lng;
 
         public Stop(String id, String name, String time, boolean ai, int extra,
-                    @ColorInt int toneColor) {
+                    @ColorInt int toneColor, double lat, double lng) {
             this.id = id;
             this.name = name;
             this.time = time;
             this.ai = ai;
             this.extra = extra;
             this.toneColor = toneColor;
+            this.lat = lat;
+            this.lng = lng;
         }
     }
 }

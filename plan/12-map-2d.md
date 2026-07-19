@@ -2,6 +2,11 @@
 
 > 제품의 핵심 가치가 완결되는 화면. 표준 Google Maps Android SDK로 위치별 핀(GPS/AI 구분)과 촬영 시각순 경로 폴리라인을 그리고, 지도/위성 뷰를 전환한다.
 
+> **상태: 🟡 셸만 완료.** Maps SDK가 실제로 연결되어 있고 상단바·지도/위성 토글·위치미상 배지가 동작한다.
+> **핀·폴리라인·카메라 fit은 전부 미착수** — 카메라는 파리(48.8566, 2.3522) 고정이고 마커 0개다.
+> 근본 원인: `MapUiState.Stop`에 **좌표 필드 자체가 없다.** S1이 04와 함께 이 모델을 확장해야 한다.
+> ⚠️ `local.properties`의 `MAPS_API_KEY`가 비어 있으면 회색 격자만 보인다.
+
 - **Epic**: Map (핵심)
 - **Depends on**: 03, 04, 10
 - **PRD**: §4.4 지도 렌더, §4.6, §9 #10
@@ -15,15 +20,15 @@
 - **Out**: 리플레이 재생·컨트롤·상영모드(13), 3D 비행(14), 저장/오프라인(15).
 
 ## 지도 렌더 (§4.4)
-- [ ] **표준 Google Maps Android SDK**로 2D/위성 지도. `SupportMapFragment` 또는 MapView + ViewBinding.
+- [x] **표준 Google Maps Android SDK**로 2D/위성 지도. `SupportMapFragment` 또는 MapView + ViewBinding. — `MapReplayFragment`
 - [ ] **핀(마커)**: 위치별 마커. **GPS 핀 vs AI 근사 위치 핀을 시각 구분** — 프로토타입: AI는 점선/반투명 + "근사 위치" 라벨, GPS는 실선·불투명. 커스텀 마커 아이콘/오버레이로 구현.
 - [ ] **경로 폴리라인**: 촬영 시각(UTC 정규화, 10) 순으로 스톱 연결. AI 구간은 점선/반투명(프로토타입 `segs`의 dash·opacity 규칙).
-- [ ] **지도/위성 토글**(프로토타입 `setMapView`/`setSatView`): 상단 세그먼트. 위성 뷰에서 상단 UI 대비(상태바·바 색) 보정.
+- [x] **지도/위성 토글**(프로토타입 `setMapView`/`setSatView`): 상단 세그먼트. 위성 뷰에서 상단 UI 대비(상태바·바 색) 보정. — `setMapType()` + `bg_scrim_satellite`
 - [ ] 초기 카메라: 전체 스톱이 보이도록 `LatLngBounds` fit.
 
 ## 상단바·위치미상 진입 (프로토타입)
-- [ ] 상단바: 뒤로(→Home) · 여행 제목("2024 파리 여행") · 지도/위성 토글(반투명 blur pill).
-- [ ] "위치 미상 N" 배지(다크 반투명 + 노란 아이콘) → drawer(13에서 구현, 여기선 배지·카운트만).
+- [x] 상단바: 뒤로(→Home) · 여행 제목("2024 파리 여행") · 지도/위성 토글(반투명 blur pill). — `view_map_top_bar.xml`
+- [x] "위치 미상 N" 배지(다크 반투명 + 노란 아이콘) → drawer(13에서 구현, 여기선 배지·카운트만). — 카운트는 픽스처
 - [ ] `PLACED`만 지도에 표시. `NAME_ONLY`/`UNKNOWN`은 지도 제외(위치미상 그룹), `NO_TIME`은 핀 표시하되 경로 순서 제외(§4.6).
 
 ## 데이터 소스

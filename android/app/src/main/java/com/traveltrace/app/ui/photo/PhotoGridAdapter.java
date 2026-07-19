@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 3열 사진 그리드. 실제 썸네일은 로직 단계에서 붙고, 지금은 타일 톤 색으로 대체한다.
+ * 3열 사진 그리드. contentUri 가 있으면 Glide 로 썸네일을, 없으면(픽스처) 톤 색을 그린다.
  * 선택 링/불투명도는 프로토타입 t.style 을 그대로 옮긴 것:
  * 선택 = 3dp 파란 링 + alpha 1, 해제 = 1dp 옅은 테두리 + alpha .5
  */
@@ -59,6 +59,18 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<PhotoGridAdapter.VH> 
         android.content.Context ctx = b.getRoot().getContext();
 
         b.photoTile.setCardBackgroundColor(tile.toneColor);
+        // 실제 사진이 있으면 썸네일로 덮고, 없으면(픽스처·프리뷰) 톤 색만 남긴다.
+        if (tile.contentUri == null) {
+            com.bumptech.glide.Glide.with(b.tileImage).clear(b.tileImage);
+            b.tileImage.setImageDrawable(null);
+            b.tileImage.setVisibility(View.GONE);
+        } else {
+            b.tileImage.setVisibility(View.VISIBLE);
+            com.bumptech.glide.Glide.with(b.tileImage)
+                    .load(tile.contentUri)
+                    .centerCrop()
+                    .into(b.tileImage);
+        }
         b.photoTile.setAlpha(tile.selected ? 1f : ALPHA_UNSELECTED);
         b.photoTile.setStrokeColor(ContextCompat.getColor(ctx,
                 tile.selected ? R.color.fill_brand : R.color.divider));

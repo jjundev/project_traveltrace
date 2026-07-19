@@ -2,6 +2,8 @@
 
 > AI가 반환한 이름/도시를 좌표로 변환한다. 입력 유형에 따라 Places(POI)와 Geocoding(행정 지명)을 분기하고, 모호하면 "이름만"으로 강등한다.
 
+> **상태: ⬜ 미착수.**
+
 - **Epic**: Analysis
 - **Depends on**: 08
 - **PRD**: §4.4 좌표화 분기, §4.3 disambiguation, §9 #7

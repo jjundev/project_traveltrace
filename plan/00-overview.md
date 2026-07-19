@@ -41,6 +41,32 @@
 
 ---
 
+## 현재 진행 상태 (2026-07-19 기준)
+
+| 에픽 | 상태 | 비고 |
+|---|---|---|
+| 01 project-setup | ✅ 완료 | vision 모델 가드 포함. `visionModels.generated.json`은 플레이스홀더 시드 |
+| 02 design-system | ✅ 완료 | 토큰·Pretendard·공용 drawable |
+| 03 app-shell-navigation | 🟡 거의 | **인자 계약·공유 VM 미완** (04 대기) |
+| 04 data-layer | ⬜ 미착수 | `@Entity`/`@Dao` 0건 — **05·11·12·13의 나머지 절반이 전부 여기를 거친다** |
+| 05 photo-selection | 🟡 UI만 | 권한·MediaStore·썸네일 미착수 |
+| 06 exif-and-time | ⬜ 미착수 | `ExifInterface` import 0건 |
+| 07~10 (업로드·AI·지오코딩·오케스트레이터) | ⬜ 미착수 | 스텁만 존재 |
+| 11 analyze-screen | 🟡 UI만 | 진행률 41/82 고정값 |
+| 12 map-2d | 🟡 셸만 | Maps SDK 연결 O, **핀·경로 X** (파리 고정 카메라) |
+| 13 replay-slideshow | 🟡 UI만 | **재생 로직 0** — 제품 핵심 가치가 여기 남아 있다 |
+| 14 map-3d-flyover | ⬜ 미착수 | 계획대로 (M3 이후) |
+| 15 trip-persistence | ⬜ 미착수 | — |
+
+> 🟡 4개(05·11·12·13)는 전부 같은 종류의 절반이다 — **UI는 있고 로직이 없다.**
+> [docs/superpowers/plans/2026-07-17-traveltrace-screens.md](../docs/superpowers/plans/2026-07-17-traveltrace-screens.md)
+> (✅ 완료)가 이 네 에픽을 **가로로 얇게** 훑고 지나간 자국이다.
+>
+> 후속 작업은 에픽 단위가 아니라 [ISSUES.md](ISSUES.md)의 **수직 슬라이스 S1~S8**로 진행한다.
+> S0는 사실상 완료(01·02·03), **다음은 S1** — 04를 세우고 05·06의 로직 절반을 채우고 12에 핀·경로를 얹는다.
+
+---
+
 ## 마일스톤
 
 - **M1 — 걷는 골격 (Walking skeleton)**: 01~05. 앱 실행 → 권한 → 사진 선택 그리드까지. 지도/분석은 stub.

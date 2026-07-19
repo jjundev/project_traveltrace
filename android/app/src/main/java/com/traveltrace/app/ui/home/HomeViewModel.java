@@ -1,35 +1,84 @@
 package com.traveltrace.app.ui.home;
 
+import android.content.ContentUris;
+import android.content.Context;
+import android.provider.MediaStore;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.traveltrace.app.ui.preview.ScreenFixtures;
+import com.traveltrace.app.R;
+import com.traveltrace.app.domain.TripRepository;
+import com.traveltrace.app.domain.model.TripSummary;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 
 import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
+import dagger.hilt.android.qualifiers.ApplicationContext;
 
-/**
- * 화면-우선 단계: 상태를 ScreenFixtures 에서 공급한다.
- * 로직 에픽에서 이 클래스의 공급원만 TripRepository 로 교체된다 — Renderer/레이아웃은 불변.
- */
+/** HOME 데이터. 저장된 여행 목록을 Room 에서 읽는다 — AI·EXIF 재실행은 없다. */
 @HiltViewModel
 public class HomeViewModel extends ViewModel {
 
+    private final Context context;
+    private final TripRepository tripRepository;
     private final MutableLiveData<HomeUiState> state = new MutableLiveData<>();
 
     @Inject
-    public HomeViewModel() {
-        state.setValue(ScreenFixtures.home());
+    public HomeViewModel(@ApplicationContext Context context, TripRepository tripRepository) {
+        this.context = context;
+        this.tripRepository = tripRepository;
     }
 
     public LiveData<HomeUiState> state() {
         return state;
     }
 
-    /** 빈 상태 디자인 확인용 토글 (프로토타입 homeState prop 대응). */
-    public void showEmpty(boolean empty) {
-        state.setValue(empty ? ScreenFixtures.homeEmpty() : ScreenFixtures.home());
+    /** 화면에 돌아올 때마다 호출한다 — 분석 후 새 여행이 바로 보여야 한다. */
+    public void refresh() {
+        tripRepository.list(summaries -> state.setValue(toState(summaries)));
+    }
+
+    /**
+     * 여행을 지우고 목록을 새로고침한다(finding 3). 분석이 취소됐는데도 이미 커밋된
+     * 여행이 하나 남는 수용된 레이스(AnalysisViewModel finding 2 참고)를 사용자가 직접
+     * 치울 수 있게 하는 최소한의 출구다 — 되돌리기·다중 선택은 없다.
+     */
+    public void delete(String tripId) {
+        tripRepository.delete(tripId, ignored -> refresh());
+    }
+
+    private HomeUiState toState(List<TripSummary> summaries) {
+        if (summaries.isEmpty()) {
+            return HomeUiState.empty();
+        }
+        List<HomeUiState.TripCard> cards = new ArrayList<>();
+        for (TripSummary s : summaries) {
+            cards.add(new HomeUiState.TripCard(
+                    s.id,
+                    s.name,
+                    meta(s),
+                    // 위치 라벨은 역지오코딩이 필요해 S1 범위 밖이다 — pill 을 숨긴다.
+                    null,
+                    true,
+                    s.heroMediaStoreId == null ? null : ContentUris.withAppendedId(
+                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI, s.heroMediaStoreId)));
+        }
+        return HomeUiState.trips(cards);
+    }
+
+    /** "82장 · 4일 · 2024. 6" (프로토타입 카드 메타). */
+    private String meta(TripSummary s) {
+        String yearMonth = new SimpleDateFormat("yyyy. M", Locale.KOREA)
+                .format(new Date(s.startDateUtc));
+        return context.getString(R.string.home_trip_meta,
+                s.photoCount, s.dayCount, yearMonth);
     }
 }

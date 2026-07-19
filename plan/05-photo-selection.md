@@ -2,6 +2,10 @@
 
 > 갤러리에서 여행 사진을 다중 선택하는 화면. MediaStore 기반 + 미디어 권한, 최대 ~100장, 안정적 `_ID` 확보.
 
+> **상태: 🟡 UI만 완료.** screens 계획이 그리드·선택 토글·카운터를 구현했고, 데이터는 `ScreenFixtures`의
+> 18타일 단색이다. **권한·MediaStore 쿼리·썸네일 로딩·`_ID` 전달은 전부 미착수** — 슬라이스 S1 소관.
+> (이미지 로딩 라이브러리는 아직 의존성조차 없다.)
+
 - **Epic**: Selection
 - **Depends on**: 02, 03, 04
 - **PRD**: §4.1, §9 #3·#6, §8(광범위 권한 트레이드오프)
@@ -23,11 +27,11 @@
 ## MediaStore (§9 #3 — Photo Picker 대신 MediaStore 채택)
 - [ ] `MediaStore.Images` 쿼리로 이미지 목록(썸네일·`_ID`·`DATE_TAKEN`·`DISPLAY_NAME`) 로드. **채택 사유는 캐싱/재조회를 위한 안정적 `_ID`**(Photo Picker의 영구 grant는 안정적 `_ID`를 못 주고 재선택을 강제).
 - [ ] 썸네일 로딩: `ContentResolver.loadThumbnail`/`Glide` 등으로 비동기·메모리 안전. 스크롤 성능(수백~수천 항목) 대비 페이징(`RecyclerView` + paging).
-- [ ] 3열 `RecyclerView` 그리드(프로토타입 3열 6dp gap), 선택 시 파란 체크 오버레이 + 미선택 dim(프로토타입 `boxShadow`/opacity 재현).
+- [x] 3열 `RecyclerView` 그리드(프로토타입 3열 6dp gap), 선택 시 파란 체크 오버레이 + 미선택 dim(프로토타입 `boxShadow`/opacity 재현). — `PhotoGridAdapter` + `GridSpacingDecoration`
 
 ## 선택 UX (프로토타입 SELECT)
 - [ ] 다중 선택 토글, **최대 ~100장** 상한(초과 시 안내). 프로토타입 문구 "최대 100장 · 탭하여 제외".
-- [ ] 상단 "선택한 사진 **N**장"(파란 강조) 실시간 갱신.
+- [x] 상단 "선택한 사진 **N**장"(파란 강조) 실시간 갱신. — `PhotoSelectionUiState.selectedCount()`
 - [ ] 기간 요약 카드("2024. 6. 12 – 6. 15 · 사진 94장" 형태) — 선택/DATE_TAKEN 기반 자동 계산. "변경"은 스텁.
 - [ ] "분석 시작" → 선택 `_ID` 목록을 공유 VM/리포지토리에 적재 후 Analyze로 전환(03 인자 계약).
 

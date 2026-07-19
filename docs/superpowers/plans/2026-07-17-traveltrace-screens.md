@@ -1,5 +1,9 @@
 # TravelTrace 화면 구현 계획 (Screens-First)
 
+> **상태: ✅ 완료 (2026-07-18).** Task 1~11 전량 구현 + 픽셀 검증 수정 9건 반영.
+> 검증: `./gradlew :app:testDebugUnitTest` → 81 tests / 0 failures (골든 스크린샷 14장 verify 포함).
+> 후속 작업은 이 계획이 아니라 [plan/ISSUES.md](../../../plan/ISSUES.md)의 수직 슬라이스 S1~로 이어진다.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 프로토타입 `prototype/TravelTrace.html`에 디자인된 모든 화면을 로직 없이 정적으로 구현한다 — 각 화면은 픽스처 UiState만으로 프로토타입과 육안 동등하게 렌더된다.
@@ -104,7 +108,7 @@ Renderer를 JVM에서 검증할 수 있어야 이후 모든 화면 태스크가 
 - Consumes: 없음 (첫 태스크)
 - Produces: Robolectric 테스트 실행 환경. 이후 모든 Renderer 테스트가 `@RunWith(RobolectricTestRunner.class)` + `ApplicationProvider.getApplicationContext()` + `ctx.setTheme(R.style.Theme_TravelTrace)` 패턴을 사용한다.
 
-- [ ] **Step 1: 버전 카탈로그에 Robolectric 추가**
+- [x] **Step 1: 버전 카탈로그에 Robolectric 추가**
 
 `android/gradle/libs.versions.toml` — `[versions]`의 `junit = "4.13.2"` 아래에 추가:
 
@@ -120,7 +124,7 @@ robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
 ```
 
-- [ ] **Step 2: build.gradle에 테스트 의존성 + 리소스 접근 활성화**
+- [x] **Step 2: build.gradle에 테스트 의존성 + 리소스 접근 활성화**
 
 `android/app/build.gradle`의 `buildFeatures { ... }` 블록 **바로 아래**에 추가 (같은 `android { }` 안):
 
@@ -141,7 +145,7 @@ androidx-test-core = { group = "androidx.test", name = "core", version.ref = "an
     testImplementation libs.androidx.test.core
 ```
 
-- [ ] **Step 3: 실패하는 스모크 테스트 작성**
+- [x] **Step 3: 실패하는 스모크 테스트 작성**
 
 `android/app/src/test/java/com/traveltrace/app/HarnessSmokeTest.java` (신규):
 
@@ -193,7 +197,7 @@ public class HarnessSmokeTest {
 }
 ```
 
-- [ ] **Step 4: 테스트 실행 — 실패 확인**
+- [x] **Step 4: 테스트 실행 — 실패 확인**
 
 Run: `cd android && ./gradlew :app:testDebugUnitTest --tests "com.traveltrace.app.HarnessSmokeTest"`
 Expected: Step 1~2를 아직 적용하지 않았다면 컴파일 실패(`package org.robolectric does not exist`). Step 1~2 적용 후에는 이 단계가 곧바로 PASS 한다 — 하네스 태스크의 red는 "의존성 부재"다.
@@ -201,12 +205,12 @@ Expected: Step 1~2를 아직 적용하지 않았다면 컴파일 실패(`package
 > **CLI 빌드 주의**: `GRADLE_USER_HOME`을 ASCII 경로로 지정하고(한글 사용자명 → Gradle 워커 크래시), Android Studio의 JBR을 `JAVA_HOME`으로 쓴다. 예:
 > `GRADLE_USER_HOME=C:/gradle-home JAVA_HOME="C:/Program Files/Android/Android Studio/jbr" ./gradlew :app:testDebugUnitTest`
 
-- [ ] **Step 5: 테스트 실행 — 통과 확인**
+- [x] **Step 5: 테스트 실행 — 통과 확인**
 
 Run: `cd android && ./gradlew :app:testDebugUnitTest --tests "com.traveltrace.app.HarnessSmokeTest"`
 Expected: PASS (2 tests). 최초 실행은 Robolectric 이 android-all jar 를 내려받아 수 분 걸릴 수 있다.
 
-- [ ] **Step 6: 커밋**
+- [x] **Step 6: 커밋**
 
 ```bash
 git add android/gradle/libs.versions.toml android/app/build.gradle android/app/src/test/java/com/traveltrace/app/HarnessSmokeTest.java
@@ -236,7 +240,7 @@ git commit -m "test: add Robolectric render-test harness"
   - `MapUiState(String tripTitle, int unknownCount, List<Stop> stops, int activeIndex, boolean playing, boolean satellite, boolean cinema, Speed speed)`; `Stop(String id, String name, String time, boolean ai, int extra, int toneColor)`; `enum Speed { RELAXED, NORMAL, FAST }`; 메서드 `Stop activeStop()`.
   - `ScreenFixtures.home()` / `.homeEmpty()` / `.photoSelection()` / `.analysisInProgress(int analyzed)` / `.analysisDone()` / `.map()` / `.unknownThumbTones()`.
 
-- [ ] **Step 1: 실패하는 픽스처 테스트 작성**
+- [x] **Step 1: 실패하는 픽스처 테스트 작성**
 
 `android/app/src/test/java/com/traveltrace/app/ui/preview/ScreenFixturesTest.java` (신규):
 
@@ -360,12 +364,12 @@ public class ScreenFixturesTest {
 }
 ```
 
-- [ ] **Step 2: 테스트 실행 — 실패 확인**
+- [x] **Step 2: 테스트 실행 — 실패 확인**
 
 Run: `cd android && ./gradlew :app:testDebugUnitTest --tests "com.traveltrace.app.ui.preview.ScreenFixturesTest"`
 Expected: 컴파일 실패 — `package com.traveltrace.app.ui.preview does not exist`, `cannot find symbol: class HomeUiState`.
 
-- [ ] **Step 3: HomeUiState 작성**
+- [x] **Step 3: HomeUiState 작성**
 
 `android/app/src/main/java/com/traveltrace/app/ui/home/HomeUiState.java` (신규):
 
@@ -418,7 +422,7 @@ public final class HomeUiState {
 }
 ```
 
-- [ ] **Step 4: PhotoSelectionUiState 작성**
+- [x] **Step 4: PhotoSelectionUiState 작성**
 
 `android/app/src/main/java/com/traveltrace/app/ui/photo/PhotoSelectionUiState.java` (신규):
 
@@ -477,7 +481,7 @@ public final class PhotoSelectionUiState {
 }
 ```
 
-- [ ] **Step 5: AnalysisUiState 작성**
+- [x] **Step 5: AnalysisUiState 작성**
 
 `android/app/src/main/java/com/traveltrace/app/ui/analysis/AnalysisUiState.java` (신규):
 
@@ -511,7 +515,7 @@ public final class AnalysisUiState {
 }
 ```
 
-- [ ] **Step 6: MapUiState 작성**
+- [x] **Step 6: MapUiState 작성**
 
 `android/app/src/main/java/com/traveltrace/app/ui/map/MapUiState.java` (신규):
 
@@ -578,7 +582,7 @@ public final class MapUiState {
 }
 ```
 
-- [ ] **Step 7: ScreenFixtures 작성**
+- [x] **Step 7: ScreenFixtures 작성**
 
 `android/app/src/main/java/com/traveltrace/app/ui/preview/ScreenFixtures.java` (신규):
 
@@ -710,12 +714,12 @@ public final class ScreenFixtures {
 }
 ```
 
-- [ ] **Step 8: 테스트 실행 — 통과 확인**
+- [x] **Step 8: 테스트 실행 — 통과 확인**
 
 Run: `cd android && ./gradlew :app:testDebugUnitTest --tests "com.traveltrace.app.ui.preview.ScreenFixturesTest"`
 Expected: PASS (8 tests).
 
-- [ ] **Step 9: 커밋**
+- [x] **Step 9: 커밋**
 
 ```bash
 git add android/app/src/main/java/com/traveltrace/app/ui/ android/app/src/test/java/com/traveltrace/app/ui/
@@ -759,7 +763,7 @@ git commit -m "feat: add screen UiState models and prototype fixtures"
   - `HomeViewModel.state()` → `LiveData<HomeUiState>`; `void showEmpty(boolean)` (디버그 토글용).
   - nav_graph: `@id/homeFragment` 가 `app:startDestination`. 액션 `@id/action_home_to_photo`, `@id/action_home_to_map`.
 
-- [ ] **Step 1: RecyclerView 의존성 명시**
+- [x] **Step 1: RecyclerView 의존성 명시**
 
 여행 카드 목록·사진 그리드(Task 4)가 RecyclerView를 쓴다. 지금은 `material` 을 통해 **전이적으로만** 들어와 있어 직접 참조가 우연에 기댄다 — 명시적으로 선언한다.
 
@@ -781,7 +785,7 @@ androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview"
     implementation libs.androidx.recyclerview
 ```
 
-- [ ] **Step 2: 문자열 추가**
+- [x] **Step 2: 문자열 추가**
 
 `android/app/src/main/res/values/strings.xml` — 기존 `<resources>` 안, 스캐폴딩 문자열 아래에 추가:
 
@@ -797,7 +801,7 @@ androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview"
     <string name="home_trip_hero_desc">여행 경로 미리보기</string>
 ```
 
-- [ ] **Step 3: 치수 추가**
+- [x] **Step 3: 치수 추가**
 
 `android/app/src/main/res/values/dimens.xml` — `<!-- Component -->` 섹션 끝(`sheet_handle_height` 아래)에 추가:
 
@@ -820,7 +824,7 @@ androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview"
     <dimen name="toast_bottom_margin">110dp</dimen>
 ```
 
-- [ ] **Step 4: 일러스트 전용 색 추가**
+- [x] **Step 4: 일러스트 전용 색 추가**
 
 `android/app/src/main/res/values/colors.xml` — `</resources>` 바로 위에 추가. (배지 전용 반투명 색과 같은 선례: 화면 고유 실측 색은 시맨틱 섹션으로 분리한다.)
 
@@ -842,7 +846,7 @@ androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview"
     <color name="pill_glass_bg">#B8FFFFFF</color>
 ```
 
-- [ ] **Step 5: 아이콘·배경 드로어블 작성**
+- [x] **Step 5: 아이콘·배경 드로어블 작성**
 
 `android/app/src/main/res/drawable/ic_add.xml` (신규):
 
@@ -886,7 +890,7 @@ androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview"
 </shape>
 ```
 
-- [ ] **Step 6: 일러스트 드로어블 3종 작성**
+- [x] **Step 6: 일러스트 드로어블 3종 작성**
 
 `android/app/src/main/res/drawable/hero_trip_paris.xml` (신규):
 
@@ -1028,7 +1032,7 @@ androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview"
 </vector>
 ```
 
-- [ ] **Step 7: 여행 카드 아이템 레이아웃 작성**
+- [x] **Step 7: 여행 카드 아이템 레이아웃 작성**
 
 `android/app/src/main/res/layout/item_trip_card.xml` (신규):
 
@@ -1104,7 +1108,7 @@ androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview"
 </com.google.android.material.card.MaterialCardView>
 ```
 
-- [ ] **Step 8: HOME 레이아웃 작성**
+- [x] **Step 8: HOME 레이아웃 작성**
 
 `android/app/src/main/res/layout/fragment_home.xml` (신규):
 
@@ -1274,7 +1278,7 @@ androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview"
 </androidx.constraintlayout.widget.ConstraintLayout>
 ```
 
-- [ ] **Step 9: 실패하는 HomeRenderer 테스트 작성**
+- [x] **Step 9: 실패하는 HomeRenderer 테스트 작성**
 
 `android/app/src/test/java/com/traveltrace/app/ui/home/HomeRendererTest.java` (신규):
 
@@ -1361,12 +1365,12 @@ public class HomeRendererTest {
 }
 ```
 
-- [ ] **Step 10: 테스트 실행 — 실패 확인**
+- [x] **Step 10: 테스트 실행 — 실패 확인**
 
 Run: `cd android && ./gradlew :app:testDebugUnitTest --tests "com.traveltrace.app.ui.home.HomeRendererTest"`
 Expected: 컴파일 실패 — `cannot find symbol: class HomeRenderer`, `cannot find symbol: class ToastPresenter`.
 
-- [ ] **Step 11: ToastPresenter · TripCardAdapter · HomeRenderer 작성**
+- [x] **Step 11: ToastPresenter · TripCardAdapter · HomeRenderer 작성**
 
 `android/app/src/main/java/com/traveltrace/app/ui/common/ToastPresenter.java` (신규):
 
@@ -1556,7 +1560,7 @@ public final class HomeRenderer {
 
 > **이 Renderer 형태가 이후 8개 화면의 본이다.** 세 가지가 의도적이다: (1) `static` — Fragment·Hilt 없이 Robolectric이 직접 호출한다; (2) 재사용 경로에서도 리스너를 다시 건다; (3) 빈 상태에서도 어댑터에 제출한다. 셋 다 실제 리뷰에서 잡힌 결함을 막은 것이므로 복사할 때 빠뜨리지 말 것.
 
-- [ ] **Step 12: HomeViewModel · HomeFragment 작성**
+- [x] **Step 12: HomeViewModel · HomeFragment 작성**
 
 `android/app/src/main/java/com/traveltrace/app/ui/home/HomeViewModel.java` (신규):
 
@@ -1663,7 +1667,7 @@ public class HomeFragment extends Fragment {
 }
 ```
 
-- [ ] **Step 13: nav_graph에 HOME 추가 + 시작 지점 변경**
+- [x] **Step 13: nav_graph에 HOME 추가 + 시작 지점 변경**
 
 `android/app/src/main/res/navigation/nav_graph.xml` — `app:startDestination` 을 `@id/homeFragment` 로 바꾸고, `photoSelectionFragment` **앞에** HOME 목적지를 추가한다:
 
@@ -1684,17 +1688,17 @@ public class HomeFragment extends Fragment {
     </fragment>
 ```
 
-- [ ] **Step 14: 테스트 실행 — 통과 확인**
+- [x] **Step 14: 테스트 실행 — 통과 확인**
 
 Run: `cd android && ./gradlew :app:testDebugUnitTest --tests "com.traveltrace.app.ui.home.HomeRendererTest"`
 Expected: PASS (5 tests).
 
-- [ ] **Step 15: 앱 빌드 + 육안 대조**
+- [x] **Step 15: 앱 빌드 + 육안 대조**
 
 Run: `cd android && ./gradlew :app:assembleDebug`
 Expected: BUILD SUCCESSFUL. 기기/에뮬레이터에 설치해 HOME이 프로토타입과 일치하는지 확인 — 여행 카드 2장, 제주 카드 탭 시 토스트, CTA.
 
-- [ ] **Step 16: 커밋**
+- [x] **Step 16: 커밋**
 
 ```bash
 git add android/app/src/main/res android/app/src/main/java/com/traveltrace/app/ui android/app/src/test/java/com/traveltrace/app/ui/home
@@ -1733,7 +1737,7 @@ git commit -m "feat: implement HOME screen (trip list, empty state, CTA, toast)"
   - `PhotoSelectionViewModel.state()` → `LiveData<PhotoSelectionUiState>`; `void toggle(int index)`
   - 기존 `fragment_photo_selection.xml` 의 스캐폴딩 뷰 id(`title`, `nextButton`)는 사라진다. `HarnessSmokeTest` 가 이 레이아웃을 인플레이트하지만 루트만 확인하고 두 id 를 참조하지 않으므로 그대로 통과한다.
 
-- [ ] **Step 1: 문자열 추가**
+- [x] **Step 1: 문자열 추가**
 
 `android/app/src/main/res/values/strings.xml` — HOME 문자열 아래에 추가:
 
@@ -1771,7 +1775,7 @@ git commit -m "feat: implement HOME screen (trip list, empty state, CTA, toast)"
 
 > `screen_analysis_title` / `screen_map_title` / `action_to_map` 은 각각 Task 5·7 에서 같은 방식으로 정리한다.
 
-- [ ] **Step 2: 치수·색·스타일 추가**
+- [x] **Step 2: 치수·색·스타일 추가**
 
 `android/app/src/main/res/values/dimens.xml` — 이전 태스크의 실측 섹션 아래에 추가:
 
@@ -1801,7 +1805,7 @@ git commit -m "feat: implement HOME screen (trip list, empty state, CTA, toast)"
     </style>
 ```
 
-- [ ] **Step 3: 배지·라벨 드로어블 작성**
+- [x] **Step 3: 배지·라벨 드로어블 작성**
 
 `android/app/src/main/res/drawable/bg_icon_tile_glass.xml` (신규):
 
@@ -1840,7 +1844,7 @@ git commit -m "feat: implement HOME screen (trip list, empty state, CTA, toast)"
 </shape>
 ```
 
-- [ ] **Step 4: 그리드 타일 레이아웃 작성**
+- [x] **Step 4: 그리드 타일 레이아웃 작성**
 
 `android/app/src/main/res/layout/item_photo_tile.xml` (신규):
 
@@ -1905,7 +1909,7 @@ git commit -m "feat: implement HOME screen (trip list, empty state, CTA, toast)"
 </androidx.constraintlayout.widget.ConstraintLayout>
 ```
 
-- [ ] **Step 5: SELECT 레이아웃 재작성**
+- [x] **Step 5: SELECT 레이아웃 재작성**
 
 `android/app/src/main/res/layout/fragment_photo_selection.xml` — 기존 스캐폴딩 내용을 전부 지우고 아래로 교체:
 
@@ -2084,7 +2088,7 @@ git commit -m "feat: implement HOME screen (trip list, empty state, CTA, toast)"
 </androidx.constraintlayout.widget.ConstraintLayout>
 ```
 
-- [ ] **Step 6: 실패하는 렌더 테스트 작성**
+- [x] **Step 6: 실패하는 렌더 테스트 작성**
 
 `android/app/src/test/java/com/traveltrace/app/ui/photo/PhotoSelectionRendererTest.java` (신규):
 
@@ -2155,12 +2159,12 @@ public class PhotoSelectionRendererTest {
 }
 ```
 
-- [ ] **Step 7: 테스트 실행 — 실패 확인**
+- [x] **Step 7: 테스트 실행 — 실패 확인**
 
 Run: `cd android && ./gradlew :app:testDebugUnitTest --tests "com.traveltrace.app.ui.photo.PhotoSelectionRendererTest"`
 Expected: 컴파일 실패 — `cannot find symbol: class PhotoSelectionRenderer`.
 
-- [ ] **Step 8: PhotoGridAdapter 작성**
+- [x] **Step 8: PhotoGridAdapter 작성**
 
 `android/app/src/main/java/com/traveltrace/app/ui/photo/PhotoGridAdapter.java` (신규):
 
@@ -2262,7 +2266,7 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<PhotoGridAdapter.VH> 
 }
 ```
 
-- [ ] **Step 9: PhotoSelectionRenderer 작성**
+- [x] **Step 9: PhotoSelectionRenderer 작성**
 
 `android/app/src/main/java/com/traveltrace/app/ui/photo/PhotoSelectionRenderer.java` (신규):
 
@@ -2364,7 +2368,7 @@ public class GridSpacingDecoration extends RecyclerView.ItemDecoration {
 }
 ```
 
-- [ ] **Step 10: ViewModel · Fragment 재작성**
+- [x] **Step 10: ViewModel · Fragment 재작성**
 
 `android/app/src/main/java/com/traveltrace/app/ui/photo/PhotoSelectionViewModel.java` — 전체 교체:
 
@@ -2462,17 +2466,17 @@ public class PhotoSelectionFragment extends Fragment {
 }
 ```
 
-- [ ] **Step 11: 테스트 실행 — 통과 확인**
+- [x] **Step 11: 테스트 실행 — 통과 확인**
 
 Run: `cd android && ./gradlew :app:testDebugUnitTest --tests "com.traveltrace.app.ui.photo.PhotoSelectionRendererTest"`
 Expected: PASS (4 tests).
 
-- [ ] **Step 12: 앱 빌드 + 육안 대조**
+- [x] **Step 12: 앱 빌드 + 육안 대조**
 
 Run: `cd android && ./gradlew :app:assembleDebug`
 Expected: BUILD SUCCESSFUL. HOME → "새 여행 만들기" → SELECT. 타일 탭 시 링/체크/카운터가 즉시 반응.
 
-- [ ] **Step 13: 커밋**
+- [x] **Step 13: 커밋**
 
 ```bash
 git add android/app/src/main android/app/src/test/java/com/traveltrace/app/ui/photo
@@ -2508,7 +2512,7 @@ git commit -m "feat: implement SELECT screen (period card, 3-col photo grid)"
   - `AnalysisRenderer.render(FragmentAnalysisBinding binding, AnalysisUiState state)` — static void. analyzing/done 그룹 전환 + 진행률·문구 반영.
   - `AnalysisViewModel.state()` → `LiveData<AnalysisUiState>`; `void setDone(boolean)` (디자인 확인용 토글).
 
-- [ ] **Step 1: 문자열 추가 + 스캐폴딩 정리**
+- [x] **Step 1: 문자열 추가 + 스캐폴딩 정리**
 
 `android/app/src/main/res/values/strings.xml` — SELECT 문자열 아래에 추가:
 
@@ -2532,7 +2536,7 @@ git commit -m "feat: implement SELECT screen (period card, 3-col photo grid)"
         android:label="@string/analyze_title">
 ```
 
-- [ ] **Step 2: 치수·색 추가**
+- [x] **Step 2: 치수·색 추가**
 
 `android/app/src/main/res/values/dimens.xml` — 실측 섹션에 추가:
 
@@ -2556,7 +2560,7 @@ git commit -m "feat: implement SELECT screen (period card, 3-col photo grid)"
     <color name="progress_track">@color/palette_grey_100</color>
 ```
 
-- [ ] **Step 3: 드로어블 작성**
+- [x] **Step 3: 드로어블 작성**
 
 `android/app/src/main/res/drawable/ic_chevron_right.xml` (신규):
 
@@ -2608,7 +2612,7 @@ git commit -m "feat: implement SELECT screen (period card, 3-col photo grid)"
 
 > 진행 카드의 16dp radius 는 Step 2에서 추가한 `radius_16` 을 쓴다.
 
-- [ ] **Step 4: ANALYZE 레이아웃 재작성**
+- [x] **Step 4: ANALYZE 레이아웃 재작성**
 
 `android/app/src/main/res/layout/fragment_analysis.xml` — 기존 스캐폴딩을 전부 지우고 교체:
 
@@ -2810,7 +2814,7 @@ git commit -m "feat: implement SELECT screen (period card, 3-col photo grid)"
 
 > 프로토타입 진행 카드는 `left:62px` 로 뒤로가기 버튼 옆에 붙는다. 위 레이아웃은 `analyzeBack`(12dp + 40dp) 오른쪽에 10dp 를 더해 동일한 위치가 된다.
 
-- [ ] **Step 5: 실패하는 렌더 테스트 작성**
+- [x] **Step 5: 실패하는 렌더 테스트 작성**
 
 `android/app/src/test/java/com/traveltrace/app/ui/analysis/AnalysisRendererTest.java` (신규):
 
@@ -2892,12 +2896,12 @@ public class AnalysisRendererTest {
 }
 ```
 
-- [ ] **Step 6: 테스트 실행 — 실패 확인**
+- [x] **Step 6: 테스트 실행 — 실패 확인**
 
 Run: `cd android && ./gradlew :app:testDebugUnitTest --tests "com.traveltrace.app.ui.analysis.AnalysisRendererTest"`
 Expected: 컴파일 실패 — `cannot find symbol: class AnalysisRenderer`.
 
-- [ ] **Step 7: AnalysisRenderer 작성**
+- [x] **Step 7: AnalysisRenderer 작성**
 
 `android/app/src/main/java/com/traveltrace/app/ui/analysis/AnalysisRenderer.java` (신규):
 
@@ -2942,7 +2946,7 @@ public final class AnalysisRenderer {
 }
 ```
 
-- [ ] **Step 8: ViewModel · Fragment 재작성**
+- [x] **Step 8: ViewModel · Fragment 재작성**
 
 `android/app/src/main/java/com/traveltrace/app/ui/analysis/AnalysisViewModel.java` — 전체 교체:
 
@@ -3046,12 +3050,12 @@ public class AnalysisFragment extends Fragment {
 }
 ```
 
-- [ ] **Step 9: 테스트 실행 — 통과 확인**
+- [x] **Step 9: 테스트 실행 — 통과 확인**
 
 Run: `cd android && ./gradlew :app:testDebugUnitTest --tests "com.traveltrace.app.ui.analysis.AnalysisRendererTest"`
 Expected: PASS (5 tests).
 
-- [ ] **Step 10: 커밋**
+- [x] **Step 10: 커밋**
 
 ```bash
 git add android/app/src/main android/app/src/test/java/com/traveltrace/app/ui/analysis
@@ -3080,7 +3084,7 @@ git commit -m "feat: implement ANALYZE screen (progress card, done state, CTA)"
   - `TimezoneSheetFragment.Listener { void onTimezoneConfirmed(); void onChangeCityRequested(); }` — 호스트 Fragment 가 구현한다.
   - `TimezoneSheetFragment.bindContent(SheetTimezoneBinding binding, String cityName)` — static, 테스트가 다이얼로그 없이 콘텐츠 렌더를 검증할 수 있게 분리.
 
-- [ ] **Step 1: 문자열·치수 추가**
+- [x] **Step 1: 문자열·치수 추가**
 
 `android/app/src/main/res/values/strings.xml` — ANALYZE 문자열 아래에 추가:
 
@@ -3101,7 +3105,7 @@ git commit -m "feat: implement ANALYZE screen (progress card, done state, CTA)"
     <dimen name="radius_13">13dp</dimen>
 ```
 
-- [ ] **Step 2: 시트 레이아웃 작성**
+- [x] **Step 2: 시트 레이아웃 작성**
 
 `android/app/src/main/res/layout/sheet_timezone.xml` (신규):
 
@@ -3164,7 +3168,7 @@ git commit -m "feat: implement ANALYZE screen (progress card, done state, CTA)"
 </LinearLayout>
 ```
 
-- [ ] **Step 3: 실패하는 시트 렌더 테스트 작성**
+- [x] **Step 3: 실패하는 시트 렌더 테스트 작성**
 
 `android/app/src/test/java/com/traveltrace/app/ui/analysis/TimezoneSheetTest.java` (신규):
 
@@ -3216,12 +3220,12 @@ public class TimezoneSheetTest {
 }
 ```
 
-- [ ] **Step 4: 테스트 실행 — 실패 확인**
+- [x] **Step 4: 테스트 실행 — 실패 확인**
 
 Run: `cd android && ./gradlew :app:testDebugUnitTest --tests "com.traveltrace.app.ui.analysis.TimezoneSheetTest"`
 Expected: 컴파일 실패 — `cannot find symbol: class TimezoneSheetFragment`.
 
-- [ ] **Step 5: TimezoneSheetFragment 작성**
+- [x] **Step 5: TimezoneSheetFragment 작성**
 
 `android/app/src/main/java/com/traveltrace/app/ui/analysis/TimezoneSheetFragment.java` (신규):
 
@@ -3328,7 +3332,7 @@ public class TimezoneSheetFragment extends BottomSheetDialogFragment {
 }
 ```
 
-- [ ] **Step 6: AnalysisFragment 에서 시트 띄우기**
+- [x] **Step 6: AnalysisFragment 에서 시트 띄우기**
 
 `android/app/src/main/java/com/traveltrace/app/ui/analysis/AnalysisFragment.java` — 클래스 선언에 `implements TimezoneSheetFragment.Listener` 를 추가하고, 아래 변경을 적용한다.
 
@@ -3382,7 +3386,7 @@ import com.traveltrace.app.ui.common.ToastPresenter;
 
 > `newInstance` 는 **child** FragmentManager 로 띄운다 — `onAttach` 의 `getParentFragment() instanceof Listener` 가 성립해야 리스너가 붙는다.
 
-- [ ] **Step 7: 토스트 문자열·pill 추가**
+- [x] **Step 7: 토스트 문자열·pill 추가**
 
 `android/app/src/main/res/values/strings.xml` 에 추가:
 
@@ -3412,17 +3416,17 @@ import com.traveltrace.app.ui.common.ToastPresenter;
         app:layout_constraintStart_toStartOf="parent" />
 ```
 
-- [ ] **Step 8: 테스트 실행 — 통과 확인**
+- [x] **Step 8: 테스트 실행 — 통과 확인**
 
 Run: `cd android && ./gradlew :app:testDebugUnitTest --tests "com.traveltrace.app.ui.analysis.*"`
 Expected: PASS (AnalysisRendererTest 5 + TimezoneSheetTest 2 = 7 tests).
 
-- [ ] **Step 9: 앱 빌드 + 육안 대조**
+- [x] **Step 9: 앱 빌드 + 육안 대조**
 
 Run: `cd android && ./gradlew :app:assembleDebug`
 Expected: BUILD SUCCESSFUL. SELECT → "분석 시작" → ANALYZE 진입과 동시에 타임존 시트. "다른 도시 선택" → 토스트.
 
-- [ ] **Step 10: 커밋**
+- [x] **Step 10: 커밋**
 
 ```bash
 git add android/app/src/main android/app/src/test/java/com/traveltrace/app/ui/analysis
@@ -3462,7 +3466,7 @@ git commit -m "feat: add timezone confirm sheet to ANALYZE"
   - 상수 `MapReplayFragment.PARIS` (`LatLng`), `MapReplayFragment.STATIC_ZOOM` (float, 12f)
   - Task 9·10·11 이 `fragment_map_replay.xml` 의 include 지점(`mapBottomSheet`, `cinemaOverlay`)에 각자 레이아웃을 붙인다.
 
-- [ ] **Step 1: 문자열 추가 + 스캐폴딩 정리**
+- [x] **Step 1: 문자열 추가 + 스캐폴딩 정리**
 
 `android/app/src/main/res/values/strings.xml` — 추가:
 
@@ -3483,7 +3487,7 @@ git commit -m "feat: add timezone confirm sheet to ANALYZE"
         android:label="@string/map_title" />
 ```
 
-- [ ] **Step 2: 치수·색 추가**
+- [x] **Step 2: 치수·색 추가**
 
 `android/app/src/main/res/values/dimens.xml` — 추가:
 
@@ -3503,7 +3507,7 @@ git commit -m "feat: add timezone confirm sheet to ANALYZE"
     <color name="satellite_scrim_bottom">#38000000</color>
 ```
 
-- [ ] **Step 3: 드로어블 작성**
+- [x] **Step 3: 드로어블 작성**
 
 `android/app/src/main/res/drawable/bg_pill_segment.xml` (신규):
 
@@ -3540,7 +3544,7 @@ git commit -m "feat: add timezone confirm sheet to ANALYZE"
 </shape>
 ```
 
-- [ ] **Step 4: 상단바 레이아웃 작성 (단독 인플레이트 가능)**
+- [x] **Step 4: 상단바 레이아웃 작성 (단독 인플레이트 가능)**
 
 `android/app/src/main/res/layout/view_map_top_bar.xml` (신규):
 
@@ -3660,7 +3664,7 @@ git commit -m "feat: add timezone confirm sheet to ANALYZE"
 </androidx.constraintlayout.widget.ConstraintLayout>
 ```
 
-- [ ] **Step 5: MAP 레이아웃 재작성**
+- [x] **Step 5: MAP 레이아웃 재작성**
 
 `android/app/src/main/res/layout/fragment_map_replay.xml` — 전체 교체:
 
@@ -3729,7 +3733,7 @@ git commit -m "feat: add timezone confirm sheet to ANALYZE"
 
 > 상단바는 시스템 상태바와 겹치지 않도록 `MapReplayFragment` 가 인셋을 적용한다(Step 8). 지도는 화면 전체를 덮어야 하므로 루트에 `fitsSystemWindows` 를 쓰지 않는다.
 
-- [ ] **Step 6: 실패하는 상단바 렌더 테스트 작성**
+- [x] **Step 6: 실패하는 상단바 렌더 테스트 작성**
 
 `android/app/src/test/java/com/traveltrace/app/ui/map/MapTopBarRendererTest.java` (신규):
 
@@ -3798,7 +3802,7 @@ public class MapTopBarRendererTest {
 }
 ```
 
-- [ ] **Step 7: MapRenderer 작성**
+- [x] **Step 7: MapRenderer 작성**
 
 `android/app/src/main/java/com/traveltrace/app/ui/map/MapRenderer.java` (신규):
 
@@ -3855,7 +3859,7 @@ public final class MapRenderer {
 </shape>
 ```
 
-- [ ] **Step 8: ViewModel · Fragment 재작성**
+- [x] **Step 8: ViewModel · Fragment 재작성**
 
 `android/app/src/main/java/com/traveltrace/app/ui/map/MapReplayViewModel.java` — 전체 교체:
 
@@ -4004,19 +4008,19 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
 }
 ```
 
-- [ ] **Step 9: 테스트 실행 — 통과 확인**
+- [x] **Step 9: 테스트 실행 — 통과 확인**
 
 Run: `cd android && ./gradlew :app:testDebugUnitTest --tests "com.traveltrace.app.ui.map.MapTopBarRendererTest"`
 Expected: PASS (3 tests).
 
-- [ ] **Step 10: 앱 빌드 + 육안 대조 (실기기/에뮬레이터 필요)**
+- [x] **Step 10: 앱 빌드 + 육안 대조 (실기기/에뮬레이터 필요)**
 
 Run: `cd android && ./gradlew :app:assembleDebug`
 Expected: BUILD SUCCESSFUL. HOME → 파리 카드 → MAP. 파리 지도가 뜨고 상단바·칩이 겹쳐 보이며, 지도/위성 탭이 실제로 지도 타입을 바꾼다.
 
 > 지도가 **회색으로만** 보이면 `local.properties` 의 `MAPS_API_KEY` 가 유효하지 않거나 해당 키에 "Maps SDK for Android" 가 활성화되지 않은 것이다. 크롬(상단바·칩)은 그래도 정상 렌더되므로 이 태스크의 디자인 검증은 계속할 수 있다.
 
-- [ ] **Step 11: 커밋**
+- [x] **Step 11: 커밋**
 
 ```bash
 git add android/app/src/main android/app/src/test/java/com/traveltrace/app/ui/map
@@ -4043,7 +4047,7 @@ git commit -m "feat: implement MAP shell (static map, top bar, unknown chip)"
   - `void setOnStopSelectedListener(OnStopSelectedListener l)`; `interface OnStopSelectedListener { void onStopSelected(int index); }`
   - `int indexAt(float x)` — x 좌표 → 정차점 인덱스 (테스트가 탭 판정을 직접 검증한다). 정차점이 없으면 `-1`.
 
-- [ ] **Step 1: 치수 추가**
+- [x] **Step 1: 치수 추가**
 
 `android/app/src/main/res/values/dimens.xml` — 추가:
 
@@ -4056,7 +4060,7 @@ git commit -m "feat: implement MAP shell (static map, top bar, unknown chip)"
     <dimen name="scrubber_height">24dp</dimen>
 ```
 
-- [ ] **Step 2: 실패하는 테스트 작성**
+- [x] **Step 2: 실패하는 테스트 작성**
 
 `android/app/src/test/java/com/traveltrace/app/ui/map/TimelineScrubberViewTest.java` (신규):
 
@@ -4144,12 +4148,12 @@ public class TimelineScrubberViewTest {
 }
 ```
 
-- [ ] **Step 3: 테스트 실행 — 실패 확인**
+- [x] **Step 3: 테스트 실행 — 실패 확인**
 
 Run: `cd android && ./gradlew :app:testDebugUnitTest --tests "com.traveltrace.app.ui.map.TimelineScrubberViewTest"`
 Expected: 컴파일 실패 — `cannot find symbol: class TimelineScrubberView`.
 
-- [ ] **Step 4: TimelineScrubberView 작성**
+- [x] **Step 4: TimelineScrubberView 작성**
 
 `android/app/src/main/java/com/traveltrace/app/ui/map/TimelineScrubberView.java` (신규):
 
@@ -4329,12 +4333,12 @@ public class TimelineScrubberView extends View {
 
 > `DashPathEffect` 는 하드웨어 가속에서 원 테두리에 정상 적용된다 — VectorDrawable 의 점선 제약(계획 상단 격차 목록)은 여기 해당하지 않는다.
 
-- [ ] **Step 5: 테스트 실행 — 통과 확인**
+- [x] **Step 5: 테스트 실행 — 통과 확인**
 
 Run: `cd android && ./gradlew :app:testDebugUnitTest --tests "com.traveltrace.app.ui.map.TimelineScrubberViewTest"`
 Expected: PASS (6 tests).
 
-- [ ] **Step 6: 커밋**
+- [x] **Step 6: 커밋**
 
 ```bash
 git add android/app/src/main/java/com/traveltrace/app/ui/map/TimelineScrubberView.java android/app/src/main/res/values/dimens.xml android/app/src/test/java/com/traveltrace/app/ui/map/TimelineScrubberViewTest.java
@@ -4371,7 +4375,7 @@ git commit -m "feat: add timeline scrubber custom view"
   - `MapReplayViewModel`: `void togglePlay()`, `void setSpeed(MapUiState.Speed)`, `void jumpTo(int index)`, `void next()`, `void prev()`, `void setCinema(boolean)` — "빼기"는 Step 9에서 토스트로만 처리하므로 `detachActive()` 는 만들지 않는다(실제 핀 제거는 로직 에픽 13).
   - `MapUiState.Stop` 의 `extra`/`ai`/`toneColor` 소비 지점 확정.
 
-- [ ] **Step 1: 문자열·치수·색 추가**
+- [x] **Step 1: 문자열·치수·색 추가**
 
 `android/app/src/main/res/values/strings.xml` — 추가:
 
@@ -4421,7 +4425,7 @@ git commit -m "feat: add timeline scrubber custom view"
     <color name="text_shadow_strong">#59000000</color>
 ```
 
-- [ ] **Step 2: 드로어블 작성**
+- [x] **Step 2: 드로어블 작성**
 
 `android/app/src/main/res/drawable/ic_cinema.xml` (신규):
 
@@ -4510,7 +4514,7 @@ git commit -m "feat: add timeline scrubber custom view"
 </shape>
 ```
 
-- [ ] **Step 3: 하단 시트 레이아웃 작성**
+- [x] **Step 3: 하단 시트 레이아웃 작성**
 
 `android/app/src/main/res/layout/view_map_bottom_sheet.xml` (신규):
 
@@ -4779,7 +4783,7 @@ git commit -m "feat: add timeline scrubber custom view"
 </LinearLayout>
 ```
 
-- [ ] **Step 4: MAP 레이아웃에 시트 붙이기**
+- [x] **Step 4: MAP 레이아웃에 시트 붙이기**
 
 `android/app/src/main/res/layout/fragment_map_replay.xml` — `toastPill` **앞**에 include 를 추가한다:
 
@@ -4794,7 +4798,7 @@ git commit -m "feat: add timeline scrubber custom view"
         app:layout_constraintStart_toStartOf="parent" />
 ```
 
-- [ ] **Step 5: 실패하는 시트 렌더 테스트 작성**
+- [x] **Step 5: 실패하는 시트 렌더 테스트 작성**
 
 `android/app/src/test/java/com/traveltrace/app/ui/map/MapSheetRendererTest.java` (신규):
 
@@ -4901,12 +4905,12 @@ public class MapSheetRendererTest {
 }
 ```
 
-- [ ] **Step 6: 테스트 실행 — 실패 확인**
+- [x] **Step 6: 테스트 실행 — 실패 확인**
 
 Run: `cd android && ./gradlew :app:testDebugUnitTest --tests "com.traveltrace.app.ui.map.MapSheetRendererTest"`
 Expected: 컴파일 실패 — `cannot find symbol: method renderSheet`.
 
-- [ ] **Step 7: MapRenderer.renderSheet 추가**
+- [x] **Step 7: MapRenderer.renderSheet 추가**
 
 `android/app/src/main/java/com/traveltrace/app/ui/map/MapRenderer.java` — `applyTab` 위에 다음 메서드를 추가하고, import 에 `com.traveltrace.app.databinding.ViewMapBottomSheetBinding` 를 더한다:
 
@@ -4969,7 +4973,7 @@ import android.content.res.ColorStateList;
 import com.traveltrace.app.databinding.ViewMapBottomSheetBinding;
 ```
 
-- [ ] **Step 8: ViewModel 에 컨트롤 동작 추가**
+- [x] **Step 8: ViewModel 에 컨트롤 동작 추가**
 
 `android/app/src/main/java/com/traveltrace/app/ui/map/MapReplayViewModel.java` — `setSatellite` 아래에 추가:
 
@@ -5027,7 +5031,7 @@ import com.traveltrace.app.databinding.ViewMapBottomSheetBinding;
     }
 ```
 
-- [ ] **Step 9: Fragment 에서 시트 배선**
+- [x] **Step 9: Fragment 에서 시트 배선**
 
 `android/app/src/main/java/com/traveltrace/app/ui/map/MapReplayFragment.java` — `onViewCreated` 의 탭 리스너 아래에 추가:
 
@@ -5063,12 +5067,12 @@ import com.traveltrace.app.ui.common.ToastPresenter;
 
 > 프로토타입의 `detach` 는 핀을 목록에서 실제로 빼지만, 화면 단계에선 토스트만 띄운다 — 목록 변형은 로직 에픽 13 소관.
 
-- [ ] **Step 10: 테스트 실행 — 통과 확인**
+- [x] **Step 10: 테스트 실행 — 통과 확인**
 
 Run: `cd android && ./gradlew :app:testDebugUnitTest --tests "com.traveltrace.app.ui.map.*"`
 Expected: PASS (MapTopBarRendererTest 3 + TimelineScrubberViewTest 6 + MapSheetRendererTest 6 = 15 tests).
 
-- [ ] **Step 11: 커밋**
+- [x] **Step 11: 커밋**
 
 ```bash
 git add android/app/src/main android/app/src/test/java/com/traveltrace/app/ui/map
@@ -5098,7 +5102,7 @@ git commit -m "feat: implement MAP bottom sheet (photo banner, scrubber, control
   - `MapRenderer.renderCinema(ViewCinemaOverlayBinding binding, MapUiState state, String cityLabel)` — static void.
   - `fragment_map_replay.xml` 의 `@id/cinemaOverlay` include 지점.
 
-- [ ] **Step 1: 문자열·치수·색 추가**
+- [x] **Step 1: 문자열·치수·색 추가**
 
 `android/app/src/main/res/values/strings.xml` — 추가:
 
@@ -5124,7 +5128,7 @@ git commit -m "feat: implement MAP bottom sheet (photo banner, scrubber, control
     <color name="cinema_hint_text">#D9FFFFFF</color>
 ```
 
-- [ ] **Step 2: 드로어블·레이아웃 작성**
+- [x] **Step 2: 드로어블·레이아웃 작성**
 
 `android/app/src/main/res/drawable/bg_cinema_hint.xml` (신규):
 
@@ -5224,7 +5228,7 @@ git commit -m "feat: implement MAP bottom sheet (photo banner, scrubber, control
 
 > 프로토타입 카드는 화면 폭의 88% 다. 390dp 기준 좌우 24dp 마진이 이에 해당한다(390 - 48 = 342 ≈ 87.7%). 카드 모서리 20dp 는 Step 4에서 `ViewOutlineProvider` 대신 `bg_map_sheet` 계열 배경으로 처리하지 않고, `cinemaCard` 에 `clipToOutline` 을 주는 대신 **톤 View 에 radius 배경을 코드로 지정**한다 — Step 4 참고.
 
-- [ ] **Step 3: 실패하는 렌더 테스트 작성**
+- [x] **Step 3: 실패하는 렌더 테스트 작성**
 
 `android/app/src/test/java/com/traveltrace/app/ui/map/CinemaOverlayRendererTest.java` (신규):
 
@@ -5291,7 +5295,7 @@ public class CinemaOverlayRendererTest {
 }
 ```
 
-- [ ] **Step 4: MapRenderer.renderCinema 추가**
+- [x] **Step 4: MapRenderer.renderCinema 추가**
 
 `android/app/src/main/java/com/traveltrace/app/ui/map/MapRenderer.java` — `applySpeed` 위에 추가:
 
@@ -5336,7 +5340,7 @@ import android.view.ViewOutlineProvider;
 import com.traveltrace.app.databinding.ViewCinemaOverlayBinding;
 ```
 
-- [ ] **Step 5: MAP 레이아웃에 오버레이 붙이기 + 배선**
+- [x] **Step 5: MAP 레이아웃에 오버레이 붙이기 + 배선**
 
 `android/app/src/main/res/layout/fragment_map_replay.xml` — `toastPill` **앞**에 추가 (시트보다 위, 토스트보다 아래):
 
@@ -5378,12 +5382,12 @@ import com.traveltrace.app.databinding.ViewCinemaOverlayBinding;
 >
 > (`MapReplayViewModel` 은 이미 `ScreenFixtures` 를 import 하고 있다. `MapReplayFragment` 에는 `ScreenFixtures` import 를 추가하지 않는다.)
 
-- [ ] **Step 6: 테스트 실행 — 통과 확인**
+- [x] **Step 6: 테스트 실행 — 통과 확인**
 
 Run: `cd android && ./gradlew :app:testDebugUnitTest --tests "com.traveltrace.app.ui.map.CinemaOverlayRendererTest"`
 Expected: PASS (3 tests).
 
-- [ ] **Step 7: 커밋**
+- [x] **Step 7: 커밋**
 
 ```bash
 git add android/app/src/main android/app/src/test/java/com/traveltrace/app/ui/map
@@ -5410,7 +5414,7 @@ git commit -m "feat: add cinema mode overlay to MAP"
   - `UnknownPhotosSheetFragment.TAG` (String, `"unknown_sheet"`)
   - `UnknownPhotosSheetFragment.bindContent(SheetUnknownPhotosBinding binding, int count, int[] tones)` — static, 다이얼로그 없이 테스트 가능.
 
-- [ ] **Step 1: 문자열 추가**
+- [x] **Step 1: 문자열 추가**
 
 `android/app/src/main/res/values/strings.xml` — 추가:
 
@@ -5421,7 +5425,7 @@ git commit -m "feat: add cinema mode overlay to MAP"
     <string name="unknown_sheet_close">닫기</string>
 ```
 
-- [ ] **Step 2: 드로어 레이아웃 작성**
+- [x] **Step 2: 드로어 레이아웃 작성**
 
 `android/app/src/main/res/layout/sheet_unknown_photos.xml` (신규):
 
@@ -5485,7 +5489,7 @@ git commit -m "feat: add cinema mode overlay to MAP"
 </LinearLayout>
 ```
 
-- [ ] **Step 3: 실패하는 테스트 작성**
+- [x] **Step 3: 실패하는 테스트 작성**
 
 `android/app/src/test/java/com/traveltrace/app/ui/map/UnknownPhotosSheetTest.java` (신규):
 
@@ -5541,12 +5545,12 @@ public class UnknownPhotosSheetTest {
 }
 ```
 
-- [ ] **Step 4: 테스트 실행 — 실패 확인**
+- [x] **Step 4: 테스트 실행 — 실패 확인**
 
 Run: `cd android && ./gradlew :app:testDebugUnitTest --tests "com.traveltrace.app.ui.map.UnknownPhotosSheetTest"`
 Expected: 컴파일 실패 — `cannot find symbol: class UnknownPhotosSheetFragment`.
 
-- [ ] **Step 5: UnknownPhotosSheetFragment 작성**
+- [x] **Step 5: UnknownPhotosSheetFragment 작성**
 
 `android/app/src/main/java/com/traveltrace/app/ui/map/UnknownPhotosSheetFragment.java` (신규):
 
@@ -5655,7 +5659,7 @@ public class UnknownPhotosSheetFragment extends BottomSheetDialogFragment {
 
 > 정사각 타일은 `GridLayout` 이 폭을 4등분해 정하고 높이는 래핑된다. 프로토타입의 `aspect-ratio:1` 을 맞추려면 Step 6에서 높이를 폭에 맞춘다.
 
-- [ ] **Step 6: 타일을 정사각으로 맞추기**
+- [x] **Step 6: 타일을 정사각으로 맞추기**
 
 `bindContent` 의 `binding.unknownGrid.addView(tile);` **아래**에, 그리드 폭이 정해진 뒤 높이를 폭과 같게 만드는 후처리를 추가한다:
 
@@ -5677,7 +5681,7 @@ public class UnknownPhotosSheetFragment extends BottomSheetDialogFragment {
 
 > `post` 는 Robolectric 에서 즉시 실행되지 않지만, 위 테스트는 자식 **개수**만 검증하므로 영향이 없다.
 
-- [ ] **Step 7: 칩에서 드로어 열기**
+- [x] **Step 7: 칩에서 드로어 열기**
 
 `MapReplayFragment.onViewCreated` — 상단바 배선 아래에 추가:
 
@@ -5700,18 +5704,18 @@ public class UnknownPhotosSheetFragment extends BottomSheetDialogFragment {
 >     }
 > ```
 
-- [ ] **Step 8: 전체 테스트 실행 — 통과 확인**
+- [x] **Step 8: 전체 테스트 실행 — 통과 확인**
 
 Run: `cd android && ./gradlew :app:testDebugUnitTest`
 Expected: PASS — 전 화면 렌더 테스트가 모두 통과한다 (하네스 2 + 픽스처 8 + HOME 5 + SELECT 4 + ANALYZE 5 + 타임존 2 + 상단바 3 + 스크러버 6 + 시트 6 + 상영 3 + 드로어 3 = 47 tests).
 
-- [ ] **Step 9: 앱 빌드 + 전체 화면 육안 대조**
+- [x] **Step 9: 앱 빌드 + 전체 화면 육안 대조**
 
 Run: `cd android && ./gradlew :app:assembleDebug`
 Expected: BUILD SUCCESSFUL. 기기에서 프로토타입과 전 화면을 대조한다:
 HOME(목록/빈) → SELECT → ANALYZE(+타임존 시트) → MAP(상단바·시트·스크러버) → 상영 모드 → 위치 미상 드로어 → 토스트.
 
-- [ ] **Step 10: 커밋**
+- [x] **Step 10: 커밋**
 
 ```bash
 git add android/app/src/main android/app/src/test/java/com/traveltrace/app/ui/map
@@ -5722,12 +5726,12 @@ git commit -m "feat: add unknown-photos drawer to MAP"
 
 ## 완료 정의 (이 계획 전체)
 
-- [ ] 프로토타입의 화면 12종(인벤토리 표)이 전부 렌더된다.
-- [ ] `./gradlew :app:testDebugUnitTest` 전부 통과.
-- [ ] `./gradlew :app:assembleDebug` 성공, 기기에서 HOME→SELECT→ANALYZE→MAP 왕복 가능.
-- [ ] 화면 코드에 하드코딩된 hex·px·한국어 문자열이 없다(전부 리소스 경유).
-- [ ] 사진 로딩·EXIF·AI·지오코딩·리플레이 애니메이션·Room 저장 로직이 **없다** — 데이터는 전부 `ScreenFixtures`.
-- [ ] `plan/00-overview.md` 의 공통 DoD(Java·View/XML, 한국어 리소스 분리)를 위반하지 않는다.
+- [x] 프로토타입의 화면 12종(인벤토리 표)이 전부 렌더된다.
+- [x] `./gradlew :app:testDebugUnitTest` 전부 통과.
+- [x] `./gradlew :app:assembleDebug` 성공, 기기에서 HOME→SELECT→ANALYZE→MAP 왕복 가능.
+- [x] 화면 코드에 하드코딩된 hex·px·한국어 문자열이 없다(전부 리소스 경유).
+- [x] 사진 로딩·EXIF·AI·지오코딩·리플레이 애니메이션·Room 저장 로직이 **없다** — 데이터는 전부 `ScreenFixtures`.
+- [x] `plan/00-overview.md` 의 공통 DoD(Java·View/XML, 한국어 리소스 분리)를 위반하지 않는다.
 
 ## 다음 단계 (이 계획 밖)
 
