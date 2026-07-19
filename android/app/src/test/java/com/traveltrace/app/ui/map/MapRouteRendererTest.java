@@ -19,7 +19,7 @@ import java.util.List;
 public class MapRouteRendererTest {
 
     private static MapUiState.Stop stop(String id, double lat, double lng) {
-        return new MapUiState.Stop(id, id, "10:00", false, 0, 0xFFCCCCCC, lat, lng);
+        return new MapUiState.Stop(id, id, "10:00", false, 0, 0xFFCCCCCC, lat, lng, null);
     }
 
     @Test

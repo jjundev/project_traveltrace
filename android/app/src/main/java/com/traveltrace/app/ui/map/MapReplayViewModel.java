@@ -1,5 +1,7 @@
 package com.traveltrace.app.ui.map;
 
+import android.content.ContentUris;
+import android.provider.MediaStore;
 import android.util.Log;
 
 import androidx.lifecycle.LiveData;
@@ -95,7 +97,9 @@ public class MapReplayViewModel extends ViewModel {
                     0,
                     TONES[i % TONES.length],
                     row.lat,
-                    row.lng));
+                    row.lng,
+                    ContentUris.withAppendedId(
+                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI, row.mediaStoreId)));
         }
         return new MapUiState(detail.name, detail.unknownCount, stops, 0,
                 false, false, false, MapUiState.Speed.NORMAL);
