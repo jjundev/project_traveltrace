@@ -138,4 +138,23 @@ public class HomeViewModelTest {
                 com.traveltrace.app.ui.preview.ScreenFixtures.home()
                         .trips.get(0).heroPhotoUri);
     }
+
+    /**
+     * finding 3: HOME 에 삭제 통로가 생긴 이유 그 자체 — 취소됐지만 이미 커밋된 분석이
+     * 여행 하나를 남기는 수용된 레이스(AnalysisViewModel finding 2)를 사용자가 직접
+     * 치울 수 있어야 한다. delete() 는 리포지토리에서 지운 뒤 목록을 새로고침해야 한다.
+     */
+    @Test
+    public void deleteRemovesTheTripAndRefreshesTheList() {
+        String tripId = await(cb -> analysisRepo.saveTrip("지울 여행", "Asia/Seoul",
+                Collections.singletonList(placed(1L, "a.jpg", 1_718_154_720_000L)), cb));
+        assertNotNull(tripId);
+        assertEquals(1, refreshed().trips.size());
+
+        HomeUiState afterDelete = AsyncTestHarness.awaitLiveData(
+                vm.state(), () -> vm.delete(tripId),
+                state -> state.empty, "HomeViewModel.delete()");
+
+        assertTrue("삭제 후 목록에서 사라져야 한다", afterDelete.trips.isEmpty());
+    }
 }

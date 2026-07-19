@@ -19,6 +19,15 @@ public class TripCardAdapter extends RecyclerView.Adapter<TripCardAdapter.VH> {
 
     public interface Listener {
         void onTripClick(HomeUiState.TripCard card);
+
+        /**
+         * 기본 구현은 아무 것도 하지 않는다 — default 메서드라 이 인터페이스는 여전히
+         * 함수형 인터페이스(추상 메서드 1개, onTripClick)라서 기존의 {@code card -> {}}
+         * 람다·메서드 레퍼런스 사용처(HomeRendererTest/HomeScreenshotTest, 예전 HomeFragment)가
+         * 그대로 컴파일된다. 롱프레스로 삭제 확인을 띄우고 싶은 호출부만 오버라이드한다
+         * (finding 3).
+         */
+        default void onTripLongPress(HomeUiState.TripCard card) {}
     }
 
     private final List<HomeUiState.TripCard> items = new ArrayList<>();
@@ -71,6 +80,11 @@ public class TripCardAdapter extends RecyclerView.Adapter<TripCardAdapter.VH> {
         holder.b.tripLocation.setVisibility(card.locationLabel == null ? View.GONE : View.VISIBLE);
         holder.b.tripLocation.setText(card.locationLabel);
         holder.b.tripCard.setOnClickListener(v -> listener.onTripClick(card));
+        // 삭제는 롱프레스로만 연다 — 멀티셀렉트·스와이프 삭제 없이 최소한으로(finding 3).
+        holder.b.tripCard.setOnLongClickListener(v -> {
+            listener.onTripLongPress(card);
+            return true;
+        });
     }
 
     @Override

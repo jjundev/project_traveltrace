@@ -46,6 +46,15 @@ public class HomeViewModel extends ViewModel {
         tripRepository.list(summaries -> state.setValue(toState(summaries)));
     }
 
+    /**
+     * 여행을 지우고 목록을 새로고침한다(finding 3). 분석이 취소됐는데도 이미 커밋된
+     * 여행이 하나 남는 수용된 레이스(AnalysisViewModel finding 2 참고)를 사용자가 직접
+     * 치울 수 있게 하는 최소한의 출구다 — 되돌리기·다중 선택은 없다.
+     */
+    public void delete(String tripId) {
+        tripRepository.delete(tripId, ignored -> refresh());
+    }
+
     private HomeUiState toState(List<TripSummary> summaries) {
         if (summaries.isEmpty()) {
             return HomeUiState.empty();

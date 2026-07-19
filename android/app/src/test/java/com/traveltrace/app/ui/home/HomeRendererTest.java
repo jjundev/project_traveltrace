@@ -102,6 +102,40 @@ public class HomeRendererTest {
                 0, binding.tripList.getAdapter().getItemCount());
     }
 
+    /**
+     * finding 3: 카드 롱프레스가 실제로 onTripLongPress 를 호출하는지 어댑터 바인딩
+     * 레벨에서 확인한다(Fragment/Hilt 하네스가 없어 다이얼로그까지는 검증 못 한다 — 그
+     * 부분은 손으로 확인했다).
+     */
+    @Test
+    public void longPressOnTripCard_invokesOnTripLongPress() {
+        java.util.concurrent.atomic.AtomicReference<HomeUiState.TripCard> longPressed =
+                new java.util.concurrent.atomic.AtomicReference<>();
+        TripCardAdapter.Listener listener = new TripCardAdapter.Listener() {
+            @Override
+            public void onTripClick(HomeUiState.TripCard card) {}
+
+            @Override
+            public void onTripLongPress(HomeUiState.TripCard card) {
+                longPressed.set(card);
+            }
+        };
+
+        HomeRenderer.render(binding, ScreenFixtures.home(), listener);
+        binding.tripList.measure(
+                View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(1920, View.MeasureSpec.EXACTLY));
+        binding.tripList.layout(0, 0, 1080, 1920);
+
+        View itemView = binding.tripList.getChildAt(0);
+        assertNotNull(itemView);
+        boolean consumed = itemView.performLongClick();
+
+        assertEquals("롱클릭은 소비되어야 한다(다른 제스처로 새지 않게)", true, consumed);
+        assertNotNull("롱프레스는 해당 카드를 리스너에 넘겨야 한다", longPressed.get());
+        assertEquals(ScreenFixtures.home().trips.get(0).id, longPressed.get().id);
+    }
+
     @Test
     public void tripCardWithNullLocationLabel_hidesLocationPill() {
         HomeUiState.TripCard noLocation = new HomeUiState.TripCard(
