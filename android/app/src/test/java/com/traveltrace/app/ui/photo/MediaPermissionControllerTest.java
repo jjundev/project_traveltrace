@@ -65,8 +65,10 @@ public class MediaPermissionControllerTest {
     @Config(sdk = Build.VERSION_CODES.TIRAMISU)
     public void onApi33ThereIsNoPartialState() {
         shadowApp.denyPermissions(Manifest.permission.READ_MEDIA_IMAGES);
+        shadowApp.grantPermissions(Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED);
 
-        assertEquals("API 33 엔 부분 접근이 없다 — 거부는 거부다",
+        assertEquals("API 33 엔 부분 접근이 없다 — READ_MEDIA_VISUAL_USER_SELECTED 가 실제로 "
+                        + "허용돼 있어도 SDK 게이트가 이를 무시하고 거부로 판정해야 한다",
                 MediaPermissionController.State.DENIED,
                 MediaPermissionController.evaluate(app));
     }
@@ -88,6 +90,19 @@ public class MediaPermissionControllerTest {
                         Manifest.permission.READ_MEDIA_IMAGES,
                         Manifest.permission.ACCESS_MEDIA_LOCATION},
                 MediaPermissionController.requiredPermissions());
+    }
+
+    @Test
+    @Config(sdk = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void fullGrantWinsOverPartialWhenBothArePresent() {
+        shadowApp.grantPermissions(
+                Manifest.permission.READ_MEDIA_IMAGES,
+                Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED);
+
+        assertEquals("READ_MEDIA_IMAGES 와 READ_MEDIA_VISUAL_USER_SELECTED 가 모두 허용돼 있으면 "
+                        + "'부분'이 아니라 '전체 허용'이어야 한다",
+                MediaPermissionController.State.GRANTED,
+                MediaPermissionController.evaluate(app));
     }
 
     @Test
