@@ -152,6 +152,8 @@ dependencies {
     implementation libs.androidx.exifinterface
     implementation libs.play.services.maps
     implementation libs.places
+    // 썸네일 로딩. 생성 API(annotationProcessor)는 쓰지 않는다 — Glide.with() 만 직접 호출.
+    implementation libs.glide
 
     testImplementation libs.junit
     testImplementation libs.robolectric
