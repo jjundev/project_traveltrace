@@ -14,7 +14,8 @@ public class TripEntity {
     @NonNull
     public String id = "";
 
-    public String name;
+    @NonNull
+    public String name = "";
 
     @Nullable
     public String coverEmoji;
@@ -30,8 +31,13 @@ public class TripEntity {
 
     public long endDateUtc;
 
-    /** 여행 기준 타임존 (PRD §4.2, v1 은 여행당 1개). */
-    public String timeZoneId;
+    /**
+     * 여행 기준 타임존 (PRD §4.2, v1 은 여행당 1개). NULL 이면
+     * MapReplayViewModel.toState() 의 TimeZone.getTimeZone(...) 이 NPE 난다 — 항상
+     * 있어야 한다(finding 4).
+     */
+    @NonNull
+    public String timeZoneId = "";
 
     public long createdAt;
 

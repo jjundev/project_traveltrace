@@ -30,7 +30,8 @@ public class PhotoLocationEntity {
     @Nullable
     public Double lng;
 
-    public LocationSource source;
+    @NonNull
+    public LocationSource source = LocationSource.NONE;
 
     @Nullable
     public String landmarkName;
@@ -41,7 +42,8 @@ public class PhotoLocationEntity {
     @Nullable
     public String country;
 
-    public LocationClassification classification;
+    @NonNull
+    public LocationClassification classification = LocationClassification.UNKNOWN;
 
     @Nullable
     public Double confidence;
