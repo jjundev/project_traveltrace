@@ -104,6 +104,25 @@ public class ExifExtractorTest {
         return uri;
     }
 
+    /**
+     * jpegWithExif() 와 달리 ContentResolver 에 아무것도 등록하지 않고 파일만 만든다.
+     * {@link OriginalRefusedProvider} 가 openFile() 에서 캐시 디렉터리를 직접 뒤져
+     * 서빙할 바이트를 스스로 골라야 하는 시나리오(원본 요청은 거부, 폴백만 성공)에 쓴다.
+     */
+    private File writeJpegFile(String name, boolean withGps) throws Exception {
+        File file = new File(ctx.getCacheDir(), name);
+        Bitmap bitmap = Bitmap.createBitmap(2, 2, Bitmap.Config.ARGB_8888);
+        try (OutputStream out = new FileOutputStream(file)) {
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
+        }
+        ExifInterface exif = new ExifInterface(file.getAbsolutePath());
+        if (withGps) {
+            exif.setLatLong(48.8584, 2.2945);
+        }
+        exif.saveAttributes();
+        return file;
+    }
+
     /** openFile() 에서 FileNotFoundException 을 던져 "원본 접근 실패"를 실제로 재현하는 provider. */
     public static class UnreadableMediaProvider extends ContentProvider {
         @Override
@@ -142,6 +161,65 @@ public class ExifExtractorTest {
             throw new FileNotFoundException("가짜 원본 접근 실패(테스트)");
         }
     }
+
+    /**
+     * "requireOriginal=1" 요청만 거부하고 그 외(폴백)는 실제 JPEG 를 서빙하는 provider.
+     *
+     * <p>디컴파일로 확인한 사실: MediaStore.setRequireOriginal(uri) 는 예외를 던지지
+     * 않는다 — uri.buildUpon().appendQueryParameter("requireOriginal", "1") 뿐인 순수
+     * AOSP 코드라 Robolectric 이 섀도잉하지도 않는다. 그래서 openExif() 의
+     * "catch (SecurityException denied)" 는 setRequireOriginal() 호출 자체가 아니라,
+     * 그 결과 Uri 로 실제 openInputStream() 을 열 때(=권한 없는 실기기에서 콘텐츠
+     * 프로바이더가 서비스할 때) 터진다. 이 provider 는 쿼리 파라미터 유무로 그 두
+     * 요청(원본 vs 폴백)을 구분해, "원본만 거부되고 폴백은 성공"하는 실기기 모양을
+     * 그대로 재현한다 — 두 요청을 구분하지 않고 전부 던지면 openPlain() 폴백 경로 자체가
+     * 실제로 도는지 증명하지 못한다.
+     */
+    public static class OriginalRefusedProvider extends ContentProvider {
+        @Override
+        public boolean onCreate() {
+            return true;
+        }
+
+        @Override
+        public Cursor query(Uri uri, String[] projection, String selection,
+                String[] selectionArgs, String sortOrder) {
+            return null;
+        }
+
+        @Override
+        public String getType(Uri uri) {
+            return null;
+        }
+
+        @Override
+        public Uri insert(Uri uri, ContentValues values) {
+            return null;
+        }
+
+        @Override
+        public int delete(Uri uri, String selection, String[] selectionArgs) {
+            return 0;
+        }
+
+        @Override
+        public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+            return 0;
+        }
+
+        @Override
+        public ParcelFileDescriptor openFile(Uri uri, String mode) throws FileNotFoundException {
+            if (uri.getBooleanQueryParameter("requireOriginal", false)) {
+                throw new SecurityException("ACCESS_MEDIA_LOCATION 없음 — 원본 거부(테스트)");
+            }
+            // 폴백(파라미터 없는 재요청)은 실기기의 MediaProvider 가 위치 EXIF 를 지운
+            // 파생본을 내려주는 것과 같은 모양으로, 미리 만들어 둔 "가림본" 파일을 서빙한다.
+            File redacted = new File(getContext().getCacheDir(), REDACTED_FALLBACK_FILE);
+            return ParcelFileDescriptor.open(redacted, ParcelFileDescriptor.MODE_READ_ONLY);
+        }
+    }
+
+    private static final String REDACTED_FALLBACK_FILE = "denied-redacted-fallback.jpg";
 
     private static GalleryImage image(Uri uri, long id, String name) {
         return new GalleryImage(id, uri, name, null);
@@ -212,6 +290,38 @@ public class ExifExtractorTest {
         assertEquals(LocationClassification.UNKNOWN, result.classification);
         assertNull(result.lat);
         assertEquals("원본 접근 실패는 반드시 세어야 한다 — 조용히 삼키면 S3 에서 비용이 폭증한다",
+                1, extractor.originalAccessFailures());
+    }
+
+    // openExif() 의 "catch (SecurityException denied)"(원본 openInputStream 이 던지는
+    // 경우) 는 위 unreadableStreamIsCountedAndDegradesToUnknown() 이 재현하는
+    // "catch (IOException unreadable)" 와는 다른 분기다 — 실기기에서
+    // ACCESS_MEDIA_LOCATION 이 없을 때 실제로 타는 건 바로 이 SecurityException 분기인데
+    // 그동안 테스트가 없었다. OriginalRefusedProvider 로 원본 요청만 거부해 재현한다.
+    @Test
+    public void originalAccessDeniedFallsBackToRedactedCopyAndCountsOnce() throws Exception {
+        // 이 시나리오의 "원본"은 진짜로 GPS 를 담고 있어야 한다 — 그래야 아래
+        // "좌표가 null" 단언이, 애초에 GPS 가 없던 사진을 우연히 통과시킨 게 아니라
+        // 원본 거부 + 폴백 가림 경로가 실제로 작동했음을 증명한다(공허한 통과 방지).
+        File original = writeJpegFile("denied-original.jpg", true);
+        assertNotNull("이 사진은 원래 GPS 를 담고 있어야 한다 — 아니면 뒤의 null 단언이 무의미하다",
+                new ExifInterface(original.getAbsolutePath()).getLatLong());
+
+        // 폴백이 실제로 열게 될 "가림본"에는 GPS 를 쓰지 않는다 — 실기기에서
+        // MediaProvider 가 위치 EXIF 를 지운 파생본을 내려주는 것과 같은 모양이다.
+        writeJpegFile(REDACTED_FALLBACK_FILE, false);
+
+        Robolectric.setupContentProvider(OriginalRefusedProvider.class, MediaStore.AUTHORITY);
+        Uri uri = Uri.parse("content://media/external/images/media/555555");
+
+        PhotoAnalysis result = extractor.extract(image(uri, 55L, "denied.jpg"));
+
+        assertEquals("원본이 거부되고 폴백으로 가림본만 읽었으니 GPS 를 못 살려 UNKNOWN 이어야 한다",
+                LocationClassification.UNKNOWN, result.classification);
+        assertNull("가림본을 읽었으니 좌표는 null 이어야 한다 — GPS 가 있던 사진인데도",
+                result.lat);
+        assertNull(result.lng);
+        assertEquals("원본 요청 실패는 한 번만 세야 한다 — 뒤이은 폴백 성공까지 세면 이중 계산이다",
                 1, extractor.originalAccessFailures());
     }
 
