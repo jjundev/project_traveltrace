@@ -10,6 +10,7 @@ import android.provider.MediaStore;
 
 import androidx.test.core.app.ApplicationProvider;
 
+import com.traveltrace.app.AsyncTestHarness;
 import com.traveltrace.app.core.AppExecutors;
 import com.traveltrace.app.data.media.MediaStoreImageSource;
 import com.traveltrace.app.ui.selection.SelectionSession;
@@ -147,5 +148,71 @@ public class PhotoSelectionViewModelTest {
         PhotoSelectionUiState state = loadState();
         assertTrue(state.tiles.isEmpty());
         assertEquals(0, state.selectedCount());
+    }
+
+    /**
+     * Finding 1 이 지키려는 것 그 자체: 회전으로 뷰만 재생성돼도 ViewModel 은 살아남고,
+     * Fragment.onViewCreated 는 (판정 캐시를 null 로 되돌리므로) load() 를 다시 부른다.
+     * 이 재호출이 사용자가 "탭하여 제외"로 골라 둔 선택을 기본값으로 덮어쓰면 안 된다.
+     *
+     * <p>이 테스트는 preservation 로직을 없애면(즉 toState 가 이전 상태를 무시하고 항상
+     * i &lt; MAX_SELECTION 으로만 매기면) 반드시 실패한다 — 11L 을 다시 선택 상태로
+     * 되돌려 버리기 때문이다.
+     */
+    @Test
+    public void reloadingAfterRotationPreservesTheUsersExclusion() {
+        loadState();
+        vm.toggle(0); // 11L 제외
+        ShadowLooper.idleMainLooper();
+        assertEquals(1, vm.state().getValue().selectedCount());
+
+        // MediaStoreImageSource.query() 가 커서를 try-with-resources 로 닫으므로, 같은
+        // RoboCursor 인스턴스를 두 번째 query() 에도 그대로 돌려주는 setCursor 훅에서는
+        // 재조회 전에 다시 seed() 해 새 커서를 등록해야 한다(그러지 않으면 이미 닫힌
+        // 커서라 두 번째 query() 가 빈 목록을 내놓는다 — 이건 이 재로딩 계약과 무관한
+        // 테스트 더블의 한계다).
+        seed(new Object[]{11L, "a.jpg", 1_718_000_000_000L},
+                new Object[]{22L, "b.jpg", 1_718_100_000_000L});
+
+        // Fragment.onViewCreated 가 다시 부르는 vm.load() 를 흉내낸다 — ViewModel 은
+        // 살아남았으므로 state() 는 이미 위에서 만든 (11L 제외) 상태를 들고 있다.
+        // awaitState() 는 "state != null" 만 보므로 이미 non-null 인 상태에선 재로딩을
+        // 기다리지 못한다 — 인스턴스 참조가 바뀔 때까지 기다리는 AsyncTestHarness 를 쓴다.
+        PhotoSelectionUiState beforeReload = vm.state().getValue();
+        PhotoSelectionUiState reloaded = AsyncTestHarness.awaitLiveData(
+                vm.state(), vm::load, s -> s != beforeReload,
+                "PhotoSelectionViewModel.load() reload");
+
+        assertEquals(2, reloaded.tiles.size());
+        assertFalse("재로딩해도 사용자가 제외한 사진은 계속 제외 상태여야 한다",
+                reloaded.tiles.get(0).selected);
+        assertEquals(11L, reloaded.tiles.get(0).mediaStoreId);
+        assertTrue("건드리지 않은 사진은 그대로 선택 상태를 유지한다",
+                reloaded.tiles.get(1).selected);
+        assertEquals(1, reloaded.selectedCount());
+    }
+
+    /** 이전 상태에 없던(신규로 나타난) 사진은 여전히 기본 규칙(상한 이내 전체 선택)을 따른다. */
+    @Test
+    public void newlyAppearedPhotosOnReloadStillGetTheDefaultSelection() {
+        loadState();
+        vm.toggle(0); // 11L 제외
+        ShadowLooper.idleMainLooper();
+
+        // 재조회 사이에 새 사진이 갤러리에 나타난 상황(예: PARTIAL 재선택, 새 촬영).
+        seed(new Object[]{11L, "a.jpg", 1_718_000_000_000L},
+                new Object[]{22L, "b.jpg", 1_718_100_000_000L},
+                new Object[]{33L, "c.jpg", 1_718_200_000_000L});
+
+        PhotoSelectionUiState beforeReload = vm.state().getValue();
+        PhotoSelectionUiState reloaded = AsyncTestHarness.awaitLiveData(
+                vm.state(), vm::load, s -> s != beforeReload,
+                "PhotoSelectionViewModel.load() reload with new photos");
+
+        assertEquals(3, reloaded.tiles.size());
+        assertFalse("기존에 제외했던 사진은 계속 제외 상태", reloaded.tiles.get(0).selected);
+        assertTrue("기존에 선택돼 있던 사진은 그대로 선택 상태", reloaded.tiles.get(1).selected);
+        assertTrue("처음 보는 사진은 기본값(상한 이내 전체 선택)을 받는다",
+                reloaded.tiles.get(2).selected);
     }
 }

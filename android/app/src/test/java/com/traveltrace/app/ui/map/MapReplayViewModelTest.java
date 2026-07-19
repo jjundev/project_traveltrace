@@ -124,4 +124,38 @@ public class MapReplayViewModelTest {
         assertFalse(before.cinema);
         assertTrue(before != after);
     }
+
+    /**
+     * Finding 2 가 지키려는 것 그 자체: MapReplayFragment.onViewCreated 는 회전 등 뷰
+     * 재생성마다 vm.load() 를 무조건 다시 부른다. ViewModel 은 살아남으므로, 이미 state
+     * 가 있으면 재호출이 아무 것도 하지 않아야 한다 — 그러지 않으면 activeIndex/playing/
+     * satellite/cinema/speed 가 기본값으로 리셋되고, toState() 가 Stop 을 새로 찍어내
+     * MapReplayFragment.sameRoute() 의 참조 동일성 가드가 깨지면서 카메라가 whole-route
+     * bounds 로 스냅된다.
+     *
+     * <p>load() 에서 idempotent 가드(state.getValue() != null 이면 return)를 없애면 이
+     * 테스트는 반드시 실패한다 — 두 번째 load() 가 픽스처를 다시 불러 satellite/cinema/
+     * activeIndex 를 전부 기본값으로 되돌리고 stops 리스트도 새 인스턴스로 바꿔 버리기
+     * 때문이다.
+     */
+    @Test
+    public void load_isIdempotentAndDoesNotResetUserOwnedState() {
+        MapReplayViewModel vm = newFixtureVm();
+        vm.setSatellite(true);
+        vm.setCinema(true);
+        vm.jumpTo(3);
+        MapUiState before = vm.state().getValue();
+
+        // Fragment.onViewCreated 가 회전 뒤 다시 부르는 vm.load() 를 흉내낸다.
+        vm.load();
+
+        MapUiState after = vm.state().getValue();
+        assertTrue("이미 state 가 있으면 재로딩은 인스턴스조차 새로 만들면 안 된다",
+                before == after);
+        assertTrue("위성 모드가 리셋되면 안 된다", after.satellite);
+        assertTrue("상영 모드가 리셋되면 안 된다", after.cinema);
+        assertEquals("스크럽 위치가 리셋되면 안 된다", 3, after.activeIndex);
+        assertTrue("stops 리스트도 같은 인스턴스여야 sameRoute 가드가 유지된다",
+                before.stops == after.stops);
+    }
 }

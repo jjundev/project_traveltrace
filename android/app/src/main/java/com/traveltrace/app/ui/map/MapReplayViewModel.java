@@ -47,8 +47,18 @@ public class MapReplayViewModel extends ViewModel {
         this.tripRepository = tripRepository;
     }
 
-    /** tripId 가 있으면 저장 여행을, 없으면 디자인 프리뷰 픽스처를 싣는다. */
+    /**
+     * tripId 가 있으면 저장 여행을, 없으면 디자인 프리뷰 픽스처를 싣는다.
+     *
+     * <p>Fragment.onViewCreated 는 회전 등 뷰 재생성마다 무조건 다시 부른다(finding 2와
+     * 짝인 finding 1 도 같은 모양이다). 이 ViewModel 은 뷰보다 오래 살아남으므로, 이미
+     * state 가 있으면 재조회를 건너뛴다 — 그러지 않으면 activeIndex/playing/satellite/
+     * cinema/speed 가 전부 기본값으로 리셋되고, toState() 가 Stop 인스턴스를 새로 찍어내
+     * MapReplayFragment.sameRoute() 가드가 깨지면서(참조 동일성 비교라서) 불필요한 Room
+     * 재조회+ 카메라가 whole-route bounds 로 스냅되는 부작용까지 겹친다.
+     */
     public void load() {
+        if (state.getValue() != null) return;
         String tripId = tripId();
         if (tripId == null) {
             state.setValue(ScreenFixtures.map());
