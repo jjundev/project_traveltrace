@@ -92,8 +92,10 @@ public class RoomTripRepositoryTest {
     private static <T> T await(java.util.function.Consumer<com.traveltrace.app.domain.Callback<T>> call) {
         AtomicReference<T> box = new AtomicReference<>();
         AtomicBoolean done = new AtomicBoolean(false);
+        AtomicBoolean onMainLooper = new AtomicBoolean(false);
         call.accept(v -> {
             box.set(v);
+            onMainLooper.set(android.os.Looper.myLooper() == android.os.Looper.getMainLooper());
             done.set(true);
         });
         long deadline = System.currentTimeMillis() + 5_000L;
@@ -109,6 +111,7 @@ public class RoomTripRepositoryTest {
             }
         }
         assertTrue("콜백이 5초 안에 와야 한다", done.get());
+        assertTrue("콜백은 메인 루퍼에서 전달되어야 한다", onMainLooper.get());
         return box.get();
     }
 
