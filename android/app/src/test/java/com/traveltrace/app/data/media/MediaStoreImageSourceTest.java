@@ -4,8 +4,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import android.content.ContentProvider;
 import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
 import android.provider.MediaStore;
 
 import androidx.test.core.app.ApplicationProvider;
@@ -131,5 +135,57 @@ public class MediaStoreImageSourceTest {
     public void emptyGalleryYieldsEmptyListNotNull() {
         seed();
         assertTrue(load(100).isEmpty());
+    }
+
+    // MediaStoreImageSource#query() 는 SecurityException 을 잡아 빈 목록으로 조용히
+    // 끝내는 걸 명시적 계약으로 삼는다(클래스 Javadoc 참고) — 권한이 없거나 철회된 상태에서
+    // 크래시 대신 "사진 없음"으로 내려가야 한다.
+    //
+    // ShadowContentResolver#setCursor 로는 이 경로를 못 만든다: 예외 없이 커서만 갈아
+    // 끼우는 훅이라서다. 대신 query()의 실제 디스패치 경로를 이용한다 — 4.14.1의
+    // ShadowContentResolver#query 는 먼저 ShadowContentResolver#getProvider(authority)로
+    // 등록된 실제 ContentProvider 가 있는지 보고, 있으면 그 provider.query()를 그대로
+    // 호출한 뒤에야 setCursor 로 등록한 커서로 폴백한다(디컴파일로 확인함). 그래서
+    // registerProviderInternal(MediaStore.AUTHORITY, ...)로 query()에서 SecurityException
+    // 을 던지는 최소 ContentProvider 를 등록하면, 실제 권한 거부 시 MediaStore가 겪는
+    // 예외 전달 경로를 그대로 재현할 수 있다. registerProviderInternal 은 프로덕션 코드를
+    // 건드리지 않고도 이 경로를 여는, 이 버전이 제공하는 유일한 공식 훅이다.
+    @Test
+    public void securityExceptionOnQueryYieldsEmptyListNotCrash() {
+        ShadowContentResolver.registerProviderInternal(MediaStore.AUTHORITY, new ContentProvider() {
+            @Override
+            public boolean onCreate() {
+                return true;
+            }
+
+            @Override
+            public Cursor query(Uri uri, String[] projection, String selection,
+                    String[] selectionArgs, String sortOrder) {
+                throw new SecurityException("갤러리 접근 권한 없음(테스트)");
+            }
+
+            @Override
+            public String getType(Uri uri) {
+                return null;
+            }
+
+            @Override
+            public Uri insert(Uri uri, ContentValues values) {
+                return null;
+            }
+
+            @Override
+            public int delete(Uri uri, String selection, String[] selectionArgs) {
+                return 0;
+            }
+
+            @Override
+            public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+                return 0;
+            }
+        });
+
+        assertTrue("SecurityException 은 삼켜지고 빈 목록이 와야 한다(크래시 금지)",
+                load(100).isEmpty());
     }
 }
