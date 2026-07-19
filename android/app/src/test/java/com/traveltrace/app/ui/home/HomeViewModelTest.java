@@ -2,7 +2,6 @@ package com.traveltrace.app.ui.home;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -11,6 +10,7 @@ import android.content.Context;
 import androidx.room.Room;
 import androidx.test.core.app.ApplicationProvider;
 
+import com.traveltrace.app.AsyncTestHarness;
 import com.traveltrace.app.core.AppExecutors;
 import com.traveltrace.app.core.model.LocationClassification;
 import com.traveltrace.app.core.model.LocationSource;
@@ -25,12 +25,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.shadows.ShadowLooper;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 @RunWith(RobolectricTestRunner.class)
@@ -72,57 +69,25 @@ public class HomeViewModelTest {
     }
 
     /**
-     * RoomTripRepositoryTest.await() 와 동일한 모양. AppExecutors.io() 는 진짜 스레드풀이라
-     * saveTrip 트리거 직후 idleMainLooper() 를 한 번만 부르면 커밋 전에 진행될 수 있다 —
-     * 콜백이 실제로 도착할 때까지 짧게 반복해서 기다린다.
+     * {@link AsyncTestHarness#awaitCallback} 로 위임한다. 예전 로컬 구현은 콜백이 메인 루퍼에서
+     * 오는지 검증을 빠뜨리고 있었다 — 공유 헬퍼로 옮기면서 그 드리프트를 없앤다(
+     * {@link AsyncTestHarness} 자바독의 "무조건 검증" 결정 참고).
      */
     private static <T> T await(Consumer<Callback<T>> call) {
-        AtomicReference<T> box = new AtomicReference<>();
-        AtomicBoolean done = new AtomicBoolean(false);
-        call.accept(v -> {
-            box.set(v);
-            done.set(true);
-        });
-        long deadline = System.currentTimeMillis() + 5_000L;
-        while (!done.get() && System.currentTimeMillis() < deadline) {
-            ShadowLooper.idleMainLooper();
-            if (!done.get()) {
-                try {
-                    Thread.sleep(5L);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    throw new AssertionError(e);
-                }
-            }
-        }
-        assertTrue("콜백이 5초 안에 와야 한다", done.get());
-        return box.get();
+        return AsyncTestHarness.awaitCallback(call);
     }
 
     /**
-     * vm.refresh() 도 TripRepository.list() 를 거쳐 같은 io() 스레드풀을 탄다 — 단발
-     * idleMainLooper() 는 레이스가 난다. state() LiveData 값이 새 객체로 바뀔 때까지
-     * 데드라인을 두고 반복해서 기다린다(HomeUiState.toState() 는 매번 새 인스턴스를 만든다).
+     * {@link AsyncTestHarness#awaitLiveData} 로 위임한다. vm.refresh() 는 TripRepository.list()
+     * 를 거쳐 같은 io() 스레드풀을 타므로 단발 idleMainLooper() 는 레이스가 난다 — 이유는
+     * {@link AsyncTestHarness} 자바독 참고. state() LiveData 값이 새 인스턴스로 바뀔 때까지
+     * 기다린다(HomeUiState.toState() 는 매번 새 인스턴스를 만들므로 "이전과 다른 참조"가 곧
+     * "새로고침 반영됨"이다).
      */
     private HomeUiState refreshed() {
         HomeUiState previous = vm.state().getValue();
-        vm.refresh();
-        long deadline = System.currentTimeMillis() + 5_000L;
-        HomeUiState current = previous;
-        while (current == previous && System.currentTimeMillis() < deadline) {
-            ShadowLooper.idleMainLooper();
-            current = vm.state().getValue();
-            if (current == previous) {
-                try {
-                    Thread.sleep(5L);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    throw new AssertionError(e);
-                }
-            }
-        }
-        assertNotSame("HomeViewModel.refresh() 결과가 5초 안에 와야 한다", previous, current);
-        return current;
+        return AsyncTestHarness.awaitLiveData(
+                vm.state(), vm::refresh, current -> current != previous, "HomeViewModel.refresh()");
     }
 
     @Test

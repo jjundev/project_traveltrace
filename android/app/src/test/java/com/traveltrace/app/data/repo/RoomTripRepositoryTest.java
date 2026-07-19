@@ -10,6 +10,7 @@ import android.content.Context;
 import androidx.room.Room;
 import androidx.test.core.app.ApplicationProvider;
 
+import com.traveltrace.app.AsyncTestHarness;
 import com.traveltrace.app.core.AppExecutors;
 import com.traveltrace.app.core.model.LocationClassification;
 import com.traveltrace.app.core.model.LocationSource;
@@ -23,13 +24,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.shadows.ShadowLooper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 @RunWith(RobolectricTestRunner.class)
 public class RoomTripRepositoryTest {
@@ -82,37 +80,12 @@ public class RoomTripRepositoryTest {
     }
 
     /**
-     * 콜백이 메인 루퍼로 오므로 테스트에서 루퍼를 비워 결과를 받는다.
-     *
-     * <p>실제 io() 는 진짜 백그라운드 스레드풀이라 호출 직후 한 번만 idleMainLooper() 를
-     * 불러선 안 된다 — 그 시점엔 아직 io 작업이 안 끝나 메인 루퍼에 아무것도 안 쌓여 있을 수
-     * 있다(관찰상 in-memory Room 삽입도 수십 ms 걸린다). 콜백이 도착할 때까지 짧게 반복해서
-     * 비운다.
+     * {@link AsyncTestHarness#awaitCallback} 로 위임한다 — 콜백이 메인 루퍼에서 오는지까지
+     * 검증하는 폴링 로직은 여러 테스트 클래스가 공유하므로 여기서 다시 구현하지 않는다. 이유는
+     * {@link AsyncTestHarness} 자바독 참고.
      */
     private static <T> T await(java.util.function.Consumer<com.traveltrace.app.domain.Callback<T>> call) {
-        AtomicReference<T> box = new AtomicReference<>();
-        AtomicBoolean done = new AtomicBoolean(false);
-        AtomicBoolean onMainLooper = new AtomicBoolean(false);
-        call.accept(v -> {
-            box.set(v);
-            onMainLooper.set(android.os.Looper.myLooper() == android.os.Looper.getMainLooper());
-            done.set(true);
-        });
-        long deadline = System.currentTimeMillis() + 5_000L;
-        while (!done.get() && System.currentTimeMillis() < deadline) {
-            ShadowLooper.idleMainLooper();
-            if (!done.get()) {
-                try {
-                    Thread.sleep(5L);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    throw new AssertionError(e);
-                }
-            }
-        }
-        assertTrue("콜백이 5초 안에 와야 한다", done.get());
-        assertTrue("콜백은 메인 루퍼에서 전달되어야 한다", onMainLooper.get());
-        return box.get();
+        return AsyncTestHarness.awaitCallback(call);
     }
 
     @Test
