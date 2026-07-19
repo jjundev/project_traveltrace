@@ -232,6 +232,53 @@ public class AnalysisPipelineTest {
         vm.cancel();
         drain();
 
-        assertNull("취소하면 여행이 저장되지 않는다", vm.savedTripId().getValue());
+        // savedTripId 라이브데이터만 보면 안 된다 — RoomPhotoAnalysisRepository 는 Room
+        // 트랜잭션을 커밋한 "뒤에" 콜백을 올리므로, 그 콜백의 cancelled 체크가 이미 durable
+        // 해진 행을 막지는 못한다(finding 2, 수용된 레이스). 즉 savedTripId 가 null 인 것만으론
+        // "아무것도 저장 안 됐다"를 증명하지 못하고, "저장은 됐는데 콜백이 UI 갱신만 건너뛰었다"
+        // 와 구분이 안 된다. 여기서 취소는 vm.start() 직후, run() 이 for 루프를 돌기도 전에
+        // 걸리므로(사진 EXIF 추출이 시작되기 전) saveTrip() 자체가 호출되지 않는 케이스만
+        // 보장한다 — 그래서 DB 를 직접 조회해 trip 행이 하나도 없음을 확인한다.
+        // (반대로 "루프를 다 돌고 saveTrip 콜백이 커밋한 바로 그 틈에" 취소가 끼는 창은
+        // finding 2 가 명시한 대로 이 테스트가 다루지 않는 수용된 레이스다.)
+        assertNull("취소하면 저장 완료 신호도 오지 않는다", vm.savedTripId().getValue());
+        assertTrue("추출을 시작하기도 전에 취소되면 여행 행이 하나도 생기지 않는다",
+                db.tripDao().listSummaries().isEmpty());
+    }
+
+    @Test
+    public void onClearedCancelsAnInFlightBatchLikeAGenuineDeparture() {
+        // AnalysisFragment.onDestroyView() 는 더 이상 vm.cancel() 을 부르지 않는다(finding 1) —
+        // 회전으로 View 만 재생성돼도 그 콜백이 매번 불려 배치를 영구히 죽였기 때문이다.
+        // 대신 진짜 취소 신호는 ViewModel.onCleared() 로 옮겼다. onCleared() 는 protected 지만
+        // 이 테스트가 같은 패키지(com.traveltrace.app.ui.analysis)에 있으므로 Fragment/Hilt
+        // 테스트 하네스(FragmentScenario, HiltTestApplication — 이 저장소엔 둘 다 없다) 없이도
+        // "ViewModelStore 가 진짜로 이 ViewModel 을 버릴 때" 를 직접 재현할 수 있다.
+        session.put(Arrays.asList(1L, 2L, 3L));
+
+        vm.start();
+        vm.onCleared();
+        drain();
+
+        assertNull("onCleared 이후엔 저장 완료 신호가 오지 않는다", vm.savedTripId().getValue());
+        assertTrue("onCleared 가 곧 취소이므로 추출 전 호출되면 여행 행이 생기지 않는다",
+                db.tripDao().listSummaries().isEmpty());
+    }
+
+    @Test
+    public void viewTeardownAloneNeverCancelsTheBatch() {
+        // finding 1 이 지키려는 반대쪽 절반: 회전처럼 View 만 재생성되고 ViewModel 은
+        // 살아남는 경우엔 그 무엇도 cancel()/onCleared() 를 부르지 않아야 배치가 끝까지
+        // 진행돼 저장된다. AnalysisFragment.onDestroyView() 에 더는 vm.cancel() 호출이 없다는
+        // 사실은 코드를 읽어 확인했고(Fragment/Hilt 하네스가 없어 실제 View 재생성을 이
+        // 테스트로 몰아붙일 수는 없다), 여기서는 그 결과 — cancel()/onCleared() 를 아무도
+        // 부르지 않으면 배치가 정상 완주한다 — 를 ViewModel 경계에서 확인한다.
+        session.put(Arrays.asList(1L, 2L, 3L));
+
+        vm.start();
+        drain();
+
+        assertNotNull("취소 신호가 없으면 정상적으로 저장까지 끝난다", vm.savedTripId().getValue());
+        assertEquals("여행 행이 정확히 하나 생긴다", 1, db.tripDao().listSummaries().size());
     }
 }

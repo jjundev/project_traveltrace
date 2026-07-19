@@ -71,8 +71,12 @@ public class AnalysisFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
-        // 화면을 벗어나면 잔여 EXIF 작업을 멈춘다 (plan/03·11: 누수 없이 정리).
-        vm.cancel();
+        // onDestroyView() 는 회전 등 설정 변경으로 View 만 재생성될 때도 매번 불린다.
+        // 반면 이 화면의 ViewModel 은 회전에도 살아남아야 하는 배치를 들고 있으므로,
+        // 여기서 vm.cancel() 을 무조건 부르면 회전 한 번에 취소 플래그가 영구히 켜져
+        // 진행 중이던 배치가 되살아나지 못하고 멈춰버린다(finding 1). 그래서 취소는
+        // ViewModel.onCleared() 로 옮겼다 — 그건 이 ViewModel 이 진짜로 폐기될 때(뒤로
+        // 가기로 이 화면을 완전히 벗어날 때)만 불리므로 "회전"과 "이탈"을 정확히 구분한다.
         super.onDestroyView();
         binding = null;
     }

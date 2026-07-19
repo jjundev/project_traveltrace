@@ -35,8 +35,14 @@ import dagger.hilt.android.qualifiers.ApplicationContext;
  * <p>S1 엔 AI 가 없으므로 "현재 인식 텍스트" 자리에는 처리 중인 <em>파일명</em>을 보여준다
  * — MediaStore DISPLAY_NAME 을 이미 쿼리하므로 추가 비용이 없다.
  *
- * <p>화면을 벗어나면 {@link #cancel()} 로 잔여 작업을 멈춘다. 취소 플래그를 매 사진마다
- * 확인하므로 진행 중이던 배치가 DB 를 건드리지 않고 끝난다.
+ * <p>진짜 취소 시점은 {@link #onCleared()} 다 — 회전으로 View 만 재생성되는 경우
+ * {@code onDestroyView()} 는 매번 불리지만 이 ViewModel 은 살아남으므로 잘못 취소되면
+ * 안 된다. {@code onCleared()} 는 ViewModelStore 가 진짜로 버려질 때(뒤로가기로 화면을
+ * 이탈하거나, 리컴포지션이 아닌 프래그먼트 폐기)만 호출되므로 "회전"과 "이탈"을 정확히
+ * 구분하는 신호다. {@link #cancel()} 은 뒤로가기 버튼처럼 사용자의 명시적 이탈 의도가
+ * 이미 확실한 자리에서 조금 더 빨리 멈추기 위한 보조 훅으로 남긴다. 취소 플래그를 매
+ * 사진마다 확인하므로 진행 중이던 배치가 이후 사진의 EXIF 는 더 읽지 않고 끝난다 —
+ * 다만 저장 커밋 자체는 별도의 수용된 레이스가 있다({@link #run} 참고).
  */
 @HiltViewModel
 public class AnalysisViewModel extends ViewModel {
@@ -110,8 +116,21 @@ public class AnalysisViewModel extends ViewModel {
         });
     }
 
-    /** 화면 이탈 시 호출. 진행 중인 배치가 저장 없이 끝난다. */
+    /**
+     * 명시적 이탈(뒤로가기 버튼 등) 시 호출해 조금 더 빨리 멈춘다. 진짜 취소 보장은
+     * {@link #onCleared()} 가 맡으므로, 이 호출이 없어도(예: 시스템 뒤로가기 제스처)
+     * ViewModel 이 실제로 폐기되는 순간 동일하게 취소된다.
+     */
     public void cancel() {
+        cancelled.set(true);
+    }
+
+    /**
+     * ViewModelStore 가 진짜로 버려질 때만 불린다 — 회전 등 View 재생성으로는 호출되지
+     * 않는다(finding 1). 그래서 "취소"의 유일한 신뢰 가능한 신호를 여기 둔다.
+     */
+    @Override
+    protected void onCleared() {
         cancelled.set(true);
     }
 
@@ -139,8 +158,17 @@ public class AnalysisViewModel extends ViewModel {
         String name = tripName(context, results);
         String zoneId = TimeZone.getDefault().getID();
         analysisRepository.saveTrip(name, zoneId, results, tripId -> {
-            if (cancelled.get()) return;
+            // 레포지토리는 Room 트랜잭션을 커밋한 "뒤에" 이 콜백을 메인 스레드로 올린다.
+            // 즉 이 콜백이 실행된 시점엔 trip 행이 이미 durable 하게 저장되어 있다 —
+            // cancelled 가 true 여도 그 사이 취소가 끼어든 것뿐, 쓰기 자체를 되돌릴
+            // 방법은 없다(finding 2, 레포지토리는 out of bounds 라 원자적으로 만들지
+            // 않기로 합의된 수용된 레이스). 그래서 세션은 취소 여부와 무관하게 "항상"
+            // 비운다 — 안 비우면 같은 선택으로 재진입한 다음 AnalysisViewModel 이 배치를
+            // 통째로 다시 돌려 같은 사진들로 두 번째 "유령 여행"을 만들 수 있고, 그 이중
+            // 저장이 이 픽스가 실제로 막으려는 결과다. 반면 이 화면 자체는 이미 사라진
+            // 뒤일 수 있으니 state/savedTripId 같은 UI 갱신은 취소 시 계속 억제한다.
             session.clear();
+            if (cancelled.get()) return;
             state.setValue(new AnalysisUiState(
                     total, total, true, name, countPlaced(results), countUnknown(results)));
             savedTripId.setValue(tripId);
