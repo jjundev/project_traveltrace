@@ -114,7 +114,14 @@ public class PhotoSelectionFragment extends Fragment {
 
         // 직전과 같은 판정이면 조용히 넘어간다 — 아니면 화면이 포그라운드로 돌아올 때마다
         // (권한 변화가 전혀 없어도) 갤러리를 다시 읽고 토스트를 또 띄우게 된다.
-        if (state == lastAppliedState) return;
+        // 단, PARTIAL 은 이 캐시에서 제외한다: State 는 "어떤 권한을 들고 있는지"만
+        // 말해줄 뿐 "어떤 사진이 선택됐는지"는 말해주지 않는다. 사용자가 시스템의
+        // "사진 더 선택" 화면에서 선택 목록을 바꾸고 돌아와도 evaluate() 는 여전히
+        // PARTIAL 을 반환하므로, 판정이 같다는 이유로 여기서 건너뛰면 그리드가 낡은
+        // 목록을 보여준 채 멈춘다. 그래서 PARTIAL 일 때는 판정이 그대로여도 매번
+        // vm.load() 를 다시 불러 그리드를 최신 선택 목록으로 갱신한다.
+        boolean unchanged = state == lastAppliedState;
+        if (unchanged && state != MediaPermissionController.State.PARTIAL) return;
         lastAppliedState = state;
 
         switch (state) {
@@ -126,8 +133,14 @@ public class PhotoSelectionFragment extends Fragment {
                 // 부분 허용도 읽을 수 있다 — 목록을 채우되 "더 선택하기"를 안내한다.
                 bindNormalStartAnalyzeButton();
                 vm.load();
-                ToastPresenter.show(binding.getRoot(),
-                        getString(R.string.select_permission_partial));
+                // 단, 안내 토스트는 판정이 실제로 바뀐 경우(예: DENIED→PARTIAL, 최초
+                // 진입)에만 띄운다 — PARTIAL 이 그대로 유지된 채 목록만 갱신되는
+                // resume 마다 같은 토스트가 반복되면 스팸이 된다. 그리드 갱신은
+                // 침묵 속에 일어나도 무해하지만, 토스트는 매번 뜨면 오히려 소음이다.
+                if (!unchanged) {
+                    ToastPresenter.show(binding.getRoot(),
+                            getString(R.string.select_permission_partial));
+                }
                 break;
             case DENIED:
             default:
