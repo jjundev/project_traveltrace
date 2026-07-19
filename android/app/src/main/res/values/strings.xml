@@ -19,6 +19,11 @@
     <string name="select_start_analyze">분석 시작</string>
     <string name="select_hint">최대 %1$d장 · 탭하여 제외</string>
     <!-- %1$d = 선택 장수. 숫자만 브랜드 색으로 강조하므로 Renderer 에서 Spannable 로 조립한다. -->
+    <string name="select_period_range">%1$s – %2$s · 사진 %3$d장</string>
+    <string name="select_period_empty">사진이 없어요</string>
+    <string name="select_permission_denied">사진 접근을 허용해야 경로를 그릴 수 있어요</string>
+    <string name="select_permission_partial">선택한 사진만 보이는 중이에요</string>
+    <string name="select_none_selected">사진을 한 장 이상 골라 주세요</string>
     <string name="select_count_prefix">"선택한 사진 "</string>
     <string name="select_count_suffix">장</string>
     <string name="select_tile_desc">사진 타일</string>
