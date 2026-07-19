@@ -1,11 +1,24 @@
 package com.traveltrace.app.ui.map;
 
+import android.util.Log;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
 
+import com.traveltrace.app.core.model.LocationSource;
+import com.traveltrace.app.domain.TripRepository;
+import com.traveltrace.app.domain.model.StopRow;
+import com.traveltrace.app.domain.model.TripDetail;
 import com.traveltrace.app.ui.preview.ScreenFixtures;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 
 import javax.inject.Inject;
 
@@ -20,11 +33,60 @@ public class MapReplayViewModel extends ViewModel {
 
     private final MutableLiveData<MapUiState> state = new MutableLiveData<>();
     private final SavedStateHandle savedState;
+    private final TripRepository tripRepository;
+
+    /** Glide 썸네일이 붙기 전 하단시트 배너의 placeholder 톤. */
+    private static final int[] TONES = {
+            0xFFD9C9A8, 0xFFB7C6D6, 0xFFA9C6DA, 0xFFCDBFA1, 0xFFC3B69B, 0xFFD7D0BF};
 
     @Inject
-    public MapReplayViewModel(SavedStateHandle savedState) {
+    public MapReplayViewModel(SavedStateHandle savedState, TripRepository tripRepository) {
         this.savedState = savedState;
-        state.setValue(ScreenFixtures.map());
+        this.tripRepository = tripRepository;
+    }
+
+    /** tripId 가 있으면 저장 여행을, 없으면 디자인 프리뷰 픽스처를 싣는다. */
+    public void load() {
+        String tripId = tripId();
+        if (tripId == null) {
+            state.setValue(ScreenFixtures.map());
+            return;
+        }
+        tripRepository.open(tripId, detail -> {
+            if (detail == null) {
+                state.setValue(new MapUiState("", 0, new ArrayList<>(), 0,
+                        false, false, false, MapUiState.Speed.NORMAL));
+                return;
+            }
+            state.setValue(toState(detail));
+        });
+    }
+
+    private static MapUiState toState(TripDetail detail) {
+        SimpleDateFormat fmt = new SimpleDateFormat("HH:mm", Locale.KOREA);
+        fmt.setTimeZone(TimeZone.getTimeZone(detail.timeZoneId));
+
+        List<MapUiState.Stop> stops = new ArrayList<>();
+        for (int i = 0; i < detail.stops.size(); i++) {
+            StopRow row = detail.stops.get(i);
+            // PLACED 행은 좌표가 있어야 하지만, 그 불변식이 깨졌을 때 0d 로 메우면
+            // 정확히 금지된 (0,0) 핀이 생긴다 — 조용히 메우지 말고 걸러내고 로그를 남긴다.
+            if (row.lat == null || row.lng == null) {
+                Log.w("MapReplayViewModel", "PLACED stop without coordinates: " + row.photoId);
+                continue;
+            }
+            stops.add(new MapUiState.Stop(
+                    row.photoId,
+                    row.landmarkName != null ? row.landmarkName : row.displayName,
+                    row.takenAtUtc == null ? "" : fmt.format(new Date(row.takenAtUtc)),
+                    row.source == LocationSource.AI,
+                    0,
+                    TONES[i % TONES.length],
+                    row.lat,
+                    row.lng));
+        }
+        return new MapUiState(detail.name, detail.unknownCount, stops, 0,
+                false, false, false, MapUiState.Speed.NORMAL);
     }
 
     /** nav argument 로 들어온 저장 여행 식별자. 없으면 null(프리뷰 진입). */

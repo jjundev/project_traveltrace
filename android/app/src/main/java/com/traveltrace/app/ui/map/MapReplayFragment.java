@@ -134,6 +134,7 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
         requireActivity().getOnBackPressedDispatcher()
                 .addCallback(getViewLifecycleOwner(), cinemaBackCallback);
 
+        vm.load();
         vm.state().observe(getViewLifecycleOwner(), this::render);
     }
 
@@ -144,6 +145,17 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
         binding.satelliteScrim.setVisibility(state.satellite ? View.VISIBLE : View.GONE);
         if (map != null) {
             map.setMapType(state.satellite ? GoogleMap.MAP_TYPE_SATELLITE : GoogleMap.MAP_TYPE_NORMAL);
+            MapRouteRenderer.draw(map, state.stops, requireContext());
+            com.google.android.gms.maps.CameraUpdate camera = MapRouteRenderer.cameraFor(
+                    state.stops,
+                    getResources().getDimensionPixelSize(R.dimen.map_camera_padding));
+            if (camera != null) {
+                // 맵뷰 크기가 0인 콜드 스타트에 newLatLngBounds 를 쓰면 SDK 가 던진다 —
+                // 레이아웃이 끝난 뒤로 미룬다.
+                binding.mapContainer.post(() -> {
+                    if (map != null) map.moveCamera(camera);
+                });
+            }
         }
 
         MapRenderer.renderCinema(binding.cinemaOverlay, state);
@@ -161,7 +173,12 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
         if (binding == null) return;
         map = googleMap;
         map.getUiSettings().setMapToolbarEnabled(false);
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(PARIS, STATIC_ZOOM));
+
+        // 초기 카메라는 여행 스톱에서 결정된다 — 스톱이 없을 때만 파리 고정.
+        MapUiState current = vm.state().getValue();
+        if (current == null || current.stops.isEmpty()) {
+            map.moveCamera(CameraUpdateFactory.newLatLngZoom(PARIS, STATIC_ZOOM));
+        }
 
         MapUiState state = vm.state().getValue();
         if (state != null) render(state);

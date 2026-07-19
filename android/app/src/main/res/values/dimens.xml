@@ -116,4 +116,8 @@
     <!-- MAP 상영 모드 -->
     <dimen name="cinema_card_height">340dp</dimen>
     <dimen name="text_cinema_name">26sp</dimen>
+
+    <!-- MAP 경로 렌더 (에픽 13) -->
+    <dimen name="map_route_width">6dp</dimen>
+    <dimen name="map_camera_padding">64dp</dimen>
 </resources>
