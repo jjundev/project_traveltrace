@@ -59,6 +59,13 @@ android {
         versionCode 1
         versionName '0.1.0'
 
+        // exportSchema=true 의 산출물 경로. 커밋해서 스키마 변경 이력을 남긴다.
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments += ["room.schemaLocation": "$projectDir/schemas".toString()]
+            }
+        }
+
         // A2: resolved vision model IDs (from committed generated file).
         buildConfigField "String", "GEMINI_VISION_MODEL", "\"${vision.gemini}\""
         buildConfigField "String", "OPENAI_VISION_MODEL", "\"${vision.openai}\""
