@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MAP 오프라인 한계 배너: 상단바 아래에 상시 노출. 토스트가 아니라 배너인 이유는
+     "오프라인 지도"라는 오해를 오프라인인 동안 계속 막아야 하기 때문이다(PRD §5). -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/offlineBannerRoot"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="14dp"
+    android:layout_marginEnd="14dp"
+    android:background="@drawable/bg_chip_unknown"
+    android:elevation="@dimen/card_elevation"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="12dp"
+    android:paddingTop="9dp"
+    android:paddingEnd="12dp"
+    android:paddingBottom="9dp"
+    android:visibility="gone">
+
+    <ImageView
+        android:layout_width="14dp"
+        android:layout_height="14dp"
+        android:contentDescription="@null"
+        android:src="@drawable/ic_info"
+        app:tint="@color/unknown_yellow" />
+
+    <TextView
+        android:id="@+id/offlineBannerText"
+        style="@style/TextAppearance.TravelTrace.Small"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_weight="1"
+        android:text="@string/map_offline_notice"
+        android:textColor="@color/text_on_fill"
+        android:textFontWeight="700"
+        tools:text="지도 배경을 불러올 수 없어요" />
+</LinearLayout>

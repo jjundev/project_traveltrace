@@ -14,6 +14,7 @@ import com.traveltrace.app.R;
 import com.traveltrace.app.databinding.ViewCinemaOverlayBinding;
 import com.traveltrace.app.databinding.ViewMapBottomSheetBinding;
 import com.traveltrace.app.databinding.ViewMapTopBarBinding;
+import com.traveltrace.app.databinding.ViewOfflineBannerBinding;
 
 /**
  * MapUiState → MAP 크롬 반영. 지도 레이아웃(FragmentContainerView)과 분리된 include
@@ -34,6 +35,15 @@ public final class MapRenderer {
 
         applyTab(ctx, binding.tabMap, !state.satellite);
         applyTab(ctx, binding.tabSatellite, state.satellite);
+    }
+
+    /**
+     * 오프라인 한계 배너. 상영 모드에선 다른 크롬과 함께 숨는다 — 상영 중에 배너만 남으면
+     * 연출이 깨지고, 어차피 상영을 나오면 다시 보인다.
+     */
+    public static void renderOfflineBanner(ViewOfflineBannerBinding binding, MapUiState state) {
+        binding.offlineBannerRoot.setVisibility(
+                state.offline && !state.cinema ? View.VISIBLE : View.GONE);
     }
 
     /** 선택 탭 = 파란 pill + 흰 글자 / 비선택 = 투명 + tertiary 글자 (프로토타입 mapTabBg/Fg). */
