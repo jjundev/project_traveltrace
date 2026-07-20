@@ -52,6 +52,11 @@ public class RoomAnalysisCacheStore implements AnalysisCacheStore {
         if (analysis.contentHash == null) return;
         if (!isCacheable(analysis)) return;
 
+        // isCacheable() 이 걸러낸 대로 여기 오는 건 항상 GPS 결과라, 지금은 GPS/EXIF 가
+        // 채우는 필드만 저장한다 — landmarkName/city/country/confidence/model 은 일부러
+        // 옮기지 않는다(엔티티엔 컬럼이 있어도 S1/S8 결과에선 항상 null). S3(AI 지명)·
+        // S5(모델 id) 가 이 값들을 채우기 시작하면 여기와 get() 양쪽에 왕복시키는 코드를
+        // 추가해야 한다 — 지금 침묵하고 있다고 잊지 말 것.
         AnalysisCacheEntity entry = new AnalysisCacheEntity();
         entry.mediaStoreId = analysis.mediaStoreId;
         entry.contentHash = analysis.contentHash;

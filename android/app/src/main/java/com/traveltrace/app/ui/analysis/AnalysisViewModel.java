@@ -177,7 +177,7 @@ public class AnalysisViewModel extends ViewModel {
             // 통째로 다시 돌려 같은 사진들로 두 번째 "유령 여행"을 만들 수 있고, 그 이중
             // 저장이 이 픽스가 실제로 막으려는 결과다. 반면 이 화면 자체는 이미 사라진
             // 뒤일 수 있으니 state/savedTripId 같은 UI 갱신은 취소 시 계속 억제한다.
-            costLog.logSummary("analyze " + total + "장");
+            costLog.logSummary("analyze " + total + " photos");
             session.clear();
             if (cancelled.get()) return;
             state.setValue(new AnalysisUiState(
@@ -210,9 +210,11 @@ public class AnalysisViewModel extends ViewModel {
                 cached.displayName = image.displayName;
                 return cached;
             }
+            // 조회할 해시가 있었는데도 못 찾았을 때만 진짜 miss 다 — 해시 자체가 없던
+            // 아래 분기는 캐시를 애초에 못 건드린 "skip"이라 miss 로 세면 신호가 흐려진다.
+            costLog.recordCacheMiss();
         }
 
-        costLog.recordCacheMiss();
         PhotoAnalysis fresh = extractor.extract(image);
         fresh.contentHash = hash;
         // put() 이 캐시 가능 여부를 스스로 판단한다 — 여기서 거르지 않는다.
