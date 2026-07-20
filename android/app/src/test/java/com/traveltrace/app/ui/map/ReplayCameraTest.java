@@ -144,6 +144,33 @@ public class ReplayCameraTest {
     }
 
     @Test
+    public void staleCallbackFromAnInterruptedFlightIsIgnoredAfterANewFlightStarts() {
+        // ReplayCamera 의 존재 이유: 실제 GoogleMap 은 onCancel/onArrive 를 다음 프레임에
+        // 비동기로 준다. flight A 가 flight B 에 의해 끊긴 뒤, A 의 콜백이 뒤늦게 도착해도
+        // B 를 오염시키면 안 된다 — 세대(generation) 가드가 이걸 보장해야 한다.
+        AtomicInteger arrivalsA = new AtomicInteger();
+        AtomicInteger interruptionsA = new AtomicInteger();
+        ReplayCamera.Arrival probeA = new ReplayCamera.Arrival() {
+            @Override public void onArrive() { arrivalsA.incrementAndGet(); }
+            @Override public void onInterrupted() { interruptionsA.incrementAndGet(); }
+        };
+
+        camera.flyTo(48.86, 2.29, 14f, 2_000L, probeA); // flight A
+
+        camera.flyTo(41.90, 12.49, 12f, 3_000L, probe); // flight B — A 를 끊고 세대를 올린다
+
+        // A 의 뒤늦은 콜백들이 지금에서야 도착한다.
+        animator.arrivePrevious();
+        animator.cancelPrevious();
+
+        assertEquals("스테일 비행의 도착은 완전히 무시돼야 한다", 0, arrivalsA.get());
+        assertEquals("스테일 비행의 중단도 완전히 무시돼야 한다", 0, interruptionsA.get());
+        assertEquals("새 비행의 도착 카운트가 오염되면 안 된다", 0, arrivals.get());
+        assertEquals("새 비행의 중단 카운트가 오염되면 안 된다", 0, interruptions.get());
+        assertTrue("새 비행(B)은 스테일 콜백 이후에도 여전히 살아있어야 한다", camera.freeze());
+    }
+
+    @Test
     public void moveToCancelsAnyFlightAndJumpsInstantly() {
         camera.flyTo(48.86, 2.29, 14f, 2_000L, probe);
 
