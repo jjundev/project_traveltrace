@@ -62,7 +62,7 @@ public final class ScreenFixtures {
         tiles.add(tile(0xFFE7E2DD, null, true));
         tiles.add(tile(0xFFDDE8E3, "몽마르트", true));
         tiles.add(tile(0xFFE4DEE6, null, true));
-        return new PhotoSelectionUiState("2024. 6. 12 – 6. 15 · 사진 94장", 100, tiles);
+        return new PhotoSelectionUiState("2024. 6. 12 – 6. 15 · 사진 94장", 100, "전체 사진", tiles);
     }
 
     /** 픽스처는 실제 사진이 없다 — mediaStoreId 0, contentUri null 로 톤 색 경로를 탄다. */

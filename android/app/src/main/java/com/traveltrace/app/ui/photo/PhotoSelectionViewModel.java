@@ -100,7 +100,8 @@ public class PhotoSelectionViewModel extends ViewModel {
                     image.id,
                     image.contentUri));
         }
-        return new PhotoSelectionUiState(periodLabel(images), MAX_SELECTION, tiles);
+        return new PhotoSelectionUiState(periodLabel(images), MAX_SELECTION,
+                context.getString(R.string.select_album_all), tiles);
     }
 
     /** "2024. 6. 12 – 6. 15 · 사진 94장" 형태. 시각을 모르는 사진은 기간 계산에서 뺀다. */
