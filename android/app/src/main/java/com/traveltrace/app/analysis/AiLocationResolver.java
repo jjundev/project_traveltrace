@@ -58,7 +58,19 @@ public class AiLocationResolver {
         }
 
         List<GeoPoint> candidates = geocoder.geocode(query);
-        GeoPoint resolved = Disambiguator.resolve(candidates);
+        GeoPoint resolved;
+        if (query instanceof GeocodeQuery.Poi) {
+            // Places Text Search 는 관련성 순으로 정렬한다 — top 후보가 질의에 가장 부합하고
+            // 하위는 발음·철자만 비슷한 상호 같은 노이즈다("에펠탑" → 1위 파리 에펠탑,
+            // 그 아래로 한국의 "Epeltab" 상호들). 그 노이즈로 흩어짐을 재면 명백한 정답까지
+            // 강등되므로, POI 경로는 관련성 top-1 을 신뢰한다(동명 지명 위험은 아래 행정
+            // 지명 경로의 몫이다).
+            resolved = candidates.isEmpty() ? null : candidates.get(0);
+        } else {
+            // 행정 지명(Geocoding)은 관련성 랭킹이 약하고 동명 지명 위험이 크다
+            // (파리 FR vs 파리 TX) — 흩어짐 강등은 여기서만 적용한다.
+            resolved = Disambiguator.resolve(candidates);
+        }
         if (resolved == null) {
             // zero result 이거나 동명 지명. 이름은 이미 위에서 보존했다.
             target.classification = LocationClassification.NAME_ONLY;

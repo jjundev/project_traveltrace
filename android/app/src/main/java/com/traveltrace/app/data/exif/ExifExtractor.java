@@ -79,7 +79,12 @@ public class ExifExtractor {
                 exif.getAttribute(ExifInterface.TAG_OFFSET_TIME_ORIGINAL),
                 deviceZone);
 
-        result.takenAtUtc = time.utcMillis;
+        // EXIF 에 촬영 시각이 없으면(브라우저 다운로드·메신저로 받은 사진에 흔하다)
+        // MediaStore 가 아는 시각(DATE_TAKEN, 없으면 DATE_ADDED)으로 폴백한다. 근사 시각이라도
+        // 있어야 경로에 참여할 수 있다 — 없으면 AI 가 장소를 알아내도 NO_TIME 으로 분류돼
+        // 지도에서 통째로 사라진다. 폴백은 오프셋 정보가 없으므로 hasOffset=false 로 둔다.
+        Long takenUtc = time.utcMillis != null ? time.utcMillis : image.dateTakenUtc;
+        result.takenAtUtc = takenUtc;
         result.takenAtHasOffset = time.hasOffset;
 
         if (latLong == null) {
@@ -90,8 +95,8 @@ public class ExifExtractor {
         result.lat = latLong[0];
         result.lng = latLong[1];
         result.source = LocationSource.GPS;
-        // 좌표는 있는데 시각이 없으면 경로 순서에 넣을 수 없다(PRD §4.6).
-        result.classification = time.utcMillis == null
+        // 좌표는 있는데 시각이 아예 없으면(폴백조차 없으면) 경로 순서에 넣을 수 없다(PRD §4.6).
+        result.classification = takenUtc == null
                 ? LocationClassification.NO_TIME
                 : LocationClassification.PLACED;
         return result;

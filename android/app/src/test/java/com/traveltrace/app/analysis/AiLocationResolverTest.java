@@ -110,6 +110,22 @@ public class AiLocationResolverTest {
     }
 
     @Test
+    public void poiKeepsTopCandidateDespiteScatteredNoise() throws Exception {
+        // 실제 기기 사례: Places 가 "에펠탑" 에 1위 파리 에펠탑과 함께 발음만 비슷한
+        // 한국 상호("Epeltab" 용인/서울)를 섞어 돌려준다. 이 흩어진 노이즈로 강등하면
+        // confidence 1.0 인 정답까지 NAME_ONLY 로 버려진다 — POI 경로는 관련성 top-1 을
+        // 신뢰해야 한다. (반면 위 homonymsDegradeToNameOnly 는 행정 지명이라 강등이 옳다.)
+        PhotoAnalysis a = blank(1_700_000_000_000L);
+
+        new AiLocationResolver(new FakeGeocoder(Arrays.asList(EIFFEL, PARIS_TX)))
+                .apply(a, new RecognitionResult("에펠탑", "파리", "프랑스", 0.95));
+
+        assertEquals(LocationClassification.PLACED, a.classification);
+        assertEquals("top-1(파리 에펠탑)을 채택한다", 48.8584, a.lat, 1e-9);
+        assertEquals(LocationSource.AI, a.source);
+    }
+
+    @Test
     public void zeroResultDegradesToNameOnly() throws Exception {
         PhotoAnalysis a = blank(1_700_000_000_000L);
 
