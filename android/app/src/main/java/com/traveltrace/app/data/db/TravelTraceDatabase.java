@@ -5,21 +5,28 @@ import androidx.room.RoomDatabase;
 import androidx.room.TypeConverters;
 
 /**
- * v1. AnalysisCache((_ID+해시) 캐시)는 AI 호출을 막는 장치라 S1 에는 없다 — S4/S8 에서
- * 테이블 추가(가산 마이그레이션)로 들어온다.
+ * v2. S1 이 세운 trips/photos/photo_locations 위에 S8 이 analysis_cache 를 가산으로 얹었다
+ * ({@link Migrations#MIGRATION_1_2}). 캐시는 여행과 독립이라 여행 삭제에 딸려가지 않는다.
  */
 @Database(
-        entities = {TripEntity.class, PhotoEntity.class, PhotoLocationEntity.class},
-        version = 1,
+        entities = {
+                TripEntity.class,
+                PhotoEntity.class,
+                PhotoLocationEntity.class,
+                AnalysisCacheEntity.class},
+        version = TravelTraceDatabase.VERSION,
         exportSchema = true)
 @TypeConverters(Converters.class)
 public abstract class TravelTraceDatabase extends RoomDatabase {
 
     public static final String NAME = "traveltrace.db";
+    public static final int VERSION = 2;
 
     public abstract TripDao tripDao();
 
     public abstract PhotoDao photoDao();
 
     public abstract PhotoLocationDao photoLocationDao();
+
+    public abstract AnalysisCacheDao analysisCacheDao();
 }

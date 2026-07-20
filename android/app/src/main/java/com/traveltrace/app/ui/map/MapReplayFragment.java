@@ -152,18 +152,27 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
         vm.state().observe(getViewLifecycleOwner(), this::render);
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        // 설정에서 비행기 모드를 끄고 돌아왔을 수 있다 — 배너를 최신 상태로 맞춘다.
+        if (vm != null) vm.refreshConnectivity();
+    }
+
     private void render(MapUiState state) {
         if (binding == null) return;
         MapRenderer.renderTopBar(binding.mapTopBar, state);
+        MapRenderer.renderOfflineBanner(binding.offlineBanner, state);
         MapRenderer.renderSheet(binding.mapBottomSheet, state);
         binding.satelliteScrim.setVisibility(state.satellite ? View.VISIBLE : View.GONE);
         if (map != null) {
             map.setMapType(state.satellite ? GoogleMap.MAP_TYPE_SATELLITE : GoogleMap.MAP_TYPE_NORMAL);
-            // 재생/속도/위성/상영/스크럽은 전부 "같은 경로, 다른 UI 상태" 인 emission 이다 —
-            // MapUiState 생성자가 매번 unmodifiableList(new ArrayList<>(...)) 로 감싸므로 리스트
-            // 참조는 항상 새것이지만(sameInstance 비교 불가), MapReplayViewModel.copy() 는 그 안의
-            // Stop 인스턴스 자체는 복사하지 않고 그대로 넘긴다. 그래서 원소 참조 동일성으로
-            // "경로가 실제로 바뀌었는가"를 판별한다 — 여행을 새로 열 때만 toState() 가 Stop 을
+            // 재생/속도/위성/상영/스크럽/오프라인 전환은 전부 "같은 경로, 다른 UI 상태" 인
+            // emission 이다 — MapUiState 생성자가 매번 unmodifiableList(new ArrayList<>(...))
+            // 로 감싸므로 리스트 참조는 항상 새것이지만(sameInstance 비교 불가),
+            // MapReplayViewModel.publish() 는 engine.stops() 를 그대로 넘기므로 그 안의
+            // Stop 인스턴스 자체는 새로 찍히지 않는다. 그래서 원소 참조 동일성으로 "경로가
+            // 실제로 바뀌었는가"를 판별한다 — 여행을 새로 열 때만 toStops() 가 Stop 을
             // 통째로 새로 만들어서 이 비교가 깨진다. 경로가 안 바뀌었으면 다시 그리지도, 카메라를
             // whole-route bounds 로 되돌리지도 않는다 — 그게 사용자가 방금 옮긴 카메라를 지킨다.
             if (lastDrawnStops == null || !sameRoute(lastDrawnStops, state.stops)) {

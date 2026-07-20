@@ -35,7 +35,9 @@ public class MediaStoreImageSource {
     private static final String[] PROJECTION = {
             MediaStore.Images.Media._ID,
             MediaStore.Images.Media.DISPLAY_NAME,
-            MediaStore.Images.Media.DATE_TAKEN};
+            MediaStore.Images.Media.DATE_TAKEN,
+            MediaStore.Images.Media.SIZE,
+    };
 
     private final Context context;
     private final AppExecutors executors;
@@ -178,6 +180,7 @@ public class MediaStoreImageSource {
         int idCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
         int nameCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DISPLAY_NAME);
         int takenCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN);
+        int sizeCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.SIZE);
 
         while (cursor.moveToNext() && images.size() < limit) {
             long id = cursor.getLong(idCol);
@@ -187,7 +190,8 @@ public class MediaStoreImageSource {
                     ContentUris.withAppendedId(collection, id),
                     cursor.getString(nameCol),
                     // 0 은 "촬영 시각 모름"이다 — 1970년으로 저장하면 정렬이 망가진다.
-                    taken > 0L ? taken : null));
+                    taken > 0L ? taken : null,
+                    cursor.isNull(sizeCol) ? 0L : cursor.getLong(sizeCol)));
         }
         return images;
     }

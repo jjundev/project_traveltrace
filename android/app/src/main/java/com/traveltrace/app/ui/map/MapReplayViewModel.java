@@ -10,6 +10,7 @@ import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
 
 import com.traveltrace.app.core.model.LocationSource;
+import com.traveltrace.app.core.net.ConnectivityMonitor;
 import com.traveltrace.app.domain.TripRepository;
 import com.traveltrace.app.domain.model.StopRow;
 import com.traveltrace.app.domain.model.TripDetail;
@@ -42,6 +43,7 @@ public class MapReplayViewModel extends ViewModel {
     private final MutableLiveData<MapUiState> state = new MutableLiveData<>();
     private final SavedStateHandle savedState;
     private final TripRepository tripRepository;
+    private final ConnectivityMonitor connectivity;
     private final ReplayEngine engine;
 
     /** Glide 썸네일이 실패하거나 아직 안 붙었을 때 하단시트 배너에 남는 placeholder 톤. */
@@ -52,18 +54,21 @@ public class MapReplayViewModel extends ViewModel {
     private String tripTitle = "";
     private int unknownCount;
     private boolean satellite;
+    private boolean offline;
     private boolean loadStarted;
 
     @Inject
-    public MapReplayViewModel(SavedStateHandle savedState, TripRepository tripRepository) {
-        this(savedState, tripRepository, new MainThreadReplayScheduler());
+    public MapReplayViewModel(SavedStateHandle savedState, TripRepository tripRepository,
+                              ConnectivityMonitor connectivity) {
+        this(savedState, tripRepository, new MainThreadReplayScheduler(), connectivity);
     }
 
     /** 테스트가 가짜 스케줄러를 넣을 수 있게 분리한 생성자. */
     MapReplayViewModel(SavedStateHandle savedState, TripRepository tripRepository,
-                       ReplayScheduler scheduler) {
+                       ReplayScheduler scheduler, ConnectivityMonitor connectivity) {
         this.savedState = savedState;
         this.tripRepository = tripRepository;
+        this.connectivity = connectivity;
         this.engine = new ReplayEngine(scheduler);
         this.engine.setListener(this::publish);
     }
@@ -82,6 +87,9 @@ public class MapReplayViewModel extends ViewModel {
     public void load() {
         if (loadStarted) return;
         loadStarted = true;
+        // 적재 시점의 연결 상태를 한 번 읽어 둔다 — 이후 모든 publish() 가 tripTitle/
+        // unknownCount/satellite 처럼 이 값도 그대로 실어 나른다(재확인은 refreshConnectivity()).
+        offline = !connectivity.isOnline();
         String tripId = tripId();
         if (tripId == null) {
             MapUiState fixture = ScreenFixtures.map();
@@ -95,6 +103,22 @@ public class MapReplayViewModel extends ViewModel {
             }
             adopt(detail.name, detail.unknownCount, toStops(detail));
         });
+    }
+
+    /**
+     * 화면으로 돌아올 때 연결 상태만 다시 확인한다. NetworkCallback 을 등록하지 않는 것은
+     * 의도다 — 배너 하나를 위해 콜백 생명주기를 관리할 값어치가 없고, 사용자가 비행기 모드를
+     * 끄고 돌아오는 흐름은 onResume 으로 충분히 잡힌다.
+     *
+     * <p>load() 가 아직 한 번도 안 불렸으면(state == null) 아무것도 하지 않는다 — 그러지
+     * 않으면 tripTitle/engine.stops() 가 전부 초기값인 상태를 너무 일찍 발행하게 된다.
+     */
+    public void refreshConnectivity() {
+        if (state.getValue() == null) return;
+        boolean nowOffline = !connectivity.isOnline();
+        if (nowOffline == offline) return;
+        offline = nowOffline;
+        publish();
     }
 
     private void adopt(String title, int unknown, List<MapUiState.Stop> stops) {
@@ -139,7 +163,7 @@ public class MapReplayViewModel extends ViewModel {
     private void publish() {
         state.setValue(new MapUiState(tripTitle, unknownCount, engine.stops(),
                 engine.activeIndex(), engine.isPlaying(), satellite, engine.isCinema(),
-                engine.speed()));
+                engine.speed(), offline));
     }
 
     /** nav argument 로 들어온 저장 여행 식별자. 없으면 null(프리뷰 진입). */

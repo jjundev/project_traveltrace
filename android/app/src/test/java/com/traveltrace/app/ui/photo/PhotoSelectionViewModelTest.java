@@ -40,8 +40,8 @@ public class PhotoSelectionViewModelTest {
     @Before
     public void setUp() {
         ctx = ApplicationProvider.getApplicationContext();
-        seed(new Object[]{11L, "a.jpg", 1_718_000_000_000L},
-                new Object[]{22L, "b.jpg", 1_718_100_000_000L});
+        seed(new Object[]{11L, "a.jpg", 1_718_000_000_000L, 2048L},
+                new Object[]{22L, "b.jpg", 1_718_100_000_000L, 4096L});
 
         executors = new AppExecutors();
         session = new SelectionSession();
@@ -63,7 +63,8 @@ public class PhotoSelectionViewModelTest {
         cursor.setColumnNames(Arrays.asList(
                 MediaStore.Images.Media._ID,
                 MediaStore.Images.Media.DISPLAY_NAME,
-                MediaStore.Images.Media.DATE_TAKEN));
+                MediaStore.Images.Media.DATE_TAKEN,
+                MediaStore.Images.Media.SIZE));
         cursor.setResults(rows);
         Shadows.shadowOf(ctx.getContentResolver())
                 .setCursor(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cursor);
@@ -173,8 +174,8 @@ public class PhotoSelectionViewModelTest {
         ShadowLooper.idleMainLooper();
         PhotoSelectionUiState beforeSwitch = vm.state().getValue();
 
-        seed(new Object[]{11L, "a.jpg", 1_718_000_000_000L},
-                new Object[]{22L, "b.jpg", 1_718_100_000_000L});
+        seed(new Object[]{11L, "a.jpg", 1_718_000_000_000L, 2048L},
+                new Object[]{22L, "b.jpg", 1_718_100_000_000L, 4096L});
         PhotoSelectionUiState afterSwitch = AsyncTestHarness.awaitLiveData(
                 vm.state(), () -> vm.selectAlbum("7", "카메라"), s -> s != beforeSwitch,
                 "PhotoSelectionViewModel.selectAlbum() reload");
@@ -231,8 +232,8 @@ public class PhotoSelectionViewModelTest {
         // 재조회 전에 다시 seed() 해 새 커서를 등록해야 한다(그러지 않으면 이미 닫힌
         // 커서라 두 번째 query() 가 빈 목록을 내놓는다 — 이건 이 재로딩 계약과 무관한
         // 테스트 더블의 한계다).
-        seed(new Object[]{11L, "a.jpg", 1_718_000_000_000L},
-                new Object[]{22L, "b.jpg", 1_718_100_000_000L});
+        seed(new Object[]{11L, "a.jpg", 1_718_000_000_000L, 2048L},
+                new Object[]{22L, "b.jpg", 1_718_100_000_000L, 4096L});
 
         // Fragment.onViewCreated 가 다시 부르는 vm.load() 를 흉내낸다 — ViewModel 은
         // 살아남았으므로 state() 는 이미 위에서 만든 (11L 선택) 상태를 들고 있다.
@@ -260,9 +261,9 @@ public class PhotoSelectionViewModelTest {
         ShadowLooper.idleMainLooper();
 
         // 재조회 사이에 새 사진이 갤러리에 나타난 상황(예: PARTIAL 재선택, 새 촬영).
-        seed(new Object[]{11L, "a.jpg", 1_718_000_000_000L},
-                new Object[]{22L, "b.jpg", 1_718_100_000_000L},
-                new Object[]{33L, "c.jpg", 1_718_200_000_000L});
+        seed(new Object[]{11L, "a.jpg", 1_718_000_000_000L, 2048L},
+                new Object[]{22L, "b.jpg", 1_718_100_000_000L, 4096L},
+                new Object[]{33L, "c.jpg", 1_718_200_000_000L, 8192L});
 
         PhotoSelectionUiState beforeReload = vm.state().getValue();
         PhotoSelectionUiState reloaded = AsyncTestHarness.awaitLiveData(
