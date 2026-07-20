@@ -11,7 +11,9 @@ import android.provider.MediaStore;
 import androidx.test.core.app.ApplicationProvider;
 
 import com.traveltrace.app.AsyncTestHarness;
+import com.traveltrace.app.R;
 import com.traveltrace.app.core.AppExecutors;
+import com.traveltrace.app.data.media.AlbumBucket;
 import com.traveltrace.app.data.media.MediaStoreImageSource;
 import com.traveltrace.app.ui.selection.SelectionSession;
 
@@ -25,6 +27,7 @@ import org.robolectric.fakes.RoboCursor;
 import org.robolectric.shadows.ShadowLooper;
 
 import java.util.Arrays;
+import java.util.List;
 
 @RunWith(RobolectricTestRunner.class)
 public class PhotoSelectionViewModelTest {
@@ -100,12 +103,12 @@ public class PhotoSelectionViewModelTest {
     }
 
     @Test
-    public void loadsGalleryImagesAsSelectedTiles() {
+    public void loadsGalleryImagesAsUnselectedTilesByDefault() {
         PhotoSelectionUiState state = loadState();
 
         assertNotNull(state);
         assertEquals(2, state.tiles.size());
-        assertTrue("새로 읽은 사진은 기본 선택 상태다", state.tiles.get(0).selected);
+        assertFalse("새로 읽은 사진은 기본 미선택 상태다 — 탭해서 고른다", state.tiles.get(0).selected);
         assertEquals(11L, state.tiles.get(0).mediaStoreId);
         assertNotNull("실제 사진은 contentUri 를 갖는다", state.tiles.get(0).contentUri);
     }
@@ -118,7 +121,7 @@ public class PhotoSelectionViewModelTest {
 
         PhotoSelectionUiState state = vm.state().getValue();
         assertEquals(1, state.selectedCount());
-        assertEquals("해제해도 사진 식별자는 남는다", 11L, state.tiles.get(0).mediaStoreId);
+        assertEquals("선택해도 사진 식별자는 그대로다", 11L, state.tiles.get(0).mediaStoreId);
     }
 
     @Test
@@ -128,18 +131,76 @@ public class PhotoSelectionViewModelTest {
         ShadowLooper.idleMainLooper();
 
         assertTrue(vm.commitSelection());
-        assertEquals(Arrays.asList(22L), session.ids());
+        assertEquals(Arrays.asList(11L), session.ids());
     }
 
     @Test
     public void commitWithNothingSelectedIsRejected() {
-        loadState();
-        vm.toggle(0);
-        vm.toggle(1);
-        ShadowLooper.idleMainLooper();
+        loadState(); // 기본 미선택 상태 — 아무것도 탭하지 않았다.
 
         assertFalse("한 장도 없으면 분석을 시작할 수 없다", vm.commitSelection());
         assertTrue(session.isEmpty());
+    }
+
+    @Test
+    public void defaultAlbumLabelIsAllPhotos() {
+        PhotoSelectionUiState state = loadState();
+        assertEquals(ctx.getString(R.string.select_album_all), state.albumLabel);
+    }
+
+    @Test
+    public void selectAlbumUpdatesTheAlbumLabelAndReloads() {
+        PhotoSelectionUiState before = loadState();
+
+        PhotoSelectionUiState after = AsyncTestHarness.awaitLiveData(
+                vm.state(), () -> vm.selectAlbum("7", "카메라"), s -> s != before,
+                "PhotoSelectionViewModel.selectAlbum() reload");
+
+        assertEquals("카메라", after.albumLabel);
+    }
+
+    /**
+     * 앨범을 바꿔도 이미 골라 둔 사진의 선택은 그대로다 — id 기준 carry-over 로직은 재조회
+     * 사유(회전이든 앨범 전환이든)를 가리지 않는다(toState() 참고).
+     *
+     * <p>단, 이 테스트가 증명하는 건 "VM 이 선택 상태를 id 로 이어받는다"는 것뿐이다.
+     * setCursor 훅은 selection 인자를 무시하므로 "실제로 그 앨범 사진만 온다"는 SQL
+     * 필터링 자체는 MediaStoreImageSourceTest 가 ContentProvider 스텁으로 증명한다.
+     */
+    @Test
+    public void selectAlbumPreservesCarriedSelectionsById() {
+        loadState();
+        vm.toggle(0); // 11L 선택
+        ShadowLooper.idleMainLooper();
+        PhotoSelectionUiState beforeSwitch = vm.state().getValue();
+
+        seed(new Object[]{11L, "a.jpg", 1_718_000_000_000L, 2048L},
+                new Object[]{22L, "b.jpg", 1_718_100_000_000L, 4096L});
+        PhotoSelectionUiState afterSwitch = AsyncTestHarness.awaitLiveData(
+                vm.state(), () -> vm.selectAlbum("7", "카메라"), s -> s != beforeSwitch,
+                "PhotoSelectionViewModel.selectAlbum() reload");
+
+        assertTrue("앨범을 바꿔도 이미 고른 사진은 그대로 선택돼 있다",
+                afterSwitch.tiles.get(0).selected);
+        assertEquals(11L, afterSwitch.tiles.get(0).mediaStoreId);
+    }
+
+    @Test
+    public void loadAlbumsDelegatesToTheImageSource() {
+        // loadAlbums() 은 다른 커서 shape(BUCKET_ID/BUCKET_DISPLAY_NAME) 을 요구하므로
+        // setUp() 의 3열 seed() 를 덮어써야 한다 — Robolectric 의 setCursor 는 URI 당
+        // 하나의 커서만 들고 있고, 요청한 프로젝션과 무관하게 등록된 그 커서를 그대로 준다.
+        RoboCursor bucketCursor = new RoboCursor();
+        bucketCursor.setColumnNames(Arrays.asList(
+                MediaStore.Images.Media.BUCKET_ID, MediaStore.Images.Media.BUCKET_DISPLAY_NAME));
+        bucketCursor.setResults(new Object[][]{{"7", "카메라"}});
+        Shadows.shadowOf(ctx.getContentResolver())
+                .setCursor(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, bucketCursor);
+
+        List<AlbumBucket> albums = AsyncTestHarness.awaitCallback(vm::loadAlbums);
+
+        assertEquals(1, albums.size());
+        assertEquals("카메라", albums.get(0).displayName);
     }
 
     @Test
@@ -154,16 +215,15 @@ public class PhotoSelectionViewModelTest {
     /**
      * Finding 1 이 지키려는 것 그 자체: 회전으로 뷰만 재생성돼도 ViewModel 은 살아남고,
      * Fragment.onViewCreated 는 (판정 캐시를 null 로 되돌리므로) load() 를 다시 부른다.
-     * 이 재호출이 사용자가 "탭하여 제외"로 골라 둔 선택을 기본값으로 덮어쓰면 안 된다.
+     * 이 재호출이 사용자가 "탭하여 선택"으로 골라 둔 선택을 기본값(미선택)으로 되돌리면 안 된다.
      *
      * <p>이 테스트는 preservation 로직을 없애면(즉 toState 가 이전 상태를 무시하고 항상
-     * i &lt; MAX_SELECTION 으로만 매기면) 반드시 실패한다 — 11L 을 다시 선택 상태로
-     * 되돌려 버리기 때문이다.
+     * 미선택으로만 매기면) 반드시 실패한다 — 11L 의 선택을 지워 버리기 때문이다.
      */
     @Test
-    public void reloadingAfterRotationPreservesTheUsersExclusion() {
+    public void reloadingAfterRotationPreservesTheUsersSelection() {
         loadState();
-        vm.toggle(0); // 11L 제외
+        vm.toggle(0); // 11L 선택
         ShadowLooper.idleMainLooper();
         assertEquals(1, vm.state().getValue().selectedCount());
 
@@ -176,7 +236,7 @@ public class PhotoSelectionViewModelTest {
                 new Object[]{22L, "b.jpg", 1_718_100_000_000L, 4096L});
 
         // Fragment.onViewCreated 가 다시 부르는 vm.load() 를 흉내낸다 — ViewModel 은
-        // 살아남았으므로 state() 는 이미 위에서 만든 (11L 제외) 상태를 들고 있다.
+        // 살아남았으므로 state() 는 이미 위에서 만든 (11L 선택) 상태를 들고 있다.
         // awaitState() 는 "state != null" 만 보므로 이미 non-null 인 상태에선 재로딩을
         // 기다리지 못한다 — 인스턴스 참조가 바뀔 때까지 기다리는 AsyncTestHarness 를 쓴다.
         PhotoSelectionUiState beforeReload = vm.state().getValue();
@@ -185,19 +245,19 @@ public class PhotoSelectionViewModelTest {
                 "PhotoSelectionViewModel.load() reload");
 
         assertEquals(2, reloaded.tiles.size());
-        assertFalse("재로딩해도 사용자가 제외한 사진은 계속 제외 상태여야 한다",
+        assertTrue("재로딩해도 사용자가 선택한 사진은 계속 선택 상태여야 한다",
                 reloaded.tiles.get(0).selected);
         assertEquals(11L, reloaded.tiles.get(0).mediaStoreId);
-        assertTrue("건드리지 않은 사진은 그대로 선택 상태를 유지한다",
+        assertFalse("건드리지 않은 사진은 그대로 미선택 상태를 유지한다",
                 reloaded.tiles.get(1).selected);
         assertEquals(1, reloaded.selectedCount());
     }
 
-    /** 이전 상태에 없던(신규로 나타난) 사진은 여전히 기본 규칙(상한 이내 전체 선택)을 따른다. */
+    /** 이전 상태에 없던(신규로 나타난) 사진은 여전히 기본 규칙(미선택)을 따른다. */
     @Test
     public void newlyAppearedPhotosOnReloadStillGetTheDefaultSelection() {
         loadState();
-        vm.toggle(0); // 11L 제외
+        vm.toggle(0); // 11L 선택
         ShadowLooper.idleMainLooper();
 
         // 재조회 사이에 새 사진이 갤러리에 나타난 상황(예: PARTIAL 재선택, 새 촬영).
@@ -211,9 +271,9 @@ public class PhotoSelectionViewModelTest {
                 "PhotoSelectionViewModel.load() reload with new photos");
 
         assertEquals(3, reloaded.tiles.size());
-        assertFalse("기존에 제외했던 사진은 계속 제외 상태", reloaded.tiles.get(0).selected);
-        assertTrue("기존에 선택돼 있던 사진은 그대로 선택 상태", reloaded.tiles.get(1).selected);
-        assertTrue("처음 보는 사진은 기본값(상한 이내 전체 선택)을 받는다",
+        assertTrue("기존에 선택했던 사진은 계속 선택 상태", reloaded.tiles.get(0).selected);
+        assertFalse("건드리지 않았던 사진은 그대로 미선택 상태", reloaded.tiles.get(1).selected);
+        assertFalse("처음 보는 사진은 기본값(미선택)을 받는다",
                 reloaded.tiles.get(2).selected);
     }
 }

@@ -23,6 +23,7 @@ public final class PhotoSelectionRenderer {
                               PhotoGridAdapter.Listener listener) {
         Context ctx = binding.getRoot().getContext();
 
+        binding.albumPickerLabel.setText(state.albumLabel);
         binding.periodLabel.setText(state.periodLabel);
         binding.selectHint.setText(ctx.getString(R.string.select_hint, state.maxCount));
         binding.selectCount.setText(buildCountText(ctx, state.selectedCount()));

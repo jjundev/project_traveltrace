@@ -22,7 +22,10 @@
     <string name="select_period_title">여행 기간</string>
     <string name="select_period_change">변경</string>
     <string name="select_start_analyze">분석 시작</string>
-    <string name="select_hint">최대 %1$d장 · 탭하여 제외</string>
+    <string name="select_hint">최대 %1$d장 · 탭하여 선택</string>
+    <string name="select_album_all">전체 사진</string>
+    <string name="select_album_sheet_title">사진첩</string>
+    <string name="select_album_count">%1$d장</string>
     <!-- %1$d = 선택 장수. 숫자만 브랜드 색으로 강조하므로 Renderer 에서 Spannable 로 조립한다. -->
     <string name="select_period_range">%1$s – %2$s · 사진 %3$d장</string>
     <string name="select_period_empty">사진이 없어요</string>
@@ -79,6 +82,7 @@
     <string name="map_prev_desc">이전 장소</string>
     <string name="map_next_desc">다음 장소</string>
     <string name="map_detach_toast">핀을 위치 미상으로 옮겼어요</string>
+    <string name="map_photo_desc">정차 지점 사진</string>
 
     <!-- MAP · 상영 모드 -->
     <string name="cinema_hint">화면을 누르면 컨트롤이 나와요</string>

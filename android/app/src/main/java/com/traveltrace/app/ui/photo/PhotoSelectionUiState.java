@@ -14,11 +14,15 @@ public final class PhotoSelectionUiState {
 
     public final String periodLabel;
     public final int maxCount;
+    /** 현재 그리드가 보여주는 앨범 이름("전체 사진" 또는 실제 폴더명). */
+    public final String albumLabel;
     public final List<Tile> tiles;
 
-    public PhotoSelectionUiState(String periodLabel, int maxCount, List<Tile> tiles) {
+    public PhotoSelectionUiState(String periodLabel, int maxCount, String albumLabel,
+                                 List<Tile> tiles) {
         this.periodLabel = periodLabel;
         this.maxCount = maxCount;
+        this.albumLabel = albumLabel;
         this.tiles = Collections.unmodifiableList(new ArrayList<>(tiles));
     }
 
@@ -50,7 +54,7 @@ public final class PhotoSelectionUiState {
         Tile t = next.get(index);
         next.set(index, new Tile(
                 t.toneColor, t.label, !t.selected, t.mediaStoreId, t.contentUri));
-        return new PhotoSelectionUiState(periodLabel, maxCount, next);
+        return new PhotoSelectionUiState(periodLabel, maxCount, albumLabel, next);
     }
 
     /** 그리드 타일 1개. contentUri 가 null 이면 톤 색으로 그린다(픽스처·프리뷰 경로). */

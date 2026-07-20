@@ -62,7 +62,7 @@ public final class ScreenFixtures {
         tiles.add(tile(0xFFE7E2DD, null, true));
         tiles.add(tile(0xFFDDE8E3, "몽마르트", true));
         tiles.add(tile(0xFFE4DEE6, null, true));
-        return new PhotoSelectionUiState("2024. 6. 12 – 6. 15 · 사진 94장", 100, tiles);
+        return new PhotoSelectionUiState("2024. 6. 12 – 6. 15 · 사진 94장", 100, "전체 사진", tiles);
     }
 
     /** 픽스처는 실제 사진이 없다 — mediaStoreId 0, contentUri null 로 톤 색 경로를 탄다. */
@@ -99,17 +99,17 @@ public final class ScreenFixtures {
     public static MapUiState map() {
         List<MapUiState.Stop> stops = new ArrayList<>();
         stops.add(new MapUiState.Stop("arc", "개선문", "10:12", false, 0, 0xFFD9C9A8,
-                48.8738, 2.2950));
+                48.8738, 2.2950, null));
         stops.add(new MapUiState.Stop("eiffel", "에펠탑", "11:05", false, 4, 0xFFB7C6D6,
-                48.8584, 2.2945));
+                48.8584, 2.2945, null));
         stops.add(new MapUiState.Stop("seine", "센강 유람선", "13:20", false, 2, 0xFFA9C6DA,
-                48.8600, 2.3050));
+                48.8600, 2.3050, null));
         stops.add(new MapUiState.Stop("louvre", "루브르 박물관", "15:40", true, 0, 0xFFCDBFA1,
-                48.8606, 2.3376));
+                48.8606, 2.3376, null));
         stops.add(new MapUiState.Stop("notredame", "노트르담", "16:50", false, 0, 0xFFC3B69B,
-                48.8530, 2.3499));
+                48.8530, 2.3499, null));
         stops.add(new MapUiState.Stop("sacre", "몽마르트", "18:30", false, 3, 0xFFD7D0BF,
-                48.8867, 2.3431));
+                48.8867, 2.3431, null));
         return new MapUiState("2024 파리 여행", 5, stops, 0, false, false, false,
                 MapUiState.Speed.NORMAL);
     }

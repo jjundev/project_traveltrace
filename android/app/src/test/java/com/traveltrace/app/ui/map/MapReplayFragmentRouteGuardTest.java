@@ -18,12 +18,12 @@ import java.util.List;
 public class MapReplayFragmentRouteGuardTest {
 
     private static MapUiState.Stop stop(String id, double lat, double lng) {
-        return new MapUiState.Stop(id, id, "10:00", false, 0, 0xFFCCCCCC, lat, lng);
+        return new MapUiState.Stop(id, id, "10:00", false, 0, 0xFFCCCCCC, lat, lng, null);
     }
 
     @Test
     public void sameUnderlyingStopInstancesAreTheSameRoute() {
-        // MapReplayViewModel.copy() 가 실제로 하는 일: 같은 Stop 인스턴스를 새 리스트에 담아 넘긴다.
+        // togglePlay/setSpeed 같은 UI-only emission 이 실제로 하는 일: 같은 Stop 인스턴스를 새 리스트에 담아 넘긴다.
         MapUiState.Stop a = stop("a", 48.85, 2.29);
         MapUiState.Stop b = stop("b", 48.86, 2.30);
         List<MapUiState.Stop> drawn = Arrays.asList(a, b);

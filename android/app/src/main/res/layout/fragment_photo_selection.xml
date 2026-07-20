@@ -34,6 +34,45 @@
         app:layout_constraintStart_toEndOf="@id/selectBack"
         app:layout_constraintTop_toTopOf="@id/selectBack" />
 
+    <!-- 앨범(폴더) 드롭다운 — 탭하면 AlbumPickerSheetFragment 가 뜬다. -->
+    <LinearLayout
+        android:id="@+id/albumPicker"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="18dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/bg_pill_glass"
+        android:backgroundTint="@color/fill_neutral"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingTop="7dp"
+        android:paddingEnd="10dp"
+        android:paddingBottom="7dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/selectBack">
+
+        <TextView
+            android:id="@+id/albumPickerLabel"
+            style="@style/TextAppearance.TravelTrace.Caption"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_secondary"
+            android:textFontWeight="700"
+            tools:text="전체 사진" />
+
+        <ImageView
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:layout_marginStart="4dp"
+            android:contentDescription="@null"
+            android:rotation="90"
+            android:src="@drawable/ic_chevron_right"
+            app:tint="@color/text_secondary" />
+    </LinearLayout>
+
     <!-- 여행 기간 카드 -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/periodCard"
@@ -46,7 +85,7 @@
         app:cardCornerRadius="@dimen/radius_14"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/selectBack">
+        app:layout_constraintTop_toBottomOf="@id/albumPicker">
 
         <LinearLayout
             android:layout_width="match_parent"
