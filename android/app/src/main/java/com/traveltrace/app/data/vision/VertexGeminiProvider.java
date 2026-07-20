@@ -11,6 +11,7 @@ import java.io.IOException;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import okhttp3.ResponseBody;
 import retrofit2.Response;
 
 /**
@@ -45,12 +46,43 @@ public class VertexGeminiProvider implements VisionProvider {
 
         if (!response.isSuccessful()) {
             // 404 는 십중팔구 죽은/미노출 모델 ID 다 — ./gradlew resolveVisionModels 를 다시 돌려야 한다.
-            throw new IOException("Vertex generateContent HTTP " + response.code());
+            // errorBody() 는 열려 있는 커넥션을 물고 있다 — 여기서 소비/close 하지 않으면
+            // OkHttp 커넥션 풀로 돌아가지 않고 비결정적으로만 회수된다(S4 재시도가 이 경로를
+            // 반복 호출하면 누수가 누적된다).
+            String detail = readAndCloseErrorBody(response);
+            throw new IOException("Vertex generateContent HTTP " + response.code()
+                    + (detail == null ? "" : ": " + detail));
         }
         JsonObject payload = response.body();
         if (payload == null) {
             throw new IOException("Vertex generateContent returned an empty body");
         }
         return VertexResponseParser.parse(payload);
+    }
+
+    /**
+     * 에러 바디를 읽어 진단용 문자열로 돌려주고, 어떤 경로로든 커넥션을 닫는다.
+     *
+     * <p>{@link ResponseBody#string()} 은 읽는 과정에서 스스로 body 를 소비/close 하므로
+     * 성공 경로에서 별도 close 는 필요 없다. 다만 body 가 null 이거나 읽기 자체가
+     * 실패하는 경우까지 대비해 방어적으로 닫는다 — 이 메서드는 절대 예외를 던지지
+     * 않는다: 진짜 HTTP 상태 예외를 가려서는 안 되기 때문이다.
+     */
+    private static String readAndCloseErrorBody(Response<?> response) {
+        ResponseBody errorBody = response.errorBody();
+        if (errorBody == null) {
+            return null;
+        }
+        try {
+            String text = errorBody.string();
+            if (text == null || text.isEmpty()) {
+                return null;
+            }
+            return text.length() > 500 ? text.substring(0, 500) : text;
+        } catch (IOException e) {
+            return null;
+        } finally {
+            errorBody.close();
+        }
     }
 }

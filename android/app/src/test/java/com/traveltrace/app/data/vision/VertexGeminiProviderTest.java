@@ -65,6 +65,17 @@ public class VertexGeminiProviderTest {
         }
     }
 
+    @Test
+    public void nullBodyOnSuccessThrows() {
+        RecordingApi api = RecordingApi.succeedingWithNullBody();
+        try {
+            new VertexGeminiProvider(api).recognize(JPEG);
+            fail("바디가 비면 파싱할 게 없다 — 빈 결과를 정상으로 취급하면 안 된다");
+        } catch (Exception expected) {
+            assertTrue(expected instanceof IOException);
+        }
+    }
+
     /** 테스트 안에서만 쓰는 손수 만든 페이크. 이 저장소는 모킹 라이브러리를 쓰지 않는다. */
     private static final class RecordingApi implements VertexApi {
         String model;
@@ -96,6 +107,12 @@ public class VertexGeminiProviderTest {
 
         static RecordingApi failingWith(int code) {
             return new RecordingApi(null, code);
+        }
+
+        /** 2xx 이지만 바디가 없는 응답 — {@code errorCode == 0} 은 성공 경로를 태우고, 성공값이
+         * {@code null} 이라 {@code Response.success(null)} 이 만들어진다. */
+        static RecordingApi succeedingWithNullBody() {
+            return new RecordingApi(null, 0);
         }
 
         @Override
