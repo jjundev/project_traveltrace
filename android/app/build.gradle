@@ -72,8 +72,8 @@ android {
 
         // A3: API keys. Vision keys used at RUNTIME by Epic D providers; Geocoding is a
         // REST key; Places via Places.initialize(); Maps via manifest meta-data.
-        buildConfigField "String", "GEMINI_API_KEY", "\"${runtimeKey('GEMINI_API_KEY')}\""
-        buildConfigField "String", "OPENAI_API_KEY", "\"${runtimeKey('OPENAI_API_KEY')}\""
+        buildConfigField "String", "VERTEX_API_KEY",    "\"${runtimeKey('VERTEX_API_KEY')}\""
+        buildConfigField "String", "OPENAI_API_KEY",    "\"${runtimeKey('OPENAI_API_KEY')}\""
         buildConfigField "String", "PLACES_API_KEY", "\"${runtimeKey('PLACES_API_KEY')}\""
         buildConfigField "String", "GEOCODING_API_KEY", "\"${runtimeKey('GEOCODING_API_KEY')}\""
 

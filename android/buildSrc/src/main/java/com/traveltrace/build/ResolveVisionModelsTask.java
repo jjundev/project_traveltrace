@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A2 explicit resolve step. Queries the LIVE Gemini/OpenAI model lists, selects vision
+ * A2 explicit resolve step. Queries the LIVE Vertex/OpenAI model lists, selects vision
  * models via {@link VisionModelResolver}, and writes the committed generated file. NOT
  * wired into ordinary builds — run on demand / in CI.
  *
@@ -36,7 +36,7 @@ import java.util.Map;
 public abstract class ResolveVisionModelsTask extends DefaultTask {
 
     @Input
-    public abstract Property<String> getGeminiApiKey();
+    public abstract Property<String> getVertexApiKey();
 
     @Input
     public abstract Property<String> getOpenAiApiKey();
@@ -49,10 +49,10 @@ public abstract class ResolveVisionModelsTask extends DefaultTask {
 
     @TaskAction
     public void resolve() throws Exception {
-        String gKey = getGeminiApiKey().getOrElse("").trim();
+        String vKey = getVertexApiKey().getOrElse("").trim();
         String oKey = getOpenAiApiKey().getOrElse("").trim();
-        if (gKey.isEmpty()) {
-            throw new GradleException("GEMINI_API_KEY missing in local.properties — cannot resolve vision models. "
+        if (vKey.isEmpty()) {
+            throw new GradleException("VERTEX_API_KEY missing in local.properties — cannot resolve vision models. "
                     + "(Missing-key error, distinct from 'no suitable model'.)");
         }
         if (oKey.isEmpty()) {
@@ -60,13 +60,13 @@ public abstract class ResolveVisionModelsTask extends DefaultTask {
                     + "(Missing-key error, distinct from 'no suitable model'.)");
         }
 
-        List<GeminiModel> gemini = fetchGemini(gKey);
+        List<VertexModel> vertex = fetchVertex(vKey);
         List<OpenAiModel> openAi = fetchOpenAi(oKey);
 
         String geminiModel;
         String openAiModel;
         try {
-            String[] r = VisionModelResolver.select(gemini, openAi);
+            String[] r = VisionModelResolver.select(vertex, openAi);
             geminiModel = r[0];
             openAiModel = r[1];
         } catch (NoSuitableModelException e) {
@@ -123,24 +123,29 @@ public abstract class ResolveVisionModelsTask extends DefaultTask {
         return sb.toString();
     }
 
+    /**
+     * Vertex Express Mode: the API key goes in the x-goog-api-key header, and the endpoint
+     * is region-less / project-less. This is the SAME surface the app calls at runtime, so
+     * a model that resolves here is a model that actually answers :generateContent.
+     */
     @SuppressWarnings("unchecked")
-    private List<GeminiModel> fetchGemini(String key) throws Exception {
-        String body = httpGet("https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000&key=" + key, null);
+    private List<VertexModel> fetchVertex(String key) throws Exception {
+        Map<String, String> headers = new HashMap<>();
+        headers.put("x-goog-api-key", key);
+        String body = httpGet(
+                "https://aiplatform.googleapis.com/v1/publishers/google/models?pageSize=1000",
+                headers);
         Object root = new JsonSlurper().parseText(body);
-        List<GeminiModel> result = new ArrayList<>();
-        Object modelsObj = ((Map<String, Object>) root).get("models");
+        List<VertexModel> result = new ArrayList<>();
+        Object modelsObj = ((Map<String, Object>) root).get("publisherModels");
         if (modelsObj instanceof List) {
             for (Object o : (List<Object>) modelsObj) {
                 Map<String, Object> m = (Map<String, Object>) o;
                 Object name = m.get("name");
-                Object methods = m.get("supportedGenerationMethods");
-                List<String> ms = new ArrayList<>();
-                if (methods instanceof List) {
-                    for (Object x : (List<Object>) methods) {
-                        ms.add(String.valueOf(x));
-                    }
-                }
-                result.add(new GeminiModel(name == null ? "" : name.toString(), ms));
+                Object stage = m.get("launchStage");
+                result.add(new VertexModel(
+                        name == null ? "" : name.toString(),
+                        stage == null ? null : stage.toString()));
             }
         }
         return result;

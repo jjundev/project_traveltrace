@@ -9,5 +9,5 @@ public final class Constants {
      * The committed gradle/visionModels.generated.json records the version it was resolved
      * under; StalenessGuardTask hard-fails (on the `check` lifecycle) when they diverge.
      */
-    public static final String RULESET_VERSION = "2026-01";
+    public static final String RULESET_VERSION = "2026-07-vertex";
 }
