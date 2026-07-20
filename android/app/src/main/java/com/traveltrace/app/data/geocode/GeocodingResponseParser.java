@@ -29,8 +29,9 @@ public final class GeocodingResponseParser {
         if (response == null || !response.has("status")) {
             return points;
         }
-        if (!STATUS_OK.equals(response.get("status").getAsString())) {
-            return points;   // ZERO_RESULTS·REQUEST_DENIED·OVER_QUERY_LIMIT 등.
+        JsonElement statusElement = response.get("status");
+        if (!statusElement.isJsonPrimitive() || !STATUS_OK.equals(statusElement.getAsString())) {
+            return points;   // null·ZERO_RESULTS·REQUEST_DENIED·OVER_QUERY_LIMIT 등.
         }
         JsonElement resultsElement = response.get("results");
         if (resultsElement == null || !resultsElement.isJsonArray()) {
@@ -40,13 +41,17 @@ public final class GeocodingResponseParser {
         for (int i = 0; i < results.size(); i++) {
             JsonElement entry = results.get(i);
             if (!entry.isJsonObject()) continue;
-            JsonObject geometry = entry.getAsJsonObject().getAsJsonObject("geometry");
-            if (geometry == null) continue;
-            JsonObject location = geometry.getAsJsonObject("location");
-            if (location == null || !location.has("lat") || !location.has("lng")) continue;
-            points.add(new GeoPoint(
-                    location.get("lat").getAsDouble(),
-                    location.get("lng").getAsDouble()));
+            JsonElement geometryElement = entry.getAsJsonObject().get("geometry");
+            if (geometryElement == null || !geometryElement.isJsonObject()) continue;
+            JsonElement locationElement = geometryElement.getAsJsonObject().get("location");
+            if (locationElement == null || !locationElement.isJsonObject()) continue;
+            JsonObject location = locationElement.getAsJsonObject();
+            JsonElement lat = location.get("lat");
+            JsonElement lng = location.get("lng");
+            if (lat == null || lng == null || !lat.isJsonPrimitive() || !lng.isJsonPrimitive()) {
+                continue;
+            }
+            points.add(new GeoPoint(lat.getAsDouble(), lng.getAsDouble()));
         }
         return points;
     }

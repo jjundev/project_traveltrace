@@ -56,6 +56,23 @@ public class GeocodeResponseParserTest {
         assertEquals(1.0, points.get(0).lat, 1e-9);
     }
 
+    @Test
+    public void placesLocationNotAnObjectYieldsEmptyListWithoutThrowing() {
+        assertTrue("location 이 객체가 아니면 raw cast 가 ClassCastException 을 던진다",
+                PlacesResponseParser.parse(json("{\"places\":[{\"location\":\"x\"}]}")).isEmpty());
+    }
+
+    @Test
+    public void placesSkipsMalformedEntryButKeepsValidOne() {
+        List<GeoPoint> points = PlacesResponseParser.parse(json(
+                "{\"places\":[{\"location\":\"x\"},"
+                        + "{\"location\":{\"latitude\":1.0,\"longitude\":2.0}}]}"));
+        assertEquals("형식이 이상한 항목 하나 때문에 전체를 포기하면 안 된다 — 건너뛰고 계속한다",
+                1, points.size());
+        assertEquals(1.0, points.get(0).lat, 1e-9);
+        assertEquals(2.0, points.get(0).lng, 1e-9);
+    }
+
     // ---------- Geocoding ----------
 
     @Test
@@ -89,5 +106,38 @@ public class GeocodeResponseParserTest {
                         + "{\"geometry\":{\"location\":{\"lat\":33.66,\"lng\":-95.55}}}]}"));
         assertEquals("후보를 잘라내면 Disambiguator 가 동명 지명을 볼 수 없다",
                 2, points.size());
+    }
+
+    @Test
+    public void geocodingNullStatusYieldsEmptyListWithoutThrowing() {
+        assertTrue("status 가 null 이면 JsonNull.getAsString() 이 UnsupportedOperationException 을 던진다",
+                GeocodingResponseParser.parse(json("{\"status\":null}")).isEmpty());
+    }
+
+    @Test
+    public void geocodingGeometryNotAnObjectYieldsEmptyListWithoutThrowing() {
+        assertTrue("geometry 가 객체가 아니면 raw cast 가 ClassCastException 을 던진다",
+                GeocodingResponseParser.parse(json(
+                        "{\"status\":\"OK\",\"results\":[{\"geometry\":\"x\"}]}")).isEmpty());
+    }
+
+    @Test
+    public void geocodingSkipsEntryWithNullLatWithoutThrowing() {
+        assertTrue("lat 이 present-but-null 이면 JsonNull.getAsDouble() 이 던진다",
+                GeocodingResponseParser.parse(json(
+                        "{\"status\":\"OK\",\"results\":[{\"geometry\":{\"location\":"
+                                + "{\"lat\":null,\"lng\":2.0}}}]}")).isEmpty());
+    }
+
+    @Test
+    public void geocodingSkipsMalformedEntryButKeepsValidOne() {
+        List<GeoPoint> points = GeocodingResponseParser.parse(json(
+                "{\"status\":\"OK\",\"results\":["
+                        + "{\"geometry\":\"x\"},"
+                        + "{\"geometry\":{\"location\":{\"lat\":48.85,\"lng\":2.35}}}]}"));
+        assertEquals("형식이 이상한 항목 하나 때문에 전체를 포기하면 안 된다 — 건너뛰고 계속한다",
+                1, points.size());
+        assertEquals(48.85, points.get(0).lat, 1e-9);
+        assertEquals(2.35, points.get(0).lng, 1e-9);
     }
 }

@@ -33,14 +33,17 @@ public final class PlacesResponseParser {
         for (int i = 0; i < places.size(); i++) {
             JsonElement entry = places.get(i);
             if (!entry.isJsonObject()) continue;
-            JsonObject location = entry.getAsJsonObject().getAsJsonObject("location");
-            // 좌표가 없는 항목은 건너뛴다 — 0 으로 메우면 (0,0) 핀이 된다.
-            if (location == null || !location.has("latitude") || !location.has("longitude")) {
+            JsonElement locationElement = entry.getAsJsonObject().get("location");
+            if (locationElement == null || !locationElement.isJsonObject()) continue;
+            JsonObject location = locationElement.getAsJsonObject();
+            JsonElement latitude = location.get("latitude");
+            JsonElement longitude = location.get("longitude");
+            // 좌표가 없거나 형식이 이상한 항목은 건너뛴다 — 0 으로 메우면 (0,0) 핀이 된다.
+            if (latitude == null || longitude == null
+                    || !latitude.isJsonPrimitive() || !longitude.isJsonPrimitive()) {
                 continue;
             }
-            points.add(new GeoPoint(
-                    location.get("latitude").getAsDouble(),
-                    location.get("longitude").getAsDouble()));
+            points.add(new GeoPoint(latitude.getAsDouble(), longitude.getAsDouble()));
         }
         return points;
     }
