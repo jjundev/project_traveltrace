@@ -15,6 +15,7 @@ import android.provider.MediaStore;
 import androidx.test.core.app.ApplicationProvider;
 
 import com.traveltrace.app.core.AppExecutors;
+import com.traveltrace.app.data.media.AlbumBucket;
 import com.traveltrace.app.domain.Callback;
 
 import org.junit.After;
@@ -241,6 +242,201 @@ public class MediaStoreImageSourceTest {
     @Test
     public void loadByIdsWithNoIdsReturnsEmptyListWithoutCrashing() {
         assertTrue("빈 id 목록이면 쿼리 없이 바로 빈 목록", loadByIds(new ArrayList<>()).isEmpty());
+    }
+
+    // ---- 앨범(버킷) 집계 ----
+
+    private void seedBuckets(Object[]... rows) {
+        RoboCursor cursor = new RoboCursor();
+        cursor.setColumnNames(Arrays.asList(
+                MediaStore.Images.Media.BUCKET_ID,
+                MediaStore.Images.Media.BUCKET_DISPLAY_NAME));
+        cursor.setResults(rows);
+        Shadows.shadowOf(ctx.getContentResolver())
+                .setCursor(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cursor);
+    }
+
+    private List<AlbumBucket> loadAlbums() {
+        AtomicReference<List<AlbumBucket>> box = new AtomicReference<>();
+        AtomicBoolean done = new AtomicBoolean(false);
+        source.loadAlbums(value -> {
+            box.set(value);
+            done.set(true);
+        });
+
+        long deadline = System.currentTimeMillis() + 5_000L;
+        while (!done.get() && System.currentTimeMillis() < deadline) {
+            ShadowLooper.idleMainLooper();
+            if (!done.get()) {
+                try {
+                    Thread.sleep(5L);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new AssertionError(e);
+                }
+            }
+        }
+        assertTrue("콜백이 5초 안에 와야 한다", done.get());
+        return box.get();
+    }
+
+    @Test
+    public void loadAlbumsAggregatesCountsPerBucket() {
+        seedBuckets(
+                new Object[]{"1", "카메라"},
+                new Object[]{"1", "카메라"},
+                new Object[]{"1", "카메라"},
+                new Object[]{"2", "카카오톡"},
+                new Object[]{"2", "카카오톡"});
+
+        List<AlbumBucket> albums = loadAlbums();
+
+        assertEquals(2, albums.size());
+        // 큰 앨범이 먼저 온다 — 사용자가 실제로 고를 만한 앨범이 위로 오게.
+        assertEquals("1", albums.get(0).bucketId);
+        assertEquals("카메라", albums.get(0).displayName);
+        assertEquals(3, albums.get(0).count);
+        assertEquals("2", albums.get(1).bucketId);
+        assertEquals(2, albums.get(1).count);
+    }
+
+    @Test
+    public void loadAlbumsWithEmptyGalleryYieldsEmptyListNotNull() {
+        seedBuckets();
+        assertTrue(loadAlbums().isEmpty());
+    }
+
+    @Test
+    public void loadAlbumsSecurityExceptionYieldsEmptyListNotCrash() {
+        ShadowContentResolver.registerProviderInternal(MediaStore.AUTHORITY, new ContentProvider() {
+            @Override
+            public boolean onCreate() {
+                return true;
+            }
+
+            @Override
+            public Cursor query(Uri uri, String[] projection, String selection,
+                    String[] selectionArgs, String sortOrder) {
+                throw new SecurityException("갤러리 접근 권한 없음(테스트)");
+            }
+
+            @Override
+            public String getType(Uri uri) {
+                return null;
+            }
+
+            @Override
+            public Uri insert(Uri uri, ContentValues values) {
+                return null;
+            }
+
+            @Override
+            public int delete(Uri uri, String selection, String[] selectionArgs) {
+                return 0;
+            }
+
+            @Override
+            public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+                return 0;
+            }
+        });
+
+        assertTrue(loadAlbums().isEmpty());
+    }
+
+    /**
+     * setCursor 훅은 selection 을 무시하므로(위 loadByIds 테스트와 같은 이유), 실제 SQL
+     * 필터링은 ContentProvider 스텁으로만 검증할 수 있다 — "선택한 앨범 사진만 온다"의
+     * 유일한 의미 있는 증거.
+     */
+    @Test
+    public void loadRecentWithBucketIdFiltersViaSqlSelection() {
+        List<Object[]> gallery = Arrays.asList(
+                new Object[]{1L, "cam1.jpg", 3_000L},
+                new Object[]{2L, "kakao1.jpg", 2_000L},
+                new Object[]{3L, "cam2.jpg", 1_000L});
+
+        ShadowContentResolver.registerProviderInternal(MediaStore.AUTHORITY, new ContentProvider() {
+            @Override
+            public boolean onCreate() {
+                return true;
+            }
+
+            @Override
+            public Cursor query(Uri uri, String[] projection, String selection,
+                    String[] selectionArgs, String sortOrder) {
+                assertEquals(MediaStore.Images.Media.BUCKET_ID + " = ?", selection);
+                String wantedBucket = selectionArgs[0];
+                List<Object[]> filtered = new ArrayList<>();
+                for (Object[] row : gallery) {
+                    // cam* 은 버킷 "1", kakao* 는 버킷 "2" 라고 가정한 테스트 전용 매핑.
+                    boolean inCam = ((String) row[1]).startsWith("cam") && wantedBucket.equals("1");
+                    if (inCam) filtered.add(row);
+                }
+                RoboCursor cursor = new RoboCursor();
+                cursor.setColumnNames(Arrays.asList(
+                        MediaStore.Images.Media._ID,
+                        MediaStore.Images.Media.DISPLAY_NAME,
+                        MediaStore.Images.Media.DATE_TAKEN));
+                cursor.setResults(filtered.toArray(new Object[0][]));
+                return cursor;
+            }
+
+            @Override
+            public String getType(Uri uri) {
+                return null;
+            }
+
+            @Override
+            public Uri insert(Uri uri, ContentValues values) {
+                return null;
+            }
+
+            @Override
+            public int delete(Uri uri, String selection, String[] selectionArgs) {
+                return 0;
+            }
+
+            @Override
+            public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+                return 0;
+            }
+        });
+
+        List<GalleryImage> images = loadRecentWithBucket(100, "1");
+
+        assertEquals("버킷 1(카메라) 사진 2장만 와야 한다", 2, images.size());
+    }
+
+    private List<GalleryImage> loadRecentWithBucket(int limit, String bucketId) {
+        AtomicReference<List<GalleryImage>> box = new AtomicReference<>();
+        AtomicBoolean done = new AtomicBoolean(false);
+        source.loadRecent(limit, bucketId, value -> {
+            box.set(value);
+            done.set(true);
+        });
+
+        long deadline = System.currentTimeMillis() + 5_000L;
+        while (!done.get() && System.currentTimeMillis() < deadline) {
+            ShadowLooper.idleMainLooper();
+            if (!done.get()) {
+                try {
+                    Thread.sleep(5L);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new AssertionError(e);
+                }
+            }
+        }
+        assertTrue("콜백이 5초 안에 와야 한다", done.get());
+        return box.get();
+    }
+
+    @Test
+    public void loadRecentWithNullBucketIdAppliesNoFilter() {
+        seed(new Object[]{1L, "a.jpg", 3_000L}, new Object[]{2L, "b.jpg", 2_000L});
+
+        assertEquals("null 버킷이면 기존과 같이 전부 온다", 2, loadRecentWithBucket(100, null).size());
     }
 
     // MediaStoreImageSource#query() 는 SecurityException 을 잡아 빈 목록으로 조용히
