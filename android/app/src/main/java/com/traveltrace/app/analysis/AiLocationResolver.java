@@ -1,7 +1,5 @@
 package com.traveltrace.app.analysis;
 
-import androidx.annotation.Nullable;
-
 import com.traveltrace.app.core.model.GeoPoint;
 import com.traveltrace.app.core.model.GeocodeQuery;
 import com.traveltrace.app.core.model.LocationClassification;
