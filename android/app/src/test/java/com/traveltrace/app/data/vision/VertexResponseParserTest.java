@@ -89,4 +89,28 @@ public class VertexResponseParserTest {
                 "{\"promptFeedback\":{\"blockReason\":\"SAFETY\"}}").getAsJsonObject();
         assertEquals(0d, VertexResponseParser.parse(root).confidence, 0d);
     }
+
+    @Test
+    public void landmarkNameAsJsonObjectDoesNotThrow() {
+        RecognitionResult r = VertexResponseParser.parse(wrap(
+                "{\"landmarkName\":{\"nested\":\"x\"},\"city\":\"파리\",\"confidence\":0.8}"));
+        assertNull("객체가 온 landmarkName 은 부재로 취급해 null 이어야 한다", r.landmarkName);
+        assertEquals("landmarkName 스키마 위반이 다른 필드 파싱을 막으면 안 된다", "파리", r.city);
+        assertEquals("landmarkName 스키마 위반은 confidence 를 무너뜨리지 않는다", 0.8d, r.confidence, 1e-9);
+    }
+
+    @Test
+    public void landmarkNameAsJsonArrayDoesNotThrow() {
+        RecognitionResult r = VertexResponseParser.parse(wrap(
+                "{\"landmarkName\":[\"x\",\"y\"],\"city\":\"파리\",\"confidence\":0.8}"));
+        assertNull("배열이 온 landmarkName 은 부재로 취급해 null 이어야 한다", r.landmarkName);
+    }
+
+    @Test
+    public void candidateContentNotAnObjectBecomesUnrecognized() {
+        JsonObject root = JsonParser.parseString(
+                "{\"candidates\":[{\"content\":\"oops\"}]}").getAsJsonObject();
+        RecognitionResult r = VertexResponseParser.parse(root);
+        assertEquals("content 가 객체가 아니면 예외 대신 인식 실패로 수렴해야 한다", 0d, r.confidence, 0d);
+    }
 }

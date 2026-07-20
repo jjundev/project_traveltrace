@@ -71,16 +71,34 @@ public final class VertexResponseParser {
         if (candidates.size() == 0) {
             return null;
         }
-        JsonObject content = candidates.get(0).getAsJsonObject().getAsJsonObject("content");
-        if (content == null || !content.has("parts")) {
+        JsonElement candidateElement = candidates.get(0);
+        if (!candidateElement.isJsonObject()) {
             return null;
         }
-        JsonArray parts = content.getAsJsonArray("parts");
+        JsonElement contentElement = candidateElement.getAsJsonObject().get("content");
+        if (contentElement == null || !contentElement.isJsonObject()) {
+            return null;
+        }
+        JsonObject content = contentElement.getAsJsonObject();
+        if (!content.has("parts")) {
+            return null;
+        }
+        JsonElement partsElement = content.get("parts");
+        if (!partsElement.isJsonArray()) {
+            return null;
+        }
+        JsonArray parts = partsElement.getAsJsonArray();
         if (parts.size() == 0) {
             return null;
         }
-        JsonObject part = parts.get(0).getAsJsonObject();
-        return part.has("text") ? part.get("text").getAsString() : null;
+        JsonElement partElement = parts.get(0);
+        if (!partElement.isJsonObject()) {
+            return null;
+        }
+        JsonObject part = partElement.getAsJsonObject();
+        return part.has("text") && part.get("text").isJsonPrimitive()
+                ? part.get("text").getAsString()
+                : null;
     }
 
     /** responseSchema 를 써도 모델이 가끔 펜스를 붙인다 — 방어적으로 벗긴다. */
@@ -105,7 +123,14 @@ public final class VertexResponseParser {
         if (!object.has(key) || object.get(key).isJsonNull()) {
             return null;
         }
-        String value = object.get(key).getAsString();
+        JsonElement element = object.get(key);
+        if (!element.isJsonPrimitive()) {
+            // 모델이 landmarkName/city/country 자리에 객체·배열을 넣는 스키마 위반.
+            // Gson 의 getAsString() 은 이런 경우 UnsupportedOperationException 을 던진다 —
+            // 절대 던지지 않는다는 계약을 지키기 위해 부재로 취급한다.
+            return null;
+        }
+        String value = element.getAsString();
         return value.trim().isEmpty() ? null : value;
     }
 }
