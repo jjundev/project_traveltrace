@@ -1,6 +1,9 @@
 package com.traveltrace.app.ui.map;
 
+import android.net.Uri;
+
 import androidx.annotation.ColorInt;
+import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -79,9 +82,15 @@ public final class MapUiState {
         /** 지도에 찍을 좌표. PLACED 인 스톱만 여기 오므로 항상 유효하다. */
         public final double lat;
         public final double lng;
+        /**
+         * 이 정차 지점 대표 사진의 MediaStore content URI. 픽스처·프리뷰 경로에선 null 이라
+         * 톤 색만 남는다 (PhotoGridAdapter 의 썸네일 규칙과 동일).
+         */
+        @Nullable public final Uri contentUri;
 
         public Stop(String id, String name, String time, boolean ai, int extra,
-                    @ColorInt int toneColor, double lat, double lng) {
+                    @ColorInt int toneColor, double lat, double lng,
+                    @Nullable Uri contentUri) {
             this.id = id;
             this.name = name;
             this.time = time;
@@ -90,6 +99,7 @@ public final class MapUiState {
             this.toneColor = toneColor;
             this.lat = lat;
             this.lng = lng;
+            this.contentUri = contentUri;
         }
     }
 }

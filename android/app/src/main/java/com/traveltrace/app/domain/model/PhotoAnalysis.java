@@ -5,7 +5,7 @@ import androidx.annotation.Nullable;
 import com.traveltrace.app.core.model.LocationClassification;
 import com.traveltrace.app.core.model.LocationSource;
 
-/** 사진 1장의 EXIF 추출 결과. 저장 전 단계의 운반 객체. */
+/** 사진 1장의 분석 결과(EXIF + AI). 저장 전 단계의 운반 객체. */
 public class PhotoAnalysis {
     public long mediaStoreId;
     public String displayName;
@@ -32,4 +32,18 @@ public class PhotoAnalysis {
 
     public LocationSource source;
     public LocationClassification classification;
+
+    /** AI 가 인식한 랜드마크/POI 이름. GPS 사진과 인식 실패는 null. */
+    @Nullable
+    public String landmarkName;
+
+    @Nullable
+    public String city;
+
+    @Nullable
+    public String country;
+
+    /** AI 인식 신뢰도(0~1). AI 를 타지 않은 사진은 null — 0 이 아니다. */
+    @Nullable
+    public Double confidence;
 }

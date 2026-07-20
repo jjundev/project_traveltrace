@@ -17,14 +17,19 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.traveltrace.app.R;
+import com.traveltrace.app.data.media.AlbumBucket;
 import com.traveltrace.app.databinding.FragmentPhotoSelectionBinding;
 import com.traveltrace.app.ui.common.ToastPresenter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
 /** SELECT: 권한 → 갤러리 로딩 → 3열 선택 그리드 → 분석 시작. */
 @AndroidEntryPoint
-public class PhotoSelectionFragment extends Fragment {
+public class PhotoSelectionFragment extends Fragment
+        implements AlbumPickerSheetFragment.Listener {
 
     private FragmentPhotoSelectionBinding binding;
     private PhotoSelectionViewModel vm;
@@ -77,6 +82,7 @@ public class PhotoSelectionFragment extends Fragment {
 
         binding.selectBack.setOnClickListener(v ->
                 NavHostFragment.findNavController(this).popBackStack());
+        binding.albumPicker.setOnClickListener(v -> openAlbumPicker());
 
         bindNormalStartAnalyzeButton();
 
@@ -178,6 +184,32 @@ public class PhotoSelectionFragment extends Fragment {
     private void bindSettingsStartAnalyzeButton() {
         binding.startAnalyzeButton.setText(R.string.select_open_settings);
         binding.startAnalyzeButton.setOnClickListener(v -> openAppSettings());
+    }
+
+    /**
+     * 기기 앨범 목록을 조회해 "전체 사진" 합성 항목을 맨 앞에 붙인 뒤 시트를 띄운다.
+     * 그 라벨은 한국어 문자열 리소스가 필요한 UI 결정이라 데이터 계층
+     * ({@code MediaStoreImageSource.loadAlbums}) 이 아니라 여기서 만든다.
+     */
+    private void openAlbumPicker() {
+        vm.loadAlbums(albums -> {
+            if (binding == null) return; // 조회 도중 화면을 나갔을 수 있다.
+
+            int total = 0;
+            for (AlbumBucket album : albums) total += album.count;
+
+            List<AlbumBucket> withAllPhotos = new ArrayList<>();
+            withAllPhotos.add(new AlbumBucket(null, getString(R.string.select_album_all), total));
+            withAllPhotos.addAll(albums);
+
+            AlbumPickerSheetFragment.newInstance(withAllPhotos, vm.selectedBucketId())
+                    .show(getChildFragmentManager(), AlbumPickerSheetFragment.TAG);
+        });
+    }
+
+    @Override
+    public void onAlbumSelected(@Nullable String bucketId, String displayName) {
+        vm.selectAlbum(bucketId, displayName);
     }
 
     private void openAppSettings() {

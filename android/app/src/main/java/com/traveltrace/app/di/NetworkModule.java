@@ -1,0 +1,103 @@
+package com.traveltrace.app.di;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import com.traveltrace.app.BuildConfig;
+import com.traveltrace.app.data.geocode.GeocodingApi;
+import com.traveltrace.app.data.geocode.PlacesTextSearchApi;
+import com.traveltrace.app.data.vision.VertexApi;
+
+import java.util.concurrent.TimeUnit;
+
+import javax.inject.Singleton;
+
+import dagger.Module;
+import dagger.Provides;
+import dagger.hilt.InstallIn;
+import dagger.hilt.components.SingletonComponent;
+
+import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+
+/**
+ * 이 앱 최초의 Retrofit 배선. 호스트가 셋(Vertex·Places·Geocoding)이라 Retrofit 인스턴스도
+ * 셋이지만, {@link OkHttpClient} 와 {@link Gson} 은 하나를 공유한다 — 커넥션 풀·스레드풀을
+ * 세 벌 만들 이유가 없다.
+ *
+ * <p><b>타임아웃은 기본값을 쓰지 않는다.</b> OkHttp 기본 read 타임아웃(10s)은 큰 이미지의
+ * Vertex 추론엔 짧고, 무한대는 배치를 영원히 멈춘다. PRD §4.8 의 콜당 30s 를 여기 박아
+ * S4 가 정책을 세우기 전까지의 안전장치로 삼는다.
+ *
+ * <p>로깅은 디버그 빌드에서 HEADERS 까지만이다. BODY 로 올리면 base64 이미지 수 MB 가
+ * logcat 에 쏟아지고, 무엇보다 요청 헤더에 실린 API 키가 그대로 찍힌다. 헤더는
+ * {@code redactHeader(...)} 로 가리지만, Geocoding 은 키를 쿼리 파라미터({@code ?key=...})로
+ * 보내므로 그것만으로는 부족하다 — 커스텀 로거로 로그 라인의 {@code key=<값>} 을
+ * 정규식으로 지워, 세 호스트(Vertex·Places·Geocoding) 모두에서 키가 logcat 에 남지
+ * 않도록 한다.
+ */
+@Module
+@InstallIn(SingletonComponent.class)
+public final class NetworkModule {
+
+    private static final String VERTEX_BASE_URL = "https://aiplatform.googleapis.com/";
+    private static final String PLACES_BASE_URL = "https://places.googleapis.com/";
+    private static final String GEOCODING_BASE_URL = "https://maps.googleapis.com/";
+
+    private static final long CONNECT_TIMEOUT_SECONDS = 10L;
+    private static final long READ_TIMEOUT_SECONDS = 30L;
+
+    private NetworkModule() {}
+
+    @Provides
+    @Singleton
+    public static Gson provideGson() {
+        return new GsonBuilder().create();
+    }
+
+    @Provides
+    @Singleton
+    public static OkHttpClient provideOkHttpClient() {
+        HttpLoggingInterceptor logging = new HttpLoggingInterceptor(message ->
+                android.util.Log.d("OkHttp", message.replaceAll("key=[^&\\s]+", "key=REDACTED")));
+        logging.setLevel(BuildConfig.DEBUG
+                ? HttpLoggingInterceptor.Level.HEADERS
+                : HttpLoggingInterceptor.Level.NONE);
+        logging.redactHeader("x-goog-api-key");
+        logging.redactHeader("X-Goog-Api-Key");
+        return new OkHttpClient.Builder()
+                .addInterceptor(logging)
+                .connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .readTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .build();
+    }
+
+    @Provides
+    @Singleton
+    public static VertexApi provideVertexApi(OkHttpClient client, Gson gson) {
+        return retrofit(VERTEX_BASE_URL, client, gson).create(VertexApi.class);
+    }
+
+    @Provides
+    @Singleton
+    public static PlacesTextSearchApi providePlacesApi(OkHttpClient client, Gson gson) {
+        return retrofit(PLACES_BASE_URL, client, gson).create(PlacesTextSearchApi.class);
+    }
+
+    @Provides
+    @Singleton
+    public static GeocodingApi provideGeocodingApi(OkHttpClient client, Gson gson) {
+        return retrofit(GEOCODING_BASE_URL, client, gson).create(GeocodingApi.class);
+    }
+
+    /** 호스트만 다르고 나머지 설정은 같다 — OkHttp/Gson 은 한 벌을 공유한다. */
+    private static Retrofit retrofit(String baseUrl, OkHttpClient client, Gson gson) {
+        return new Retrofit.Builder()
+                .baseUrl(baseUrl)
+                .client(client)
+                .addConverterFactory(GsonConverterFactory.create(gson))
+                .build();
+    }
+}

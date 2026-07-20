@@ -63,7 +63,25 @@ public class PhotoSelectionRendererTest {
         PhotoSelectionRenderer.render(binding, ScreenFixtures.photoSelection(), index -> {});
 
         assertEquals("2024. 6. 12 – 6. 15 · 사진 94장", binding.periodLabel.getText().toString());
-        assertEquals("최대 100장 · 탭하여 제외", binding.selectHint.getText().toString());
+        assertEquals("최대 100장 · 탭하여 선택", binding.selectHint.getText().toString());
+    }
+
+    @Test
+    public void albumPickerShowsTheCurrentAlbumLabel() {
+        PhotoSelectionRenderer.render(binding, ScreenFixtures.photoSelection(), index -> {});
+
+        assertEquals("전체 사진", binding.albumPickerLabel.getText().toString());
+    }
+
+    @Test
+    public void albumPickerLabelUpdatesWhenAlbumChanges() {
+        PhotoSelectionUiState fixture = ScreenFixtures.photoSelection();
+        PhotoSelectionUiState inCamera = new PhotoSelectionUiState(
+                fixture.periodLabel, fixture.maxCount, "카메라", fixture.tiles);
+
+        PhotoSelectionRenderer.render(binding, inCamera, index -> {});
+
+        assertEquals("카메라", binding.albumPickerLabel.getText().toString());
     }
 
     /**

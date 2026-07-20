@@ -4,12 +4,15 @@ sdk.dir=D:/Android/Sdk
 
 # === API keys — NEVER commit real values ===
 
-# Build-time only: needed ONLY when running `./gradlew resolveVisionModels`.
-# Normal app builds do NOT need these (they read gradle/visionModels.generated.json).
-GEMINI_API_KEY=
+# Build-time AND runtime: Vertex AI Express Mode API key (x-goog-api-key header).
+# `./gradlew resolveVisionModels` uses it to query the live publisher model list, and the
+# app uses it at runtime for :generateContent. Same surface, same key — deliberately.
+VERTEX_API_KEY=
+
+# Build-time only: needed ONLY when running `./gradlew resolveVisionModels`. (S5 fallback.)
 OPENAI_API_KEY=
 
-# Runtime: injected into BuildConfig (Geocoding via REST, Places via Places.initialize)
+# Runtime: injected into BuildConfig (Geocoding + Places via REST)
 # and the manifest (Maps via meta-data placeholder).
 MAPS_API_KEY=
 PLACES_API_KEY=

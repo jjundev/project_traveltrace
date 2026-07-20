@@ -55,6 +55,12 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
      */
     private List<MapUiState.Stop> lastDrawnStops;
 
+    /**
+     * 마지막으로 팝을 튼 스톱. activeIndex 는 <em>도착할 때만</em> 바뀌므로, 이 값과 다르면
+     * 방금 새 스톱에 닿은 것이다 — 재생/속도/위성 전환 같은 UI-only emission 에는 팝이 안 튄다.
+     */
+    private int lastPoppedIndex = -1;
+
     /** MAP 진입 인자. tripId 하나뿐이라 nav argument 로 나른다(사진 목록은 SelectionSession). */
     public static Bundle argsFor(String tripId) {
         Bundle args = new Bundle();
@@ -161,11 +167,12 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
         binding.satelliteScrim.setVisibility(state.satellite ? View.VISIBLE : View.GONE);
         if (map != null) {
             map.setMapType(state.satellite ? GoogleMap.MAP_TYPE_SATELLITE : GoogleMap.MAP_TYPE_NORMAL);
-            // 재생/속도/위성/상영/스크럽은 전부 "같은 경로, 다른 UI 상태" 인 emission 이다 —
-            // MapUiState 생성자가 매번 unmodifiableList(new ArrayList<>(...)) 로 감싸므로 리스트
-            // 참조는 항상 새것이지만(sameInstance 비교 불가), MapReplayViewModel.copy() 는 그 안의
-            // Stop 인스턴스 자체는 복사하지 않고 그대로 넘긴다. 그래서 원소 참조 동일성으로
-            // "경로가 실제로 바뀌었는가"를 판별한다 — 여행을 새로 열 때만 toState() 가 Stop 을
+            // 재생/속도/위성/상영/스크럽/오프라인 전환은 전부 "같은 경로, 다른 UI 상태" 인
+            // emission 이다 — MapUiState 생성자가 매번 unmodifiableList(new ArrayList<>(...))
+            // 로 감싸므로 리스트 참조는 항상 새것이지만(sameInstance 비교 불가),
+            // MapReplayViewModel.publish() 는 engine.stops() 를 그대로 넘기므로 그 안의
+            // Stop 인스턴스 자체는 새로 찍히지 않는다. 그래서 원소 참조 동일성으로 "경로가
+            // 실제로 바뀌었는가"를 판별한다 — 여행을 새로 열 때만 toStops() 가 Stop 을
             // 통째로 새로 만들어서 이 비교가 깨진다. 경로가 안 바뀌었으면 다시 그리지도, 카메라를
             // whole-route bounds 로 되돌리지도 않는다 — 그게 사용자가 방금 옮긴 카메라를 지킨다.
             if (lastDrawnStops == null || !sameRoute(lastDrawnStops, state.stops)) {
@@ -185,6 +192,13 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
         }
 
         MapRenderer.renderCinema(binding.cinemaOverlay, state);
+        if (!state.stops.isEmpty() && state.activeIndex != lastPoppedIndex) {
+            lastPoppedIndex = state.activeIndex;
+            // 상영 모드에선 큰 카드가, 아니면 하단시트 배너가 팝의 주인공이다.
+            PhotoCardPop.play(state.cinema
+                    ? binding.cinemaOverlay.cinemaCard
+                    : binding.mapBottomSheet.photoBanner);
+        }
         int chromeVis = state.cinema ? View.GONE : View.VISIBLE;
         binding.mapTopBar.topBarRoot.setVisibility(chromeVis);
         binding.mapBottomSheet.sheetRoot.setVisibility(chromeVis);
@@ -220,13 +234,27 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
             map.moveCamera(CameraUpdateFactory.newLatLngZoom(PARIS, STATIC_ZOOM));
         }
 
+        // 이 시점부터 재생이 실제 카메라를 움직인다. attachCamera 는 카메라를 건드리지
+        // 않으므로 바로 아래 render() 의 whole-route bounds fit 이 살아남는다.
+        vm.attachCamera(new GoogleMapCameraAnimator(map));
+
         MapUiState state = vm.state().getValue();
         if (state != null) render(state);
     }
 
     @Override
+    public void onPause() {
+        // 화면이 가려지면 재생을 멈춘다 — 안 그러면 백그라운드에서 dwell 타이머가 계속 돌며
+        // 보이지도 않는 카메라를 움직인다. 공중 정지라서 돌아오면 재생으로 이어갈 수 있다.
+        vm.pausePlayback();
+        super.onPause();
+    }
+
+    @Override
     public void onDestroyView() {
         ToastPresenter.cancel(binding.getRoot());
+        // 뷰와 함께 GoogleMap 도 사라진다 — 엔진이 죽은 지도를 붙들지 않도록 먼저 뽑는다.
+        vm.detachCamera();
         super.onDestroyView();
         map = null;
         binding = null;
@@ -234,5 +262,7 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
         // 캐시된 last-drawn 경로를 버려서 다음 onMapReady 가 (VM 의 Stop 인스턴스가 그대로여도)
         // 반드시 다시 그리게 한다.
         lastDrawnStops = null;
+        // 뷰가 새로 생기면 첫 렌더에서 다시 한 번 팝이 나야 한다.
+        lastPoppedIndex = -1;
     }
 }

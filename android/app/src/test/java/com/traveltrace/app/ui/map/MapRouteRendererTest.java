@@ -1,10 +1,14 @@
 package com.traveltrace.app.ui.map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import com.google.android.gms.maps.model.LatLngBounds;
+
+import com.traveltrace.app.R;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -19,7 +23,7 @@ import java.util.List;
 public class MapRouteRendererTest {
 
     private static MapUiState.Stop stop(String id, double lat, double lng) {
-        return new MapUiState.Stop(id, id, "10:00", false, 0, 0xFFCCCCCC, lat, lng);
+        return new MapUiState.Stop(id, id, "10:00", false, 0, 0xFFCCCCCC, lat, lng, null);
     }
 
     @Test
@@ -54,5 +58,45 @@ public class MapRouteRendererTest {
 
         assertNull("좌표가 전부 같으면 span 이 0 — bounds 대신 고정 줌을 써야 한다",
                 MapRouteRenderer.boundsOf(sameSpot));
+    }
+
+    private static MapUiState.Stop stop(double lat, double lng, boolean ai) {
+        // contentUri(썸네일)는 경로/핀 렌더링과 무관 — 이 테스트는 null 로 둔다.
+        return new MapUiState.Stop("p" + lat, "이름", "09:00", ai, 0, 0xFFEEEEEE, lat, lng, null);
+    }
+
+    @Test
+    public void aiStopsGetTheApproximatePin() {
+        assertEquals(R.drawable.pin_approx, MapRouteRenderer.pinResFor(true));
+        assertEquals(R.drawable.pin_gps, MapRouteRenderer.pinResFor(false));
+    }
+
+    @Test
+    public void segmentTouchingAnAiStopIsDashed() {
+        boolean[] dashed = MapRouteRenderer.dashedSegments(Arrays.asList(
+                stop(1, 1, false), stop(2, 2, true), stop(3, 3, false)));
+        assertEquals(2, dashed.length);
+        assertTrue("AI 스톱으로 들어가는 구간은 추정 경로다", dashed[0]);
+        assertTrue("AI 스톱에서 나가는 구간도 마찬가지다", dashed[1]);
+    }
+
+    @Test
+    public void segmentBetweenTwoGpsStopsIsSolid() {
+        boolean[] dashed = MapRouteRenderer.dashedSegments(Arrays.asList(
+                stop(1, 1, false), stop(2, 2, false)));
+        assertEquals(1, dashed.length);
+        assertFalse("GPS 끼리는 실측 경로다 — 점선으로 그리면 정확도를 스스로 깎는다", dashed[0]);
+    }
+
+    @Test
+    public void singleStopHasNoSegments() {
+        assertEquals(0, MapRouteRenderer.dashedSegments(
+                Collections.singletonList(stop(1, 1, true))).length);
+    }
+
+    @Test
+    public void emptyStopsHaveNoSegments() {
+        assertEquals(0, MapRouteRenderer.dashedSegments(
+                Collections.<MapUiState.Stop>emptyList()).length);
     }
 }
