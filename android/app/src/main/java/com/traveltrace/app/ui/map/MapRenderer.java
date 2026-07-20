@@ -4,16 +4,20 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Outline;
 import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
 import android.view.View;
 import android.view.ViewOutlineProvider;
+import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 
 import com.traveltrace.app.R;
 import com.traveltrace.app.databinding.ViewCinemaOverlayBinding;
 import com.traveltrace.app.databinding.ViewMapBottomSheetBinding;
 import com.traveltrace.app.databinding.ViewMapTopBarBinding;
+import com.traveltrace.app.databinding.ViewOfflineBannerBinding;
 
 /**
  * MapUiState → MAP 크롬 반영. 지도 레이아웃(FragmentContainerView)과 분리된 include
@@ -34,6 +38,15 @@ public final class MapRenderer {
 
         applyTab(ctx, binding.tabMap, !state.satellite);
         applyTab(ctx, binding.tabSatellite, state.satellite);
+    }
+
+    /**
+     * 오프라인 한계 배너. 상영 모드에선 다른 크롬과 함께 숨는다 — 상영 중에 배너만 남으면
+     * 연출이 깨지고, 어차피 상영을 나오면 다시 보인다.
+     */
+    public static void renderOfflineBanner(ViewOfflineBannerBinding binding, MapUiState state) {
+        binding.offlineBannerRoot.setVisibility(
+                state.offline && !state.cinema ? View.VISIBLE : View.GONE);
     }
 
     /** 선택 탭 = 파란 pill + 흰 글자 / 비선택 = 투명 + tertiary 글자 (프로토타입 mapTabBg/Fg). */
@@ -60,6 +73,7 @@ public final class MapRenderer {
         MapUiState.Stop stop = state.activeStop();
 
         binding.photoTone.setBackgroundColor(stop.toneColor);
+        bindPhoto(binding.photoImage, stop.contentUri);
         binding.stopName.setText(stop.name);
         binding.stopMeta.setText(ctx.getString(R.string.map_stop_meta,
                 stop.time, state.activeIndex + 1, state.stops.size()));
@@ -105,6 +119,7 @@ public final class MapRenderer {
         tone.setColor(stop.toneColor);
         tone.setCornerRadius(ctx.getResources().getDimension(R.dimen.radius_20));
         binding.cinemaTone.setBackground(tone);
+        bindPhoto(binding.cinemaImage, stop.contentUri);
 
         int cornerRadiusPx = ctx.getResources().getDimensionPixelSize(R.dimen.radius_20);
         binding.cinemaCard.setOutlineProvider(new ViewOutlineProvider() {
@@ -130,5 +145,26 @@ public final class MapRenderer {
         pill.setBackgroundResource(selected ? R.drawable.bg_speed_selected : 0);
         pill.setTextColor(ContextCompat.getColor(ctx,
                 selected ? R.color.text_primary : R.color.text_tertiary));
+    }
+
+    /**
+     * 실제 사진이 있으면 톤 색 위를 썸네일로 덮고, 없으면(픽스처·프리뷰) 톤 색만 남긴다 —
+     * {@code PhotoGridAdapter} 와 같은 규칙이다.
+     *
+     * <p>null 경로에서도 {@code Glide.clear()} 를 반드시 부른다: 사진 있는 스톱 → 없는 스톱으로
+     * 넘어갈 때 앞선 로딩이 뒤늦게 완료되면 숨겨 놓은 ImageView 에 이전 사진이 다시 꽂힌다.
+     */
+    private static void bindPhoto(ImageView view, @Nullable Uri uri) {
+        if (uri == null) {
+            com.bumptech.glide.Glide.with(view).clear(view);
+            view.setImageDrawable(null);
+            view.setVisibility(View.GONE);
+            return;
+        }
+        view.setVisibility(View.VISIBLE);
+        com.bumptech.glide.Glide.with(view)
+                .load(uri)
+                .centerCrop()
+                .into(view);
     }
 }

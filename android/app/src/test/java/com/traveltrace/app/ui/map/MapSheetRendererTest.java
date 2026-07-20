@@ -3,6 +3,7 @@ package com.traveltrace.app.ui.map;
 import static org.junit.Assert.assertEquals;
 
 import android.content.Context;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 
@@ -113,5 +114,31 @@ public class MapSheetRendererTest {
         assertEquals(View.GONE, binding.photoBanner.getVisibility());
         assertEquals(View.GONE, binding.scrubber.getVisibility());
         assertEquals(View.GONE, binding.controlsRow.getVisibility());
+    }
+
+    /** 픽스처(contentUri=null)는 실제 사진이 없다 — 톤 색만 남기고 ImageView 는 숨긴다. */
+    @Test
+    public void stopWithoutContentUri_hidesPhotoImage() {
+        MapRenderer.renderSheet(binding, at(0));
+
+        assertEquals(View.GONE, binding.photoImage.getVisibility());
+    }
+
+    /** 실제 사진이 있으면 ImageView 를 띄운다(비트맵 로딩은 Glide 비동기라 여기서 보지 않는다). */
+    @Test
+    public void stopWithContentUri_showsPhotoImage() {
+        MapUiState base = ScreenFixtures.map();
+        MapUiState.Stop origin = base.stops.get(0);
+        MapUiState.Stop withPhoto = new MapUiState.Stop(
+                origin.id, origin.name, origin.time, origin.ai, origin.extra,
+                origin.toneColor, origin.lat, origin.lng,
+                Uri.parse("content://media/external/images/media/42"));
+        MapUiState state = new MapUiState(base.tripTitle, base.unknownCount,
+                Collections.singletonList(withPhoto), 0,
+                base.playing, base.satellite, base.cinema, base.speed);
+
+        MapRenderer.renderSheet(binding, state);
+
+        assertEquals(View.VISIBLE, binding.photoImage.getVisibility());
     }
 }

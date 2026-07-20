@@ -89,9 +89,24 @@ public class MapReplayViewModelLoadTest {
     private MapUiState load(String tripId) {
         SavedStateHandle handle = new SavedStateHandle();
         if (tripId != null) handle.set(MapReplayFragment.ARG_TRIP_ID, tripId);
-        MapReplayViewModel vm = new MapReplayViewModel(handle, tripRepo);
+        MapReplayViewModel vm =
+                new MapReplayViewModel(handle, tripRepo, FakeConnectivity.online());
         return AsyncTestHarness.awaitLiveData(
                 vm.state(), vm::load, state -> state != null, "MapReplayViewModel.load()");
+    }
+
+    @Test
+    public void anOfflineDeviceMarksTheLoadedTripAsOffline() {
+        SavedStateHandle handle = new SavedStateHandle();
+        handle.set(MapReplayFragment.ARG_TRIP_ID, saveTrip());
+        MapReplayViewModel vm =
+                new MapReplayViewModel(handle, tripRepo, FakeConnectivity.offline());
+
+        MapUiState state = AsyncTestHarness.awaitLiveData(
+                vm.state(), vm::load, s -> s != null, "MapReplayViewModel.load() offline");
+
+        assertTrue("오프라인이어도 경로는 그대로 실린다", state.stops.size() == 2);
+        assertTrue("배너를 띄울 근거가 상태에 실려야 한다", state.offline);
     }
 
     @Test

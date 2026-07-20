@@ -3,6 +3,7 @@ package com.traveltrace.app.data.geocode;
 import com.google.gson.JsonObject;
 
 import com.traveltrace.app.BuildConfig;
+import com.traveltrace.app.core.AnalysisCostLog;
 import com.traveltrace.app.core.model.GeoPoint;
 import com.traveltrace.app.core.model.GeocodeQuery;
 import com.traveltrace.app.domain.Geocoder;
@@ -37,15 +38,20 @@ public class RoutingGeocoder implements Geocoder {
 
     private final PlacesTextSearchApi places;
     private final GeocodingApi geocoding;
+    private final AnalysisCostLog costLog;
 
     @Inject
-    public RoutingGeocoder(PlacesTextSearchApi places, GeocodingApi geocoding) {
+    public RoutingGeocoder(PlacesTextSearchApi places, GeocodingApi geocoding,
+                           AnalysisCostLog costLog) {
         this.places = places;
         this.geocoding = geocoding;
+        this.costLog = costLog;
     }
 
     @Override
     public List<GeoPoint> geocode(GeocodeQuery query) throws Exception {
+        // 유료 호출 경계(S8). 실패로 끝나도 한 번 나간 콜은 센다.
+        costLog.recordGeocodeCall();
         if (query instanceof GeocodeQuery.Poi) {
             return searchPlaces(((GeocodeQuery.Poi) query).name);
         }

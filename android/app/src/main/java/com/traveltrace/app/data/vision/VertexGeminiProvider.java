@@ -3,6 +3,7 @@ package com.traveltrace.app.data.vision;
 import com.google.gson.JsonObject;
 
 import com.traveltrace.app.BuildConfig;
+import com.traveltrace.app.core.AnalysisCostLog;
 import com.traveltrace.app.core.model.RecognitionResult;
 import com.traveltrace.app.domain.VisionProvider;
 
@@ -32,14 +33,20 @@ import retrofit2.Response;
 public class VertexGeminiProvider implements VisionProvider {
 
     private final VertexApi api;
+    private final AnalysisCostLog costLog;
 
     @Inject
-    public VertexGeminiProvider(VertexApi api) {
+    public VertexGeminiProvider(VertexApi api, AnalysisCostLog costLog) {
         this.api = api;
+        this.costLog = costLog;
     }
 
     @Override
     public RecognitionResult recognize(byte[] imageJpeg) throws Exception {
+        // 유료 호출은 이 경계에서 센다(S8) — HTTP 실패로 끝나도 토큰은 쓰이므로 호출 전에
+        // 기록한다. "저장 여행을 열면 vision=0" 수용 기준은 이 지점이 구현 안이 아니라
+        // provider 경계에 있어야 캐시 hit 로 provider 가 안 불릴 때 0 이 유지된다.
+        costLog.recordVisionCall();
         JsonObject body = VertexRequestBuilder.build(imageJpeg);
         Response<JsonObject> response = api.generateContent(
                 BuildConfig.GEMINI_VISION_MODEL, BuildConfig.VERTEX_API_KEY, body).execute();

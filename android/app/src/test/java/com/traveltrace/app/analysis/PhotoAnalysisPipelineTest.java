@@ -103,7 +103,7 @@ public class PhotoAnalysisPipelineTest {
     @Test
     public void gpsPhotoSkipsPrepareAndRecognizeEntirely() throws Exception {
         Uri uri = registerJpeg(1L, true, "2024:06:12 10:12:00");
-        GalleryImage image = new GalleryImage(1L, uri, "a.jpg", null);
+        GalleryImage image = new GalleryImage(1L, uri, "a.jpg", null, 2048L);
         FakeVisionProvider vision = new FakeVisionProvider();
         PhotoAnalysisPipeline pipeline = new PhotoAnalysisPipeline(
                 exif, preparer, vision, new AiLocationResolver(new FakeGeocoder(Collections.emptyList())));
@@ -119,7 +119,7 @@ public class PhotoAnalysisPipelineTest {
     @Test
     public void recognitionFailureLeavesThePhotoUnknownWithoutThrowing() throws Exception {
         Uri uri = registerJpeg(2L, false, "2024:06:12 11:12:00");
-        GalleryImage image = new GalleryImage(2L, uri, "b.jpg", null);
+        GalleryImage image = new GalleryImage(2L, uri, "b.jpg", null, 2048L);
         FakeVisionProvider vision = new FakeVisionProvider();
         vision.toReturn = VertexResponseParser.UNRECOGNIZED;
         PhotoAnalysisPipeline pipeline = new PhotoAnalysisPipeline(
@@ -135,7 +135,7 @@ public class PhotoAnalysisPipelineTest {
     @Test
     public void visionExceptionDoesNotCrashTheBatch() throws Exception {
         Uri uri = registerJpeg(3L, false, "2024:06:12 12:12:00");
-        GalleryImage image = new GalleryImage(3L, uri, "c.jpg", null);
+        GalleryImage image = new GalleryImage(3L, uri, "c.jpg", null, 2048L);
         FakeVisionProvider vision = new FakeVisionProvider();
         vision.toThrow = new IOException("boom");
         PhotoAnalysisPipeline pipeline = new PhotoAnalysisPipeline(
@@ -152,7 +152,7 @@ public class PhotoAnalysisPipelineTest {
     @Test
     public void happyAiPathProducesAPlacedStop() throws Exception {
         Uri uri = registerJpeg(4L, false, "2024:06:12 13:12:00");
-        GalleryImage image = new GalleryImage(4L, uri, "d.jpg", null);
+        GalleryImage image = new GalleryImage(4L, uri, "d.jpg", null, 2048L);
         FakeVisionProvider vision = new FakeVisionProvider();
         vision.toReturn = new RecognitionResult("에펠탑", "파리", "프랑스", 0.9);
         FakeGeocoder geocoder = new FakeGeocoder(

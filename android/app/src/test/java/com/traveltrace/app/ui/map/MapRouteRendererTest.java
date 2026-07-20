@@ -23,7 +23,7 @@ import java.util.List;
 public class MapRouteRendererTest {
 
     private static MapUiState.Stop stop(String id, double lat, double lng) {
-        return new MapUiState.Stop(id, id, "10:00", false, 0, 0xFFCCCCCC, lat, lng);
+        return new MapUiState.Stop(id, id, "10:00", false, 0, 0xFFCCCCCC, lat, lng, null);
     }
 
     @Test
@@ -61,7 +61,8 @@ public class MapRouteRendererTest {
     }
 
     private static MapUiState.Stop stop(double lat, double lng, boolean ai) {
-        return new MapUiState.Stop("p" + lat, "이름", "09:00", ai, 0, 0xFFEEEEEE, lat, lng);
+        // contentUri(썸네일)는 경로/핀 렌더링과 무관 — 이 테스트는 null 로 둔다.
+        return new MapUiState.Stop("p" + lat, "이름", "09:00", ai, 0, 0xFFEEEEEE, lat, lng, null);
     }
 
     @Test

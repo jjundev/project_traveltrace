@@ -130,7 +130,7 @@ public class ScreenFixturesTest {
     public void uiStateDoesNotAliasCallerList() {
         List<PhotoSelectionUiState.Tile> tiles = new ArrayList<>();
         tiles.add(new PhotoSelectionUiState.Tile(0xFF000000, null, true, 0L, null));
-        PhotoSelectionUiState s = new PhotoSelectionUiState("p", 100, tiles);
+        PhotoSelectionUiState s = new PhotoSelectionUiState("p", 100, "전체 사진", tiles);
 
         tiles.add(new PhotoSelectionUiState.Tile(0xFFFFFFFF, null, true, 0L, null));
 

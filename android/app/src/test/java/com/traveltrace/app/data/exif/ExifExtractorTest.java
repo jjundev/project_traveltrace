@@ -222,7 +222,7 @@ public class ExifExtractorTest {
     private static final String REDACTED_FALLBACK_FILE = "denied-redacted-fallback.jpg";
 
     private static GalleryImage image(Uri uri, long id, String name) {
-        return new GalleryImage(id, uri, name, null);
+        return new GalleryImage(id, uri, name, null, 0L);
     }
 
     @Test

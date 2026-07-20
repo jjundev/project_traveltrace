@@ -1,6 +1,9 @@
 package com.traveltrace.app.ui.map;
 
+import android.net.Uri;
+
 import androidx.annotation.ColorInt;
+import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,8 +24,21 @@ public final class MapUiState {
     public final boolean cinema;
     public final Speed speed;
 
+    /**
+     * 지도 타일을 받아올 수 없는 상태. 경로 폴리라인은 저장된 좌표만으로 그려지므로 이 값이
+     * true 여도 재생 자체는 정상이다 — 배경이 비는 이유를 안내하는 데만 쓴다(PRD §5).
+     */
+    public final boolean offline;
+
+    /** offline=false 인 기존 8인자 형태. 오프라인을 모르는 호출부(픽스처·테스트)가 쓴다. */
     public MapUiState(String tripTitle, int unknownCount, List<Stop> stops, int activeIndex,
                       boolean playing, boolean satellite, boolean cinema, Speed speed) {
+        this(tripTitle, unknownCount, stops, activeIndex, playing, satellite, cinema, speed, false);
+    }
+
+    public MapUiState(String tripTitle, int unknownCount, List<Stop> stops, int activeIndex,
+                      boolean playing, boolean satellite, boolean cinema, Speed speed,
+                      boolean offline) {
         this.tripTitle = tripTitle;
         this.unknownCount = unknownCount;
         this.stops = Collections.unmodifiableList(new ArrayList<>(stops));
@@ -31,6 +47,19 @@ public final class MapUiState {
         this.satellite = satellite;
         this.cinema = cinema;
         this.speed = speed;
+        this.offline = offline;
+    }
+
+    /**
+     * 연결 상태만 갈아끼운 복제본. <b>Stop 인스턴스는 그대로 넘긴다</b> —
+     * {@link MapReplayFragment#sameRoute} 가 참조 동일성으로 "경로가 바뀌었는가"를 판별하므로,
+     * 여기서 Stop 을 새로 찍으면 오프라인 배너가 뜨고 지는 것만으로 지도가 다시 그려지고
+     * 카메라가 전체 경로 bounds 로 스냅된다.
+     */
+    public MapUiState withOffline(boolean offline) {
+        if (this.offline == offline) return this;
+        return new MapUiState(tripTitle, unknownCount, stops, activeIndex,
+                playing, satellite, cinema, speed, offline);
     }
 
     public Stop activeStop() {
@@ -53,9 +82,15 @@ public final class MapUiState {
         /** 지도에 찍을 좌표. PLACED 인 스톱만 여기 오므로 항상 유효하다. */
         public final double lat;
         public final double lng;
+        /**
+         * 이 정차 지점 대표 사진의 MediaStore content URI. 픽스처·프리뷰 경로에선 null 이라
+         * 톤 색만 남는다 (PhotoGridAdapter 의 썸네일 규칙과 동일).
+         */
+        @Nullable public final Uri contentUri;
 
         public Stop(String id, String name, String time, boolean ai, int extra,
-                    @ColorInt int toneColor, double lat, double lng) {
+                    @ColorInt int toneColor, double lat, double lng,
+                    @Nullable Uri contentUri) {
             this.id = id;
             this.name = name;
             this.time = time;
@@ -64,6 +99,7 @@ public final class MapUiState {
             this.toneColor = toneColor;
             this.lat = lat;
             this.lng = lng;
+            this.contentUri = contentUri;
         }
     }
 }

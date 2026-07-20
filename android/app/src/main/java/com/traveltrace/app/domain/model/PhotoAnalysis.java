@@ -10,6 +10,13 @@ public class PhotoAnalysis {
     public long mediaStoreId;
     public String displayName;
 
+    /**
+     * 캐시 키의 절반 (짝은 mediaStoreId). 스트림을 못 읽었으면 null 이고, 그때는 캐시를
+     * 통째로 건너뛴다.
+     */
+    @Nullable
+    public String contentHash;
+
     /** 촬영 시각(UTC millis). 못 읽었으면 null. */
     @Nullable
     public Long takenAtUtc;
@@ -39,14 +46,4 @@ public class PhotoAnalysis {
     /** AI 인식 신뢰도(0~1). AI 를 타지 않은 사진은 null — 0 이 아니다. */
     @Nullable
     public Double confidence;
-
-    /**
-     * 업로드 파이프라인이 스트림을 읽는 김에 계산한 SHA-256 (PRD §4.7).
-     *
-     * <p>AI 경로를 탄 사진에만 채워진다. GPS 사진은 업로드 자체를 하지 않으므로
-     * 다운스케일·해시 비용을 낼 이유가 없다 — 캐시(S4)가 GPS 사진까지 필요로 하면
-     * 그때 해시 전용 경로를 따로 만든다.
-     */
-    @Nullable
-    public String contentHash;
 }

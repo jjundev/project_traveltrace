@@ -33,7 +33,7 @@ public class VertexGeminiProviderTest {
         RecordingApi api = RecordingApi.succeeding(
                 "{\"landmarkName\":\"에펠탑\",\"city\":\"파리\",\"country\":\"프랑스\",\"confidence\":0.9}");
 
-        RecognitionResult r = new VertexGeminiProvider(api).recognize(JPEG);
+        RecognitionResult r = new VertexGeminiProvider(api, new com.traveltrace.app.core.AnalysisCostLog()).recognize(JPEG);
 
         assertEquals("에펠탑", r.landmarkName);
         assertEquals(0.9d, r.confidence, 1e-9);
@@ -43,7 +43,7 @@ public class VertexGeminiProviderTest {
     public void sendsTheResolvedModelIdAndKey() throws Exception {
         RecordingApi api = RecordingApi.succeeding("{\"confidence\":0}");
 
-        new VertexGeminiProvider(api).recognize(JPEG);
+        new VertexGeminiProvider(api, new com.traveltrace.app.core.AnalysisCostLog()).recognize(JPEG);
 
         assertNotNull("모델 ID 가 비면 Vertex 가 404 를 낸다", api.model);
         assertTrue("모델 ID 는 BuildConfig 에서 온다 — 하드코딩하면 modelIdGuard 가 빌드를 깬다",
@@ -57,7 +57,7 @@ public class VertexGeminiProviderTest {
     public void httpFailureThrowsSoTheCallerCanCountIt() {
         RecordingApi api = RecordingApi.failingWith(429);
         try {
-            new VertexGeminiProvider(api).recognize(JPEG);
+            new VertexGeminiProvider(api, new com.traveltrace.app.core.AnalysisCostLog()).recognize(JPEG);
             fail("HTTP 실패는 인식 실패와 구분돼야 한다 — S4 재시도/백오프가 이 예외에 붙는다");
         } catch (Exception expected) {
             assertTrue(expected instanceof IOException);
@@ -69,7 +69,7 @@ public class VertexGeminiProviderTest {
     public void nullBodyOnSuccessThrows() {
         RecordingApi api = RecordingApi.succeedingWithNullBody();
         try {
-            new VertexGeminiProvider(api).recognize(JPEG);
+            new VertexGeminiProvider(api, new com.traveltrace.app.core.AnalysisCostLog()).recognize(JPEG);
             fail("바디가 비면 파싱할 게 없다 — 빈 결과를 정상으로 취급하면 안 된다");
         } catch (Exception expected) {
             assertTrue(expected instanceof IOException);

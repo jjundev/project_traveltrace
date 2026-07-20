@@ -21,7 +21,7 @@ public class PhotoSelectionUiStateTest {
                         0xFFDBE4EE, null, true, 11L, Uri.parse("content://media/11")),
                 new PhotoSelectionUiState.Tile(
                         0xFFE8E0D6, "개선문", false, 22L, Uri.parse("content://media/22")));
-        return new PhotoSelectionUiState("기간", 100, tiles);
+        return new PhotoSelectionUiState("기간", 100, "전체 사진", tiles);
     }
 
     @Test
@@ -36,6 +36,13 @@ public class PhotoSelectionUiStateTest {
                 Uri.parse("content://media/11"), toggled.contentUri);
         assertEquals("톤 색도 보존된다", 0xFFDBE4EE, toggled.toneColor);
         assertNull(toggled.label);
+    }
+
+    @Test
+    public void toggledStatePreservesTheAlbumLabel() {
+        PhotoSelectionUiState next = twoRealTiles().withToggled(0);
+
+        assertEquals("탭해도 앨범 라벨은 그대로다", "전체 사진", next.albumLabel);
     }
 
     @Test

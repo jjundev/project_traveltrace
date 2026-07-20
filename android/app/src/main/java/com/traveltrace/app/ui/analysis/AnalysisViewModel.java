@@ -8,10 +8,13 @@ import androidx.lifecycle.ViewModel;
 
 import com.traveltrace.app.R;
 import com.traveltrace.app.analysis.PhotoAnalysisPipeline;
+import com.traveltrace.app.core.AnalysisCostLog;
 import com.traveltrace.app.core.AppExecutors;
 import com.traveltrace.app.core.model.LocationClassification;
+import com.traveltrace.app.data.media.ContentHasher;
 import com.traveltrace.app.data.media.GalleryImage;
 import com.traveltrace.app.data.media.MediaStoreImageSource;
+import com.traveltrace.app.domain.AnalysisCacheStore;
 import com.traveltrace.app.domain.PhotoAnalysisRepository;
 import com.traveltrace.app.domain.model.PhotoAnalysis;
 import com.traveltrace.app.ui.selection.SelectionSession;
@@ -52,6 +55,9 @@ public class AnalysisViewModel extends ViewModel {
     private final PhotoAnalysisRepository analysisRepository;
     private final SelectionSession session;
     private final AppExecutors executors;
+    private final ContentHasher hasher;
+    private final AnalysisCacheStore cacheStore;
+    private final AnalysisCostLog costLog;
 
     private final MutableLiveData<AnalysisUiState> state = new MutableLiveData<>();
     private final MutableLiveData<String> savedTripId = new MutableLiveData<>();
@@ -65,13 +71,19 @@ public class AnalysisViewModel extends ViewModel {
                              PhotoAnalysisPipeline pipeline,
                              PhotoAnalysisRepository analysisRepository,
                              SelectionSession session,
-                             AppExecutors executors) {
+                             AppExecutors executors,
+                             ContentHasher hasher,
+                             AnalysisCacheStore cacheStore,
+                             AnalysisCostLog costLog) {
         this.context = context;
         this.imageSource = imageSource;
         this.pipeline = pipeline;
         this.analysisRepository = analysisRepository;
         this.session = session;
         this.executors = executors;
+        this.hasher = hasher;
+        this.cacheStore = cacheStore;
+        this.costLog = costLog;
     }
 
     public LiveData<AnalysisUiState> state() {
@@ -99,6 +111,7 @@ public class AnalysisViewModel extends ViewModel {
         }
 
         pipeline.resetFailureCount();
+        costLog.reset();
         state.setValue(new AnalysisUiState(0, selectedIds.size(), false, "", 0, 0));
 
         // 선택은 이미 SELECT 에서 확정됐다 — 갤러리 전체(수만 장일 수 있다)를 훑어 그중
@@ -140,7 +153,7 @@ public class AnalysisViewModel extends ViewModel {
             if (cancelled.get()) return;
 
             GalleryImage image = targets.get(i);
-            PhotoAnalysis analysis = pipeline.analyze(image);
+            PhotoAnalysis analysis = analyze(image);
             results.add(analysis);
 
             int analyzed = i + 1;
@@ -167,12 +180,53 @@ public class AnalysisViewModel extends ViewModel {
             // 통째로 다시 돌려 같은 사진들로 두 번째 "유령 여행"을 만들 수 있고, 그 이중
             // 저장이 이 픽스가 실제로 막으려는 결과다. 반면 이 화면 자체는 이미 사라진
             // 뒤일 수 있으니 state/savedTripId 같은 UI 갱신은 취소 시 계속 억제한다.
+            costLog.logSummary("analyze " + total + " photos");
             session.clear();
             if (cancelled.get()) return;
             state.setValue(new AnalysisUiState(
                     total, total, true, name, countPlaced(results), countUnknown(results)));
             savedTripId.setValue(tripId);
         });
+    }
+
+    /**
+     * 사진 1장을 해석한다: 해시 → 캐시 조회 → miss 일 때만 실제 판독.
+     *
+     * <p>순서가 중요하다. 해시를 앞 64KiB 로만 계산하기 때문에(plan/04 결정) 캐시 조회를
+     * 판독 <em>앞에</em> 둘 수 있고, 그래야 hit 이 실제로 일을 줄인다. hit 이면
+     * {@link PhotoAnalysisPipeline}(다운스케일·업로드·AI·지오코딩)이 통째로 스킵된다 —
+     * 그때 절약되는 것은 로컬 파싱이 아니라 돈이다.
+     *
+     * <p>해시를 못 구했으면(사진이 지워졌거나 권한이 빠졌다) 캐시를 통째로 건너뛰고 평소대로
+     * 판독한다 — 캐시는 최적화지 정확성의 전제가 아니다.
+     */
+    private PhotoAnalysis analyze(GalleryImage image) {
+        String hash = hasher.hash(image.contentUri, image.sizeBytes);
+
+        if (hash != null) {
+            // GalleryImage 쪽 필드명은 id, PhotoAnalysis 쪽은 mediaStoreId 다 — 같은 값이다.
+            PhotoAnalysis cached = cacheStore.get(image.id, hash);
+            if (cached != null) {
+                costLog.recordCacheHit();
+                // 파일명은 콘텐츠가 아니라 MediaStore 행의 속성이라 캐시가 들고 있지 않다 —
+                // 살아 있는 커서 값으로 채운다(사용자가 이름을 바꿨을 수 있다).
+                cached.displayName = image.displayName;
+                return cached;
+            }
+            // 조회할 해시가 있었는데도 못 찾았을 때만 진짜 miss 다 — 해시 자체가 없던
+            // 아래 분기는 캐시를 애초에 못 건드린 "skip"이라 miss 로 세면 신호가 흐려진다.
+            costLog.recordCacheMiss();
+        }
+
+        // 캐시 miss — S3 파이프라인이 EXIF 부터 (GPS 없으면) 다운스케일·AI·지오코딩까지
+        // 통째로 돈다. 여기가 유료 호출이 실제로 나가는 유일한 자리다.
+        PhotoAnalysis fresh = pipeline.analyze(image);
+        // 캐시 키는 hasher 의 64KiB 해시로 통일한다 — 파이프라인이 AI 경로에서 내부적으로
+        // 채운 SHA-256 을 여기서 캐시 키 해시로 덮어써 put/get 이 같은 값을 쓰게 한다.
+        fresh.contentHash = hash;
+        // put() 이 캐시 가능 여부를 스스로 판단한다 — 여기서 거르지 않는다.
+        cacheStore.put(fresh);
+        return fresh;
     }
 
     private static int countPlaced(List<PhotoAnalysis> results) {

@@ -8,8 +8,10 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.traveltrace.app.R;
+import com.traveltrace.app.data.media.AlbumBucket;
 import com.traveltrace.app.data.media.GalleryImage;
 import com.traveltrace.app.data.media.MediaStoreImageSource;
+import com.traveltrace.app.domain.Callback;
 import com.traveltrace.app.ui.selection.SelectionSession;
 
 import java.text.SimpleDateFormat;
@@ -49,6 +51,10 @@ public class PhotoSelectionViewModel extends ViewModel {
     private final SelectionSession session;
     private final MutableLiveData<PhotoSelectionUiState> state = new MutableLiveData<>();
 
+    /** null 이면 전체 앨범. 앨범 드롭다운에서 고른 폴더로 그리드를 좁힌다. */
+    @Nullable private String selectedBucketId;
+    private String selectedAlbumLabel;
+
     @Inject
     public PhotoSelectionViewModel(@ApplicationContext Context context,
                                    MediaStoreImageSource imageSource,
@@ -56,6 +62,7 @@ public class PhotoSelectionViewModel extends ViewModel {
         this.context = context;
         this.imageSource = imageSource;
         this.session = session;
+        this.selectedAlbumLabel = context.getString(R.string.select_album_all);
     }
 
     public LiveData<PhotoSelectionUiState> state() {
@@ -65,7 +72,7 @@ public class PhotoSelectionViewModel extends ViewModel {
     /**
      * 권한이 확보된 뒤 Fragment 가 호출한다. 여러 번 불러도 안전하다 — 그리고 회전처럼
      * 뷰만 재생성되고 이 ViewModel 이 살아남는 경우(finding 1)에도 안전해야 한다: 이미
-     * 반영된 선택(사용자가 "탭하여 제외"로 골라 둔 것)을 여기서 기본값으로 덮어쓰면 안
+     * 반영된 선택(사용자가 "탭하여 선택"으로 골라 둔 것)을 여기서 기본값으로 덮어쓰면 안
      * 되므로, 직전 상태가 있으면 mediaStoreId 기준으로 selected 를 그대로 이어받는다.
      * PARTIAL 권한에서 매 resume 마다 다시 불리는 건 의도된 동작이다(사용자가 시스템의
      * "사진 더 선택"에서 목록 자체를 바꿀 수 있어서다) — 여기서 막는 건 그 재조회 자체가
@@ -73,7 +80,33 @@ public class PhotoSelectionViewModel extends ViewModel {
      */
     public void load() {
         PhotoSelectionUiState previous = state.getValue();
-        imageSource.loadRecent(GALLERY_PAGE, images -> state.setValue(toState(images, previous)));
+        imageSource.loadRecent(GALLERY_PAGE, selectedBucketId,
+                images -> state.setValue(toState(images, previous)));
+    }
+
+    /**
+     * 기기의 앨범(폴더) 목록. 앨범 드롭다운을 여는 시점에 Fragment 가 부른다 — 화면
+     * 진입마다 미리 조회하지 않는다(그리드 로딩과 무관한 별도 쿼리라 필요할 때만).
+     */
+    public void loadAlbums(Callback<List<AlbumBucket>> callback) {
+        imageSource.loadAlbums(callback);
+    }
+
+    /** 지금 그리드가 보여주는 앨범의 bucketId. null 이면 전체 사진 — 시트를 다시 열 때 어떤 행을 강조할지 결정한다. */
+    @Nullable
+    public String selectedBucketId() {
+        return selectedBucketId;
+    }
+
+    /**
+     * 앨범 드롭다운에서 폴더를 골랐다. bucketId 가 null 이면 "전체 사진"으로 되돌아간다.
+     * 선택 상태는 toState() 의 id 기준 carry-over 로 그대로 이어진다 — 회전 재조회와
+     * 같은 경로라 앨범 전환을 특별 취급할 이유가 없다.
+     */
+    public void selectAlbum(@Nullable String bucketId, String displayName) {
+        selectedBucketId = bucketId;
+        selectedAlbumLabel = displayName;
+        load();
     }
 
     private PhotoSelectionUiState toState(List<GalleryImage> images,
@@ -90,9 +123,9 @@ public class PhotoSelectionViewModel extends ViewModel {
             GalleryImage image = images.get(i);
             Boolean carried = previousSelection.get(image.id);
             // 이미 알던 사진(id 가 이전 상태에도 있었다)은 사용자가 정한 선택을 그대로
-            // 이어받는다. 처음 보는 사진(신규 촬영분 등)만 기존 기본 규칙(상한 이내 전체
-            // 선택)을 적용한다 — "새로 나타난 것"에 한해서만 기본값을 매긴다.
-            boolean selected = carried != null ? carried : i < MAX_SELECTION;
+            // 이어받는다. 처음 보는 사진(신규 촬영분 등)은 미선택으로 시작한다 —
+            // "탭하여 선택" UX(사용자가 여행에 넣을 사진만 직접 고른다).
+            boolean selected = carried != null && carried;
             tiles.add(new PhotoSelectionUiState.Tile(
                     TONES[i % TONES.length],
                     null,
@@ -100,7 +133,8 @@ public class PhotoSelectionViewModel extends ViewModel {
                     image.id,
                     image.contentUri));
         }
-        return new PhotoSelectionUiState(periodLabel(images), MAX_SELECTION, tiles);
+        return new PhotoSelectionUiState(periodLabel(images), MAX_SELECTION,
+                selectedAlbumLabel, tiles);
     }
 
     /** "2024. 6. 12 – 6. 15 · 사진 94장" 형태. 시각을 모르는 사진은 기간 계산에서 뺀다. */

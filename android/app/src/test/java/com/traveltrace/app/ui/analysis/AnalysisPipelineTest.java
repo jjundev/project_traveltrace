@@ -93,7 +93,10 @@ public class AnalysisPipelineTest {
                         new AiLocationResolver(geocoder)),
                 new RoomPhotoAnalysisRepository(db, executors),
                 session,
-                executors);
+                executors,
+                new com.traveltrace.app.data.media.ContentHasher(ctx),
+                new com.traveltrace.app.data.repo.RoomAnalysisCacheStore(db),
+                new com.traveltrace.app.core.AnalysisCostLog());
     }
 
     @After
@@ -111,11 +114,12 @@ public class AnalysisPipelineTest {
         cursor.setColumnNames(Arrays.asList(
                 MediaStore.Images.Media._ID,
                 MediaStore.Images.Media.DISPLAY_NAME,
-                MediaStore.Images.Media.DATE_TAKEN));
+                MediaStore.Images.Media.DATE_TAKEN,
+                MediaStore.Images.Media.SIZE));
         cursor.setResults(new Object[][]{
-                {1L, "a.jpg", 1_718_154_720_000L},
-                {2L, "b.jpg", 1_718_158_320_000L},
-                {3L, "c.jpg", 1_718_161_920_000L}});
+                {1L, "a.jpg", 1_718_154_720_000L, 2048L},
+                {2L, "b.jpg", 1_718_158_320_000L, 2048L},
+                {3L, "c.jpg", 1_718_161_920_000L, 2048L}});
         Shadows.shadowOf(ctx.getContentResolver())
                 .setCursor(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cursor);
 
@@ -138,18 +142,23 @@ public class AnalysisPipelineTest {
 
         Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI.buildUpon()
                 .appendPath(String.valueOf(id)).build();
-        // 브리프 원안은 이 bare uri 에 스트림을 등록했지만, ExifExtractor 는
-        // MediaStore.setRequireOriginal(uri) 로 얻은(쿼리 파라미터 "?requireOriginal=1" 이 붙은)
-        // 별도의 Uri 로만 스트림을 연다 — ShadowContentResolver#registerInputStream 은 정확히
-        // 같은 Uri 로만 매칭하므로(ExifExtractorTest 의 선례), 실제로 여는 Uri 에 등록한다.
+        // ExifExtractor 는 MediaStore.setRequireOriginal(uri) 로 얻은(쿼리 파라미터
+        // "?requireOriginal=1" 이 붙은) Uri 를, ContentHasher 는 평범한 uri 를 연다 — 서로 다른
+        // Uri 라 양쪽 모두 등록해야 한다. 배치를 두 번(캐시 재사용 검증) 돌릴 수도 있으므로
+        // registerInputStream 대신 registerInputStreamSupplier 로 매번 새 스트림을 만든다.
         Shadows.shadowOf(ctx.getContentResolver())
-                .registerInputStream(MediaStore.setRequireOriginal(uri), new FileInputStream(file));
-        // UploadPreparer 는 원본이 아닌 일반 URI 로 연다(업로드 경로엔 위치가 필요 없고,
-        // scoped storage 가 이미 위치 EXIF 를 가려준 스트림이면 충분하다). 섀도 리졸버는
-        // Uri 가 정확히 일치할 때만 매칭하므로 두 Uri 에 각각 등록해야 한다.
-        // FileInputStream 은 1회용이라 같은 인스턴스를 재사용할 수 없다 — 새로 연다.
+                .registerInputStreamSupplier(uri, () -> openQuietly(file));
         Shadows.shadowOf(ctx.getContentResolver())
-                .registerInputStream(uri, new FileInputStream(file));
+                .registerInputStreamSupplier(MediaStore.setRequireOriginal(uri),
+                        () -> openQuietly(file));
+    }
+
+    private static FileInputStream openQuietly(File file) {
+        try {
+            return new FileInputStream(file);
+        } catch (java.io.IOException impossible) {
+            throw new AssertionError(impossible);
+        }
     }
 
     /** 백그라운드 작업 + 메인 루퍼 콜백이 모두 소진될 때까지 돌린다. */
@@ -408,7 +417,10 @@ public class AnalysisPipelineTest {
                         new AiLocationResolver(new ScriptedGeocoder())),
                 fakeRepo,
                 session,
-                executors);
+                executors,
+                new com.traveltrace.app.data.media.ContentHasher(ctx),
+                new com.traveltrace.app.data.repo.RoomAnalysisCacheStore(db),
+                new com.traveltrace.app.core.AnalysisCostLog());
         fakeRepo.attachTo(raceVm);
 
         session.put(Arrays.asList(1L, 2L, 3L));
