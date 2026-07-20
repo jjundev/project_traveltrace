@@ -158,4 +158,75 @@ public class MapReplayViewModelTest {
         assertTrue("stops 리스트도 같은 인스턴스여야 sameRoute 가드가 유지된다",
                 before.stops == after.stops);
     }
+
+    /** 지도가 붙으면 재생이 실제 카메라를 움직인다 — VM 이 엔진에 정말 위임했는지의 증거. */
+    @Test
+    public void attachedCameraMovesWhenTheUserJumps() {
+        MapReplayViewModel vm = newFixtureVm();
+        FakeCameraAnimator animator = new FakeCameraAnimator();
+        vm.attachCamera(animator);
+
+        vm.jumpTo(2);
+
+        assertEquals(1, animator.animateCount);
+        assertEquals(48.8600d, animator.lastLat, 0.0001d); // 픽스처 index 2 = 센강
+    }
+
+    /** 도착해야 카드가 바뀐다 — 비행 중에는 activeIndex 가 그대로다. */
+    @Test
+    public void activeIndexOnlyMovesOnArrival() {
+        MapReplayViewModel vm = newFixtureVm();
+        FakeCameraAnimator animator = new FakeCameraAnimator();
+        vm.attachCamera(animator);
+
+        vm.jumpTo(2);
+        assertEquals(0, vm.state().getValue().activeIndex);
+
+        animator.arrive();
+        assertEquals(2, vm.state().getValue().activeIndex);
+    }
+
+    /** 화면이 사라지면 재생이 멈춘다 (타이머·애니메이션 누수 방지 — S2 수용 기준). */
+    @Test
+    public void detachCameraStopsPlayback() {
+        MapReplayViewModel vm = newFixtureVm();
+        vm.attachCamera(new FakeCameraAnimator());
+        vm.togglePlay();
+        assertTrue(vm.state().getValue().playing);
+
+        vm.detachCamera();
+
+        assertFalse(vm.state().getValue().playing);
+    }
+
+    @Test
+    public void pausePlaybackIsIdempotent() {
+        MapReplayViewModel vm = newFixtureVm();
+        vm.attachCamera(new FakeCameraAnimator());
+
+        vm.pausePlayback();
+        assertFalse(vm.state().getValue().playing);
+
+        vm.togglePlay();
+        vm.pausePlayback();
+        vm.pausePlayback();
+
+        assertFalse(vm.state().getValue().playing);
+    }
+
+    /** sameRoute 가드의 전제: UI-only 갱신은 같은 Stop 인스턴스를 그대로 다시 보낸다. */
+    @Test
+    public void uiOnlyUpdatesKeepTheSameStopInstances() {
+        MapReplayViewModel vm = newFixtureVm();
+        MapUiState before = vm.state().getValue();
+
+        vm.setSatellite(true);
+        MapUiState after = vm.state().getValue();
+
+        assertTrue(before != after);
+        for (int i = 0; i < before.stops.size(); i++) {
+            assertTrue("Stop 인스턴스가 그대로여야 Fragment 가 다시 그리지 않는다",
+                    before.stops.get(i) == after.stops.get(i));
+        }
+    }
 }

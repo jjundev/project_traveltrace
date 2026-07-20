@@ -27,10 +27,14 @@ import javax.inject.Inject;
 import dagger.hilt.android.lifecycle.HiltViewModel;
 
 /**
- * 저장된 여행을 TripRepository 에서 불러와 지도 화면 상태(MapUiState)로 공급한다.
- * 재생/속도/위성/상영 전환, 스크럽 같은 사용자 조작은 여기서 상태만 갱신하고, 실제
- * 마커·경로 렌더링과 카메라 이동은 MapReplayFragment 가 맡는다 — Fragment 는 stops 가
- * 실제로 바뀐 emission(여행을 새로 열었을 때)에서만 다시 그리고 카메라를 맞춘다.
+ * 저장된 여행을 TripRepository 에서 불러오고, 재생 상태 머신({@link ReplayEngine})을 감싸
+ * 지도 화면 상태({@link MapUiState})로 공급한다.
+ *
+ * <p><b>재생 로직이 왜 여기 있는가:</b> 카메라는 Fragment 의 {@code GoogleMap} 에 붙어 있지만,
+ * 재생 상태(어느 스톱이 활성인지·재생 중인지)는 회전보다 오래 살아야 하고 화면이 렌더하는
+ * 단일 SoT 여야 한다. 그래서 엔진은 ViewModel 이 들고, Fragment 는 지도가 준비되면
+ * {@link #attachCamera} 로 애니메이터만 꽂아 준다. Fragment 가 상태를 보고 재생 동작을
+ * 유도하면 렌더 → 동작 → 렌더 루프가 생기므로, Fragment 는 <em>렌더만</em> 한다.
  */
 @HiltViewModel
 public class MapReplayViewModel extends ViewModel {
@@ -38,45 +42,68 @@ public class MapReplayViewModel extends ViewModel {
     private final MutableLiveData<MapUiState> state = new MutableLiveData<>();
     private final SavedStateHandle savedState;
     private final TripRepository tripRepository;
+    private final ReplayEngine engine;
 
-    /** Glide 썸네일이 붙기 전 하단시트 배너의 placeholder 톤. */
+    /** Glide 썸네일이 실패하거나 아직 안 붙었을 때 하단시트 배너에 남는 placeholder 톤. */
     private static final int[] TONES = {
             0xFFD9C9A8, 0xFFB7C6D6, 0xFFA9C6DA, 0xFFCDBFA1, 0xFFC3B69B, 0xFFD7D0BF};
 
+    /** 엔진이 모르는, 순수 화면 정보. */
+    private String tripTitle = "";
+    private int unknownCount;
+    private boolean satellite;
+    private boolean loadStarted;
+
     @Inject
     public MapReplayViewModel(SavedStateHandle savedState, TripRepository tripRepository) {
+        this(savedState, tripRepository, new MainThreadReplayScheduler());
+    }
+
+    /** 테스트가 가짜 스케줄러를 넣을 수 있게 분리한 생성자. */
+    MapReplayViewModel(SavedStateHandle savedState, TripRepository tripRepository,
+                       ReplayScheduler scheduler) {
         this.savedState = savedState;
         this.tripRepository = tripRepository;
+        this.engine = new ReplayEngine(scheduler);
+        this.engine.setListener(this::publish);
     }
 
     /**
      * tripId 가 있으면 저장 여행을, 없으면 디자인 프리뷰 픽스처를 싣는다.
      *
-     * <p>Fragment.onViewCreated 는 회전 등 뷰 재생성마다 무조건 다시 부른다(finding 2와
-     * 짝인 finding 1 도 같은 모양이다). 이 ViewModel 은 뷰보다 오래 살아남으므로, 이미
-     * state 가 있으면 재조회를 건너뛴다 — 그러지 않으면 activeIndex/playing/satellite/
-     * cinema/speed 가 전부 기본값으로 리셋되고, toState() 가 Stop 인스턴스를 새로 찍어내
-     * MapReplayFragment.sameRoute() 가드가 깨지면서(참조 동일성 비교라서) 불필요한 Room
-     * 재조회+ 카메라가 whole-route bounds 로 스냅되는 부작용까지 겹친다.
+     * <p>Fragment.onViewCreated 는 회전 등 뷰 재생성마다 무조건 다시 부른다. 이 ViewModel 은
+     * 뷰보다 오래 살아남으므로 한 번 시작한 적재는 다시 하지 않는다 — 그러지 않으면
+     * activeIndex/playing/satellite/cinema/speed 가 전부 기본값으로 리셋되고, 새로 찍어낸
+     * {@code Stop} 인스턴스 때문에 {@code MapReplayFragment.sameRoute()} 가드가 깨져
+     * 카메라가 whole-route bounds 로 스냅되는 부작용까지 겹친다. {@code state} 값이 아니라
+     * 별도 플래그로 판별하는 이유는 저장 여행 적재가 비동기라, 콜백이 오기 전에 두 번째
+     * load() 가 들어오면 조회가 중복되기 때문이다.
      */
     public void load() {
-        if (state.getValue() != null) return;
+        if (loadStarted) return;
+        loadStarted = true;
         String tripId = tripId();
         if (tripId == null) {
-            state.setValue(ScreenFixtures.map());
+            MapUiState fixture = ScreenFixtures.map();
+            adopt(fixture.tripTitle, fixture.unknownCount, fixture.stops);
             return;
         }
         tripRepository.open(tripId, detail -> {
             if (detail == null) {
-                state.setValue(new MapUiState("", 0, new ArrayList<>(), 0,
-                        false, false, false, MapUiState.Speed.NORMAL));
+                adopt("", 0, new ArrayList<>());
                 return;
             }
-            state.setValue(toState(detail));
+            adopt(detail.name, detail.unknownCount, toStops(detail));
         });
     }
 
-    private static MapUiState toState(TripDetail detail) {
+    private void adopt(String title, int unknown, List<MapUiState.Stop> stops) {
+        tripTitle = title;
+        unknownCount = unknown;
+        engine.setStops(stops); // 엔진이 리스너로 publish() 를 부른다.
+    }
+
+    private static List<MapUiState.Stop> toStops(TripDetail detail) {
         SimpleDateFormat fmt = new SimpleDateFormat("HH:mm", Locale.KOREA);
         fmt.setTimeZone(TimeZone.getTimeZone(detail.timeZoneId));
 
@@ -101,8 +128,18 @@ public class MapReplayViewModel extends ViewModel {
                     ContentUris.withAppendedId(
                             MediaStore.Images.Media.EXTERNAL_CONTENT_URI, row.mediaStoreId)));
         }
-        return new MapUiState(detail.name, detail.unknownCount, stops, 0,
-                false, false, false, MapUiState.Speed.NORMAL);
+        return stops;
+    }
+
+    /**
+     * 엔진 상태 + 화면 정보 → 새 {@link MapUiState}. {@code engine.stops()} 를 그대로 넘기므로
+     * Stop 인스턴스는 여행을 새로 열 때만 바뀐다 — 그게 Fragment 의 sameRoute 가드가 기대하는
+     * 계약이다.
+     */
+    private void publish() {
+        state.setValue(new MapUiState(tripTitle, unknownCount, engine.stops(),
+                engine.activeIndex(), engine.isPlaying(), satellite, engine.isCinema(),
+                engine.speed()));
     }
 
     /** nav argument 로 들어온 저장 여행 식별자. 없으면 null(프리뷰 진입). */
@@ -118,56 +155,62 @@ public class MapReplayViewModel extends ViewModel {
         return state;
     }
 
-    /** 위치 미상 드로어의 썸네일 톤. 로직 단계에서 이 공급원이 리포지토리로 교체된다. */
+    /** 위치 미상 드로어의 썸네일 톤. 실데이터 교체는 S6 소관이다. */
     public int[] unknownThumbTones() {
         return ScreenFixtures.unknownThumbTones();
     }
 
-    public void setSatellite(boolean satellite) {
-        MapUiState s = state.getValue();
-        if (s == null) return;
-        state.setValue(copy(s, s.activeIndex, s.playing, satellite, s.cinema, s.speed));
+    // ---- 지도 연결 ----
+
+    /** 지도가 준비됐다. 이 시점부터 재생이 실제 카메라를 움직인다. */
+    public void attachCamera(CameraAnimator animator) {
+        engine.attachCamera(animator);
     }
 
-    /** 재생 아이콘 토글만 — 실제 리플레이 진행은 로직 에픽 13 소관. */
+    /** 뷰가 죽는다. 재생을 멈추고 카메라를 놓는다. */
+    public void detachCamera() {
+        engine.detachCamera();
+    }
+
+    /** 화면이 백그라운드로 갔다. 이미 멈춰 있으면 아무 일도 없다. */
+    public void pausePlayback() {
+        engine.pause();
+    }
+
+    // ---- 사용자 조작 ----
+
+    public void setSatellite(boolean satellite) {
+        this.satellite = satellite;
+        publish();
+    }
+
     public void togglePlay() {
-        MapUiState s = state.getValue();
-        if (s == null) return;
-        state.setValue(copy(s, s.activeIndex, !s.playing, s.satellite, s.cinema, s.speed));
+        engine.togglePlay();
     }
 
     public void setSpeed(MapUiState.Speed speed) {
-        MapUiState s = state.getValue();
-        if (s == null) return;
-        state.setValue(copy(s, s.activeIndex, s.playing, s.satellite, s.cinema, speed));
+        engine.setSpeed(speed);
     }
 
     public void jumpTo(int index) {
-        MapUiState s = state.getValue();
-        if (s == null) return;
-        int clamped = Math.min(Math.max(index, 0), s.stops.size() - 1);
-        state.setValue(copy(s, clamped, false, s.satellite, s.cinema, s.speed));
+        engine.jumpTo(index);
     }
 
     public void next() {
-        MapUiState s = state.getValue();
-        if (s != null) jumpTo(s.activeIndex + 1);
+        engine.next();
     }
 
     public void prev() {
-        MapUiState s = state.getValue();
-        if (s != null) jumpTo(s.activeIndex - 1);
+        engine.prev();
     }
 
     public void setCinema(boolean cinema) {
-        MapUiState s = state.getValue();
-        if (s == null) return;
-        state.setValue(copy(s, s.activeIndex, s.playing, s.satellite, cinema, s.speed));
+        engine.setCinema(cinema);
     }
 
-    private static MapUiState copy(MapUiState s, int activeIndex, boolean playing,
-                                   boolean satellite, boolean cinema, MapUiState.Speed speed) {
-        return new MapUiState(s.tripTitle, s.unknownCount, s.stops, activeIndex,
-                playing, satellite, cinema, speed);
+    @Override
+    protected void onCleared() {
+        engine.release();
+        super.onCleared();
     }
 }
