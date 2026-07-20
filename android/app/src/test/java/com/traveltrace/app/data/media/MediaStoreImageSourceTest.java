@@ -63,7 +63,8 @@ public class MediaStoreImageSourceTest {
         cursor.setColumnNames(Arrays.asList(
                 MediaStore.Images.Media._ID,
                 MediaStore.Images.Media.DISPLAY_NAME,
-                MediaStore.Images.Media.DATE_TAKEN));
+                MediaStore.Images.Media.DATE_TAKEN,
+                MediaStore.Images.Media.SIZE));
         cursor.setResults(rows);
         ContentResolver resolver = ctx.getContentResolver();
         ShadowContentResolver shadow = Shadows.shadowOf(resolver);
@@ -104,7 +105,7 @@ public class MediaStoreImageSourceTest {
 
     @Test
     public void mapsCursorRowsToGalleryImages() {
-        seed(new Object[]{11L, "a.jpg", 1_700_000_000_000L});
+        seed(new Object[]{11L, "a.jpg", 1_700_000_000_000L, 2048L});
 
         List<GalleryImage> images = load(100);
 
@@ -119,7 +120,7 @@ public class MediaStoreImageSourceTest {
 
     @Test
     public void zeroDateTakenBecomesNullNotEpoch() {
-        seed(new Object[]{12L, "b.jpg", 0L});
+        seed(new Object[]{12L, "b.jpg", 0L, 1024L});
 
         assertNull("DATE_TAKEN 0 은 '없음'이지 1970년이 아니다",
                 load(100).get(0).dateTakenUtc);
@@ -127,9 +128,9 @@ public class MediaStoreImageSourceTest {
 
     @Test
     public void respectsTheLimit() {
-        seed(new Object[]{1L, "a.jpg", 3_000L},
-                new Object[]{2L, "b.jpg", 2_000L},
-                new Object[]{3L, "c.jpg", 1_000L});
+        seed(new Object[]{1L, "a.jpg", 3_000L, 100L},
+                new Object[]{2L, "b.jpg", 2_000L, 200L},
+                new Object[]{3L, "c.jpg", 1_000L, 300L});
 
         assertEquals(2, load(2).size());
     }
@@ -181,9 +182,9 @@ public class MediaStoreImageSourceTest {
     @Test
     public void loadByIdsFiltersToOnlyTheRequestedIdsViaSqlSelection() {
         List<Object[]> gallery = Arrays.asList(
-                new Object[]{1L, "a.jpg", 3_000L},
-                new Object[]{2L, "b.jpg", 2_000L},
-                new Object[]{3L, "c.jpg", 1_000L});
+                new Object[]{1L, "a.jpg", 3_000L, 100L},
+                new Object[]{2L, "b.jpg", 2_000L, 200L},
+                new Object[]{3L, "c.jpg", 1_000L, 300L});
 
         ShadowContentResolver.registerProviderInternal(MediaStore.AUTHORITY, new ContentProvider() {
             @Override
@@ -205,7 +206,8 @@ public class MediaStoreImageSourceTest {
                 cursor.setColumnNames(Arrays.asList(
                         MediaStore.Images.Media._ID,
                         MediaStore.Images.Media.DISPLAY_NAME,
-                        MediaStore.Images.Media.DATE_TAKEN));
+                        MediaStore.Images.Media.DATE_TAKEN,
+                        MediaStore.Images.Media.SIZE));
                 cursor.setResults(filtered.toArray(new Object[0][]));
                 return cursor;
             }

@@ -146,9 +146,17 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
         vm.state().observe(getViewLifecycleOwner(), this::render);
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        // 설정에서 비행기 모드를 끄고 돌아왔을 수 있다 — 배너를 최신 상태로 맞춘다.
+        if (vm != null) vm.refreshConnectivity();
+    }
+
     private void render(MapUiState state) {
         if (binding == null) return;
         MapRenderer.renderTopBar(binding.mapTopBar, state);
+        MapRenderer.renderOfflineBanner(binding.offlineBanner, state);
         MapRenderer.renderSheet(binding.mapBottomSheet, state);
         binding.satelliteScrim.setVisibility(state.satellite ? View.VISIBLE : View.GONE);
         if (map != null) {

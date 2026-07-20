@@ -47,6 +47,7 @@ public class RoomPhotoAnalysisRepository implements PhotoAnalysisRepository {
                 p.id = photoId;
                 p.tripId = tripId;
                 p.mediaStoreId = a.mediaStoreId;
+                p.contentHash = a.contentHash;
                 p.takenAtUtc = a.takenAtUtc;
                 p.takenAtHasOffset = a.takenAtHasOffset;
                 p.displayName = a.displayName;

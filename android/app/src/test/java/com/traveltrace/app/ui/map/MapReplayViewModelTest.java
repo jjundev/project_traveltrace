@@ -21,7 +21,8 @@ public class MapReplayViewModelTest {
      * null 로 충분하다(에픽 13, MapReplayViewModel 이 저장 여행도 읽게 되며 load() 가 명시 호출로 분리됨).
      */
     private static MapReplayViewModel newFixtureVm() {
-        MapReplayViewModel vm = new MapReplayViewModel(new SavedStateHandle(), null);
+        MapReplayViewModel vm =
+                new MapReplayViewModel(new SavedStateHandle(), null, FakeConnectivity.online());
         vm.load();
         return vm;
     }

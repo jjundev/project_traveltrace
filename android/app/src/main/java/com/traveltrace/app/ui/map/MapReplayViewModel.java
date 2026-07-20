@@ -8,6 +8,7 @@ import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
 
 import com.traveltrace.app.core.model.LocationSource;
+import com.traveltrace.app.core.net.ConnectivityMonitor;
 import com.traveltrace.app.domain.TripRepository;
 import com.traveltrace.app.domain.model.StopRow;
 import com.traveltrace.app.domain.model.TripDetail;
@@ -36,15 +37,18 @@ public class MapReplayViewModel extends ViewModel {
     private final MutableLiveData<MapUiState> state = new MutableLiveData<>();
     private final SavedStateHandle savedState;
     private final TripRepository tripRepository;
+    private final ConnectivityMonitor connectivity;
 
     /** Glide 썸네일이 붙기 전 하단시트 배너의 placeholder 톤. */
     private static final int[] TONES = {
             0xFFD9C9A8, 0xFFB7C6D6, 0xFFA9C6DA, 0xFFCDBFA1, 0xFFC3B69B, 0xFFD7D0BF};
 
     @Inject
-    public MapReplayViewModel(SavedStateHandle savedState, TripRepository tripRepository) {
+    public MapReplayViewModel(SavedStateHandle savedState, TripRepository tripRepository,
+                              ConnectivityMonitor connectivity) {
         this.savedState = savedState;
         this.tripRepository = tripRepository;
+        this.connectivity = connectivity;
     }
 
     /**
@@ -61,16 +65,16 @@ public class MapReplayViewModel extends ViewModel {
         if (state.getValue() != null) return;
         String tripId = tripId();
         if (tripId == null) {
-            state.setValue(ScreenFixtures.map());
+            state.setValue(ScreenFixtures.map().withOffline(!connectivity.isOnline()));
             return;
         }
         tripRepository.open(tripId, detail -> {
             if (detail == null) {
                 state.setValue(new MapUiState("", 0, new ArrayList<>(), 0,
-                        false, false, false, MapUiState.Speed.NORMAL));
+                        false, false, false, MapUiState.Speed.NORMAL, !connectivity.isOnline()));
                 return;
             }
-            state.setValue(toState(detail));
+            state.setValue(toState(detail).withOffline(!connectivity.isOnline()));
         });
     }
 
@@ -164,6 +168,17 @@ public class MapReplayViewModel extends ViewModel {
     private static MapUiState copy(MapUiState s, int activeIndex, boolean playing,
                                    boolean satellite, boolean cinema, MapUiState.Speed speed) {
         return new MapUiState(s.tripTitle, s.unknownCount, s.stops, activeIndex,
-                playing, satellite, cinema, speed);
+                playing, satellite, cinema, speed, s.offline);
+    }
+
+    /**
+     * 화면으로 돌아올 때 연결 상태만 다시 확인한다. NetworkCallback 을 등록하지 않는 것은
+     * 의도다 — 배너 하나를 위해 콜백 생명주기를 관리할 값어치가 없고, 사용자가 비행기 모드를
+     * 끄고 돌아오는 흐름은 onResume 으로 충분히 잡힌다.
+     */
+    public void refreshConnectivity() {
+        MapUiState s = state.getValue();
+        if (s == null) return;
+        state.setValue(s.withOffline(!connectivity.isOnline()));
     }
 }

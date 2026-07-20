@@ -60,6 +60,10 @@
     <string name="map_tab_satellite">위성</string>
     <string name="map_unknown_chip">위치 미상 %1$d</string>
 
+    <!-- 오프라인 한계 안내. "오프라인 지도"가 아님을 정확히 말해야 한다(PRD §5) —
+         저장된 경로는 그려지지만 지도 타일은 2D·3D 모두 네트워크가 필요하다. -->
+    <string name="map_offline_notice">지도 배경은 못 불러왔어요. 저장된 경로는 그대로 볼 수 있어요.</string>
+
     <!-- MAP · 하단 시트 -->
     <string name="map_badge_gps">GPS</string>
     <string name="map_badge_approx">근사 위치</string>
