@@ -66,6 +66,24 @@ public class PhotoSelectionRendererTest {
         assertEquals("최대 100장 · 탭하여 선택", binding.selectHint.getText().toString());
     }
 
+    @Test
+    public void albumPickerShowsTheCurrentAlbumLabel() {
+        PhotoSelectionRenderer.render(binding, ScreenFixtures.photoSelection(), index -> {});
+
+        assertEquals("전체 사진", binding.albumPickerLabel.getText().toString());
+    }
+
+    @Test
+    public void albumPickerLabelUpdatesWhenAlbumChanges() {
+        PhotoSelectionUiState fixture = ScreenFixtures.photoSelection();
+        PhotoSelectionUiState inCamera = new PhotoSelectionUiState(
+                fixture.periodLabel, fixture.maxCount, "카메라", fixture.tiles);
+
+        PhotoSelectionRenderer.render(binding, inCamera, index -> {});
+
+        assertEquals("카메라", binding.albumPickerLabel.getText().toString());
+    }
+
     /**
      * 재사용 경로(어댑터가 이미 붙어있는 상태에서 다시 render)에서 리스너가 최신으로 갱신되는지
      * 검증한다. 어댑터를 실제 화면 크기로 레이아웃해 RecyclerView 가 타일 뷰홀더를 만들게 한 뒤,
