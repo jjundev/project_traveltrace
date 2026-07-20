@@ -65,7 +65,7 @@ public class PhotoSelectionViewModel extends ViewModel {
     /**
      * 권한이 확보된 뒤 Fragment 가 호출한다. 여러 번 불러도 안전하다 — 그리고 회전처럼
      * 뷰만 재생성되고 이 ViewModel 이 살아남는 경우(finding 1)에도 안전해야 한다: 이미
-     * 반영된 선택(사용자가 "탭하여 제외"로 골라 둔 것)을 여기서 기본값으로 덮어쓰면 안
+     * 반영된 선택(사용자가 "탭하여 선택"으로 골라 둔 것)을 여기서 기본값으로 덮어쓰면 안
      * 되므로, 직전 상태가 있으면 mediaStoreId 기준으로 selected 를 그대로 이어받는다.
      * PARTIAL 권한에서 매 resume 마다 다시 불리는 건 의도된 동작이다(사용자가 시스템의
      * "사진 더 선택"에서 목록 자체를 바꿀 수 있어서다) — 여기서 막는 건 그 재조회 자체가
@@ -90,9 +90,9 @@ public class PhotoSelectionViewModel extends ViewModel {
             GalleryImage image = images.get(i);
             Boolean carried = previousSelection.get(image.id);
             // 이미 알던 사진(id 가 이전 상태에도 있었다)은 사용자가 정한 선택을 그대로
-            // 이어받는다. 처음 보는 사진(신규 촬영분 등)만 기존 기본 규칙(상한 이내 전체
-            // 선택)을 적용한다 — "새로 나타난 것"에 한해서만 기본값을 매긴다.
-            boolean selected = carried != null ? carried : i < MAX_SELECTION;
+            // 이어받는다. 처음 보는 사진(신규 촬영분 등)은 미선택으로 시작한다 —
+            // "탭하여 선택" UX(사용자가 여행에 넣을 사진만 직접 고른다).
+            boolean selected = carried != null && carried;
             tiles.add(new PhotoSelectionUiState.Tile(
                     TONES[i % TONES.length],
                     null,

@@ -22,7 +22,7 @@
     <string name="select_period_title">여행 기간</string>
     <string name="select_period_change">변경</string>
     <string name="select_start_analyze">분석 시작</string>
-    <string name="select_hint">최대 %1$d장 · 탭하여 제외</string>
+    <string name="select_hint">최대 %1$d장 · 탭하여 선택</string>
     <!-- %1$d = 선택 장수. 숫자만 브랜드 색으로 강조하므로 Renderer 에서 Spannable 로 조립한다. -->
     <string name="select_period_range">%1$s – %2$s · 사진 %3$d장</string>
     <string name="select_period_empty">사진이 없어요</string>

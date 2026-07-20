@@ -63,7 +63,7 @@ public class PhotoSelectionRendererTest {
         PhotoSelectionRenderer.render(binding, ScreenFixtures.photoSelection(), index -> {});
 
         assertEquals("2024. 6. 12 – 6. 15 · 사진 94장", binding.periodLabel.getText().toString());
-        assertEquals("최대 100장 · 탭하여 제외", binding.selectHint.getText().toString());
+        assertEquals("최대 100장 · 탭하여 선택", binding.selectHint.getText().toString());
     }
 
     /**
