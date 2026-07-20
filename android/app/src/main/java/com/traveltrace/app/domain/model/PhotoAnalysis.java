@@ -10,6 +10,13 @@ public class PhotoAnalysis {
     public long mediaStoreId;
     public String displayName;
 
+    /**
+     * 캐시 키의 절반 (짝은 mediaStoreId). 스트림을 못 읽었으면 null 이고, 그때는 캐시를
+     * 통째로 건너뛴다.
+     */
+    @Nullable
+    public String contentHash;
+
     /** 촬영 시각(UTC millis). 못 읽었으면 null. */
     @Nullable
     public Long takenAtUtc;

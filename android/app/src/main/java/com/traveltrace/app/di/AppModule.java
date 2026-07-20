@@ -2,8 +2,10 @@ package com.traveltrace.app.di;
 
 import com.traveltrace.app.data.GeocoderStub;
 import com.traveltrace.app.data.VisionProviderStub;
+import com.traveltrace.app.data.repo.RoomAnalysisCacheStore;
 import com.traveltrace.app.data.repo.RoomPhotoAnalysisRepository;
 import com.traveltrace.app.data.repo.RoomTripRepository;
+import com.traveltrace.app.domain.AnalysisCacheStore;
 import com.traveltrace.app.domain.Geocoder;
 import com.traveltrace.app.domain.PhotoAnalysisRepository;
 import com.traveltrace.app.domain.TripRepository;
@@ -40,4 +42,8 @@ public abstract class AppModule {
     @Singleton
     public abstract PhotoAnalysisRepository bindPhotoAnalysisRepository(
             RoomPhotoAnalysisRepository impl);
+
+    @Binds
+    @Singleton
+    public abstract AnalysisCacheStore bindAnalysisCacheStore(RoomAnalysisCacheStore impl);
 }
