@@ -2039,21 +2039,9 @@ Run: `cd android && grep -rn "new AnalysisViewModel(" app/src/test`
 (`fakeRepo` 는 바로 윗줄에서 만드는 `CommitThenCancelRepository` 인스턴스다. 그 아래
 `fakeRepo.attachTo(raceVm);` 줄은 그대로 둔다.)
 
-같은 파일의 `seedGallery()` 에서 `RoboCursor` 컬럼 목록에 `MediaStore.Images.Media.SIZE` 를, 각 행 끝에 크기 값을 더한다(Task 1 Step 8 과 같은 이유 — `getColumnIndexOrThrow` 가 던진다):
+`seedGallery()` 의 `RoboCursor` 에 SIZE 컬럼을 더하는 일은 **Task 1 에서 이미 끝났다**(Task 1 이 `getColumnIndexOrThrow(SIZE)` 를 넣으면서 이 파일까지 green 으로 만들었다). 그러니 컬럼 목록은 건드리지 말고, 아래 스트림 등록만 바꾼다. (혹시 SIZE 컬럼이 없다면 Task 1 이 빠뜨린 것이니 Task 1 Step 8 대로 컬럼+행에 SIZE 를 먼저 채운다.)
 
-```java
-        cursor.setColumnNames(Arrays.asList(
-                MediaStore.Images.Media._ID,
-                MediaStore.Images.Media.DISPLAY_NAME,
-                MediaStore.Images.Media.DATE_TAKEN,
-                MediaStore.Images.Media.SIZE));
-        cursor.setResults(new Object[][]{
-                {1L, "a.jpg", 1_718_154_720_000L, 2048L},
-                {2L, "b.jpg", 1_718_158_320_000L, 2048L},
-                {3L, "c.jpg", 1_718_161_920_000L, 2048L}});
-```
-
-또한 `registerJpeg(...)` 의 `registerInputStream` 을 `registerInputStreamSupplier` 로 바꾸고 **평범한 uri 에도** 등록한다 — 이제 `ContentHasher` 가 그 URI 를 열기 때문이다:
+`registerJpeg(...)` 의 `registerInputStream` 을 `registerInputStreamSupplier` 로 바꾸고 **평범한 uri 에도** 등록한다 — 이제 `ContentHasher` 가 그 URI 를 열기 때문이다:
 
 ```java
         Shadows.shadowOf(ctx.getContentResolver())
