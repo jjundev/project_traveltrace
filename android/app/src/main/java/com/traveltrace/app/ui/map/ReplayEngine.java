@@ -106,6 +106,10 @@ public class ReplayEngine {
      */
     public void detachCamera() {
         pause();
+        // 얼려 둔 잔여 비행은 카메라와 함께 버려진다 — 목적지(movingIndex)를 남겨두면 뷰가
+        // 재생성된 뒤 첫 조작이 마지막 도착 지점이 아니라 그 목적지에서 계산돼 카드가 한 번
+        // 건너뛴다. 확정된 마지막 도착(activeIndex)만 남기고 진행 중이던 hop 은 잊는다.
+        movingIndex = NO_MOVE;
         camera = null;
     }
 

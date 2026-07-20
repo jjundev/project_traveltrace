@@ -277,6 +277,30 @@ public class ReplayEngineTest {
         assertEquals(0, scheduler.pendingCount());
     }
 
+    /**
+     * 회전 중처럼 카메라가 비행 도중에 떨어지면, 그 비행은 확정된 도착이 아니므로
+     * 잊혀야 한다 — {@code movingIndex} 가 목적지를 계속 들고 있으면 뷰가 재생성된 뒤
+     * 첫 Next 가 마지막 도착이 아니라 그 목적지에서 계산돼 카드가 한 번에 두 칸을 넘는다.
+     */
+    @Test
+    public void detachMidFlightForgetsTheAbandonedHopSoNextAdvancesJustOne() {
+        engine.togglePlay();
+        scheduler.runPending(); // 0 → 1 비행 중, 아직 도착 전
+
+        engine.detachCamera();
+
+        assertEquals("중단된 비행은 잊는다 — 마지막 확정 도착(0)에 머물러야 한다",
+                0, engine.currentIndex());
+
+        FakeCameraAnimator freshAnimator = new FakeCameraAnimator();
+        engine.attachCamera(freshAnimator);
+        engine.next();
+        freshAnimator.arrive();
+
+        assertEquals("Next 한 번은 마지막 도착에서 한 칸만 전진해야 한다 (0 → 1)",
+                1, engine.activeIndex());
+    }
+
     @Test
     public void withoutACameraTheMachineStillAdvancesInstantly() {
         // 회전 직후처럼 카메라가 없어도 상태 머신이 멈추면 안 된다.
