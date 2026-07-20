@@ -90,11 +90,12 @@ public class AnalysisPipelineTest {
         cursor.setColumnNames(Arrays.asList(
                 MediaStore.Images.Media._ID,
                 MediaStore.Images.Media.DISPLAY_NAME,
-                MediaStore.Images.Media.DATE_TAKEN));
+                MediaStore.Images.Media.DATE_TAKEN,
+                MediaStore.Images.Media.SIZE));
         cursor.setResults(new Object[][]{
-                {1L, "a.jpg", 1_718_154_720_000L},
-                {2L, "b.jpg", 1_718_158_320_000L},
-                {3L, "c.jpg", 1_718_161_920_000L}});
+                {1L, "a.jpg", 1_718_154_720_000L, 2048L},
+                {2L, "b.jpg", 1_718_158_320_000L, 2048L},
+                {3L, "c.jpg", 1_718_161_920_000L, 2048L}});
         Shadows.shadowOf(ctx.getContentResolver())
                 .setCursor(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cursor);
 

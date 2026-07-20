@@ -15,11 +15,18 @@ public class GalleryImage {
     @Nullable
     public final Long dateTakenUtc;
 
+    /**
+     * 파일 크기(바이트). 캐시 키의 콘텐츠 해시에 섞인다 — 커서에서 이미 읽어 오므로
+     * 파일을 한 번 더 열지 않아도 된다(plan/04 "앞부분+크기" 결정). 모르면 0.
+     */
+    public final long sizeBytes;
+
     public GalleryImage(long id, Uri contentUri, String displayName,
-                        @Nullable Long dateTakenUtc) {
+                        @Nullable Long dateTakenUtc, long sizeBytes) {
         this.id = id;
         this.contentUri = contentUri;
         this.displayName = displayName;
         this.dateTakenUtc = dateTakenUtc;
+        this.sizeBytes = sizeBytes;
     }
 }
