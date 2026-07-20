@@ -55,6 +55,12 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
      */
     private List<MapUiState.Stop> lastDrawnStops;
 
+    /**
+     * 마지막으로 팝을 튼 스톱. activeIndex 는 <em>도착할 때만</em> 바뀌므로, 이 값과 다르면
+     * 방금 새 스톱에 닿은 것이다 — 재생/속도/위성 전환 같은 UI-only emission 에는 팝이 안 튄다.
+     */
+    private int lastPoppedIndex = -1;
+
     /** MAP 진입 인자. tripId 하나뿐이라 nav argument 로 나른다(사진 목록은 SelectionSession). */
     public static Bundle argsFor(String tripId) {
         Bundle args = new Bundle();
@@ -177,6 +183,13 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
         }
 
         MapRenderer.renderCinema(binding.cinemaOverlay, state);
+        if (!state.stops.isEmpty() && state.activeIndex != lastPoppedIndex) {
+            lastPoppedIndex = state.activeIndex;
+            // 상영 모드에선 큰 카드가, 아니면 하단시트 배너가 팝의 주인공이다.
+            PhotoCardPop.play(state.cinema
+                    ? binding.cinemaOverlay.cinemaCard
+                    : binding.mapBottomSheet.photoBanner);
+        }
         int chromeVis = state.cinema ? View.GONE : View.VISIBLE;
         binding.mapTopBar.topBarRoot.setVisibility(chromeVis);
         binding.mapBottomSheet.sheetRoot.setVisibility(chromeVis);
@@ -240,5 +253,7 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
         // 캐시된 last-drawn 경로를 버려서 다음 onMapReady 가 (VM 의 Stop 인스턴스가 그대로여도)
         // 반드시 다시 그리게 한다.
         lastDrawnStops = null;
+        // 뷰가 새로 생기면 첫 렌더에서 다시 한 번 팝이 나야 한다.
+        lastPoppedIndex = -1;
     }
 }
