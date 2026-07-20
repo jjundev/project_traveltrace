@@ -212,13 +212,27 @@ public class MapReplayFragment extends Fragment implements OnMapReadyCallback {
             map.moveCamera(CameraUpdateFactory.newLatLngZoom(PARIS, STATIC_ZOOM));
         }
 
+        // 이 시점부터 재생이 실제 카메라를 움직인다. attachCamera 는 카메라를 건드리지
+        // 않으므로 바로 아래 render() 의 whole-route bounds fit 이 살아남는다.
+        vm.attachCamera(new GoogleMapCameraAnimator(map));
+
         MapUiState state = vm.state().getValue();
         if (state != null) render(state);
     }
 
     @Override
+    public void onPause() {
+        // 화면이 가려지면 재생을 멈춘다 — 안 그러면 백그라운드에서 dwell 타이머가 계속 돌며
+        // 보이지도 않는 카메라를 움직인다. 공중 정지라서 돌아오면 재생으로 이어갈 수 있다.
+        vm.pausePlayback();
+        super.onPause();
+    }
+
+    @Override
     public void onDestroyView() {
         ToastPresenter.cancel(binding.getRoot());
+        // 뷰와 함께 GoogleMap 도 사라진다 — 엔진이 죽은 지도를 붙들지 않도록 먼저 뽑는다.
+        vm.detachCamera();
         super.onDestroyView();
         map = null;
         binding = null;
