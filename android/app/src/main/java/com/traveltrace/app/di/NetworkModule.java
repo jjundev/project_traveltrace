@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import com.traveltrace.app.BuildConfig;
+import com.traveltrace.app.data.geocode.GeocodingApi;
+import com.traveltrace.app.data.geocode.PlacesTextSearchApi;
 import com.traveltrace.app.data.vision.VertexApi;
 
 import java.util.concurrent.TimeUnit;
@@ -37,6 +39,8 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public final class NetworkModule {
 
     private static final String VERTEX_BASE_URL = "https://aiplatform.googleapis.com/";
+    private static final String PLACES_BASE_URL = "https://places.googleapis.com/";
+    private static final String GEOCODING_BASE_URL = "https://maps.googleapis.com/";
 
     private static final long CONNECT_TIMEOUT_SECONDS = 10L;
     private static final long READ_TIMEOUT_SECONDS = 30L;
@@ -68,11 +72,27 @@ public final class NetworkModule {
     @Provides
     @Singleton
     public static VertexApi provideVertexApi(OkHttpClient client, Gson gson) {
+        return retrofit(VERTEX_BASE_URL, client, gson).create(VertexApi.class);
+    }
+
+    @Provides
+    @Singleton
+    public static PlacesTextSearchApi providePlacesApi(OkHttpClient client, Gson gson) {
+        return retrofit(PLACES_BASE_URL, client, gson).create(PlacesTextSearchApi.class);
+    }
+
+    @Provides
+    @Singleton
+    public static GeocodingApi provideGeocodingApi(OkHttpClient client, Gson gson) {
+        return retrofit(GEOCODING_BASE_URL, client, gson).create(GeocodingApi.class);
+    }
+
+    /** 호스트만 다르고 나머지 설정은 같다 — OkHttp/Gson 은 한 벌을 공유한다. */
+    private static Retrofit retrofit(String baseUrl, OkHttpClient client, Gson gson) {
         return new Retrofit.Builder()
-                .baseUrl(VERTEX_BASE_URL)
+                .baseUrl(baseUrl)
                 .client(client)
                 .addConverterFactory(GsonConverterFactory.create(gson))
-                .build()
-                .create(VertexApi.class);
+                .build();
     }
 }
