@@ -14,14 +14,23 @@ import androidx.exifinterface.media.ExifInterface;
 import androidx.room.Room;
 import androidx.test.core.app.ApplicationProvider;
 
+import com.traveltrace.app.analysis.AiLocationResolver;
+import com.traveltrace.app.analysis.PhotoAnalysisPipeline;
+import com.traveltrace.app.analysis.UploadPreparer;
 import com.traveltrace.app.core.AppExecutors;
+import com.traveltrace.app.core.model.GeoPoint;
+import com.traveltrace.app.core.model.GeocodeQuery;
+import com.traveltrace.app.core.model.RecognitionResult;
 import com.traveltrace.app.data.db.TravelTraceDatabase;
 import com.traveltrace.app.data.exif.ExifExtractor;
 import com.traveltrace.app.data.media.MediaStoreImageSource;
 import com.traveltrace.app.data.repo.RoomPhotoAnalysisRepository;
 import com.traveltrace.app.data.repo.RoomTripRepository;
+import com.traveltrace.app.data.vision.VertexResponseParser;
 import com.traveltrace.app.domain.Callback;
+import com.traveltrace.app.domain.Geocoder;
 import com.traveltrace.app.domain.PhotoAnalysisRepository;
+import com.traveltrace.app.domain.VisionProvider;
 import com.traveltrace.app.domain.model.PhotoAnalysis;
 import com.traveltrace.app.domain.model.TripDetail;
 import com.traveltrace.app.ui.selection.SelectionSession;
@@ -32,6 +41,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.Shadows;
+import org.robolectric.annotation.GraphicsMode;
 import org.robolectric.fakes.RoboCursor;
 import org.robolectric.shadows.ShadowLooper;
 
@@ -40,11 +50,14 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 @RunWith(RobolectricTestRunner.class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
 public class AnalysisPipelineTest {
 
     private Context ctx;
@@ -53,6 +66,8 @@ public class AnalysisPipelineTest {
     private SelectionSession session;
     private RoomTripRepository tripRepo;
     private AnalysisViewModel vm;
+    private ScriptedVisionProvider vision;
+    private ScriptedGeocoder geocoder;
 
     @Before
     public void setUp() throws Exception {
@@ -66,10 +81,16 @@ public class AnalysisPipelineTest {
 
         seedGallery();
 
+        vision = new ScriptedVisionProvider();
+        geocoder = new ScriptedGeocoder();
         vm = new AnalysisViewModel(
                 ctx,
                 new MediaStoreImageSource(ctx, executors),
-                new ExifExtractor(ctx, TimeZone.getTimeZone("Asia/Seoul")),
+                new PhotoAnalysisPipeline(
+                        new ExifExtractor(ctx, TimeZone.getTimeZone("Asia/Seoul")),
+                        new UploadPreparer(ctx),
+                        vision,
+                        new AiLocationResolver(geocoder)),
                 new RoomPhotoAnalysisRepository(db, executors),
                 session,
                 executors);
@@ -123,6 +144,12 @@ public class AnalysisPipelineTest {
         // 같은 Uri 로만 매칭하므로(ExifExtractorTest 의 선례), 실제로 여는 Uri 에 등록한다.
         Shadows.shadowOf(ctx.getContentResolver())
                 .registerInputStream(MediaStore.setRequireOriginal(uri), new FileInputStream(file));
+        // UploadPreparer 는 원본이 아닌 일반 URI 로 연다(업로드 경로엔 위치가 필요 없고,
+        // scoped storage 가 이미 위치 EXIF 를 가려준 스트림이면 충분하다). 섀도 리졸버는
+        // Uri 가 정확히 일치할 때만 매칭하므로 두 Uri 에 각각 등록해야 한다.
+        // FileInputStream 은 1회용이라 같은 인스턴스를 재사용할 수 없다 — 새로 연다.
+        Shadows.shadowOf(ctx.getContentResolver())
+                .registerInputStream(uri, new FileInputStream(file));
     }
 
     /** 백그라운드 작업 + 메인 루퍼 콜백이 모두 소진될 때까지 돌린다. */
@@ -156,15 +183,40 @@ public class AnalysisPipelineTest {
     }
 
     @Test
-    public void gpsPhotosBecomeRouteAndTheRestBecomeUnknown() {
+    public void gpsPhotosSkipAiEntirely() {
+        session.put(Arrays.asList(1L, 2L, 3L));
+        vm.start();
+        drain();
+
+        assertEquals("GPS 사진은 AI 를 타지 않는다 — 비용·프라이버시 양쪽의 계약(PRD §4.2)",
+                1, vision.calls);
+    }
+
+    @Test
+    public void recognizedPhotoBecomesAnAiStopOnTheRoute() {
+        vision.next = new RecognitionResult("에펠탑", "파리", "프랑스", 0.9);
+        geocoder.next = Collections.singletonList(new GeoPoint(48.8584, 2.2945));
         session.put(Arrays.asList(1L, 2L, 3L));
 
         vm.start();
         drain();
 
         AnalysisUiState state = vm.state().getValue();
-        assertEquals("GPS 2장이 경로에 오른다", 2, state.routeCount);
-        assertEquals("GPS 없는 1장은 위치 미상", 1, state.unknownCount);
+        assertEquals("GPS 2장 + AI 1장이 모두 경로에 오른다", 3, state.routeCount);
+        assertEquals(0, state.unknownCount);
+    }
+
+    @Test
+    public void unrecognizedPhotoStaysUnknown() {
+        // vision.next 는 기본값(UNRECOGNIZED) 그대로.
+        session.put(Arrays.asList(1L, 2L, 3L));
+
+        vm.start();
+        drain();
+
+        AnalysisUiState state = vm.state().getValue();
+        assertEquals("GPS 2장만 경로에", 2, state.routeCount);
+        assertEquals("인식 실패한 1장은 위치 미상", 1, state.unknownCount);
     }
 
     @Test
@@ -311,6 +363,27 @@ public class AnalysisPipelineTest {
         }
     }
 
+    /** 기본은 인식 실패. 테스트가 명시적으로 결과를 심을 때만 성공한다. */
+    private static final class ScriptedVisionProvider implements VisionProvider {
+        RecognitionResult next = VertexResponseParser.UNRECOGNIZED;
+        int calls;
+
+        @Override
+        public RecognitionResult recognize(byte[] imageJpeg) {
+            calls++;
+            return next;
+        }
+    }
+
+    private static final class ScriptedGeocoder implements Geocoder {
+        List<GeoPoint> next = Collections.emptyList();
+
+        @Override
+        public List<GeoPoint> geocode(GeocodeQuery query) {
+            return next;
+        }
+    }
+
     @Test
     public void sessionClearOrderingSurvivesACommitThenCancelRace() {
         // finding 2 가 지키려는 순서 그 자체를 핀으로 고정한다: session.clear() 는
@@ -328,7 +401,11 @@ public class AnalysisPipelineTest {
         AnalysisViewModel raceVm = new AnalysisViewModel(
                 ctx,
                 new MediaStoreImageSource(ctx, executors),
-                new ExifExtractor(ctx, TimeZone.getTimeZone("Asia/Seoul")),
+                new PhotoAnalysisPipeline(
+                        new ExifExtractor(ctx, TimeZone.getTimeZone("Asia/Seoul")),
+                        new UploadPreparer(ctx),
+                        new ScriptedVisionProvider(),
+                        new AiLocationResolver(new ScriptedGeocoder())),
                 fakeRepo,
                 session,
                 executors);

@@ -7,9 +7,9 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.traveltrace.app.R;
+import com.traveltrace.app.analysis.PhotoAnalysisPipeline;
 import com.traveltrace.app.core.AppExecutors;
 import com.traveltrace.app.core.model.LocationClassification;
-import com.traveltrace.app.data.exif.ExifExtractor;
 import com.traveltrace.app.data.media.GalleryImage;
 import com.traveltrace.app.data.media.MediaStoreImageSource;
 import com.traveltrace.app.domain.PhotoAnalysisRepository;
@@ -30,8 +30,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext;
 /**
  * ANALYZE 진행. 선택된 사진을 EXIF 로 훑어 진행률을 올리고, 끝나면 여행으로 저장한다.
  *
- * <p>S1 엔 AI 가 없으므로 "현재 인식 텍스트" 자리에는 처리 중인 <em>파일명</em>을 보여준다
- * — MediaStore DISPLAY_NAME 을 이미 쿼리하므로 추가 비용이 없다.
+ * <p>사진 1장의 분석은 {@link PhotoAnalysisPipeline} 이 통째로 소유한다 — 이 ViewModel 은
+ * GPS 냐 AI 냐를 알지 못하며, 알 필요도 없다. S3 는 <em>직렬</em> 처리다(동시 4건·재시도·
+ * 비용 상한은 S4 가 이 루프를 대체하며 붙인다).
  *
  * <p>진짜 취소 시점은 {@link #onCleared()} 다 — 회전으로 View 만 재생성되는 경우
  * {@code onDestroyView()} 는 매번 불리지만 이 ViewModel 은 살아남으므로 잘못 취소되면
@@ -47,7 +48,7 @@ public class AnalysisViewModel extends ViewModel {
 
     private final Context context;
     private final MediaStoreImageSource imageSource;
-    private final ExifExtractor extractor;
+    private final PhotoAnalysisPipeline pipeline;
     private final PhotoAnalysisRepository analysisRepository;
     private final SelectionSession session;
     private final AppExecutors executors;
@@ -61,13 +62,13 @@ public class AnalysisViewModel extends ViewModel {
     @Inject
     public AnalysisViewModel(@ApplicationContext Context context,
                              MediaStoreImageSource imageSource,
-                             ExifExtractor extractor,
+                             PhotoAnalysisPipeline pipeline,
                              PhotoAnalysisRepository analysisRepository,
                              SelectionSession session,
                              AppExecutors executors) {
         this.context = context;
         this.imageSource = imageSource;
-        this.extractor = extractor;
+        this.pipeline = pipeline;
         this.analysisRepository = analysisRepository;
         this.session = session;
         this.executors = executors;
@@ -97,7 +98,7 @@ public class AnalysisViewModel extends ViewModel {
             return;
         }
 
-        extractor.resetFailureCount();
+        pipeline.resetFailureCount();
         state.setValue(new AnalysisUiState(0, selectedIds.size(), false, "", 0, 0));
 
         // 선택은 이미 SELECT 에서 확정됐다 — 갤러리 전체(수만 장일 수 있다)를 훑어 그중
@@ -139,13 +140,15 @@ public class AnalysisViewModel extends ViewModel {
             if (cancelled.get()) return;
 
             GalleryImage image = targets.get(i);
-            PhotoAnalysis analysis = extractor.extract(image);
+            PhotoAnalysis analysis = pipeline.analyze(image);
             results.add(analysis);
 
             int analyzed = i + 1;
             int placed = countPlaced(results);
             int unknown = countUnknown(results);
-            String currentName = image.displayName;
+            // AI 가 이름을 알아냈으면 그걸 보여준다 — "현재 인식 텍스트"라는 이름값을
+            // 이제야 한다. 못 알아냈으면 S1 처럼 파일명으로 폴백한다.
+            String currentName = progressLabel(analysis, image);
             executors.mainThread().execute(() -> state.setValue(
                     new AnalysisUiState(analyzed, total, false, currentName, placed, unknown)));
         }
@@ -180,17 +183,35 @@ public class AnalysisViewModel extends ViewModel {
         return n;
     }
 
+    /**
+     * NAME_ONLY 를 위치 미상에 합산한다. 사용자에겐 둘 다 "지도에 없는 사진"이고,
+     * 이 둘을 화면에서 갈라 보여주는 건 S6 다 — 그때 이 합산을 쪼갠다.
+     */
     private static int countUnknown(List<PhotoAnalysis> results) {
         int n = 0;
         for (PhotoAnalysis a : results) {
-            if (a.classification == LocationClassification.UNKNOWN) n++;
+            if (a.classification == LocationClassification.UNKNOWN
+                    || a.classification == LocationClassification.NAME_ONLY) {
+                n++;
+            }
         }
         return n;
     }
 
+    /** 인식된 장소명 > 도시명 > 파일명. 전부 저장된 값이라 새 문자열 리소스가 필요 없다. */
+    private static String progressLabel(PhotoAnalysis analysis, GalleryImage image) {
+        if (analysis.landmarkName != null && !analysis.landmarkName.trim().isEmpty()) {
+            return analysis.landmarkName;
+        }
+        if (analysis.city != null && !analysis.city.trim().isEmpty()) {
+            return analysis.city;
+        }
+        return image.displayName;
+    }
+
     /** 원본 접근 실패 수 — 완료 안내에 덧붙인다(조용한 GPS 누락 감지). */
     public int originalAccessFailures() {
-        return extractor.originalAccessFailures();
+        return pipeline.originalAccessFailures();
     }
 
     /**
