@@ -73,6 +73,23 @@ public class GeocodeResponseParserTest {
         assertEquals(2.0, points.get(0).lng, 1e-9);
     }
 
+    @Test
+    public void placesSkipsEntryWithNonNumericLatitudeStringWithoutThrowing() {
+        assertTrue("JsonPrimitive 가 문자열을 감싸면 getAsDouble() 이 내부적으로 "
+                        + "Double.parseDouble 을 호출해 NumberFormatException 을 던진다",
+                PlacesResponseParser.parse(json(
+                        "{\"places\":[{\"location\":{\"latitude\":\"nope\",\"longitude\":2.0}}]}"))
+                        .isEmpty());
+    }
+
+    @Test
+    public void placesSkipsEntryWithNullLatitudeWithoutThrowing() {
+        assertTrue("latitude 가 present-but-null 이면 JsonNull.getAsDouble() 이 던진다",
+                PlacesResponseParser.parse(json(
+                        "{\"places\":[{\"location\":{\"latitude\":null,\"longitude\":2.0}}]}"))
+                        .isEmpty());
+    }
+
     // ---------- Geocoding ----------
 
     @Test
@@ -136,6 +153,46 @@ public class GeocodeResponseParserTest {
                         + "{\"geometry\":\"x\"},"
                         + "{\"geometry\":{\"location\":{\"lat\":48.85,\"lng\":2.35}}}]}"));
         assertEquals("형식이 이상한 항목 하나 때문에 전체를 포기하면 안 된다 — 건너뛰고 계속한다",
+                1, points.size());
+        assertEquals(48.85, points.get(0).lat, 1e-9);
+        assertEquals(2.35, points.get(0).lng, 1e-9);
+    }
+
+    @Test
+    public void geocodingLocationNotAnObjectYieldsEmptyListWithoutThrowing() {
+        assertTrue("location 이 객체가 아니면 raw cast 가 ClassCastException 을 던진다",
+                GeocodingResponseParser.parse(json(
+                        "{\"status\":\"OK\",\"results\":[{\"geometry\":{\"location\":\"x\"}}]}"))
+                        .isEmpty());
+    }
+
+    @Test
+    public void geocodingSkipsEntryWithNonNumericLatStringWithoutThrowing() {
+        assertTrue("JsonPrimitive 가 문자열을 감싸면 getAsDouble() 이 내부적으로 "
+                        + "Double.parseDouble 을 호출해 NumberFormatException 을 던진다",
+                GeocodingResponseParser.parse(json(
+                        "{\"status\":\"OK\",\"results\":[{\"geometry\":{\"location\":"
+                                + "{\"lat\":\"not-a-number\",\"lng\":2.0}}}]}"))
+                        .isEmpty());
+    }
+
+    @Test
+    public void geocodingSkipsEntryWithBooleanLatWithoutThrowing() {
+        assertTrue("JsonPrimitive 가 Boolean 을 감싸면 getAsDouble() 이 \"true\"/\"false\" 문자열을 "
+                        + "parseDouble 에 넘겨 NumberFormatException 을 던진다",
+                GeocodingResponseParser.parse(json(
+                        "{\"status\":\"OK\",\"results\":[{\"geometry\":{\"location\":"
+                                + "{\"lat\":true,\"lng\":2.0}}}]}"))
+                        .isEmpty());
+    }
+
+    @Test
+    public void geocodingSkipsNonNumericLatEntryButKeepsValidOne() {
+        List<GeoPoint> points = GeocodingResponseParser.parse(json(
+                "{\"status\":\"OK\",\"results\":["
+                        + "{\"geometry\":{\"location\":{\"lat\":\"not-a-number\",\"lng\":2.0}}},"
+                        + "{\"geometry\":{\"location\":{\"lat\":48.85,\"lng\":2.35}}}]}"));
+        assertEquals("숫자가 아닌 lat 항목 하나 때문에 전체를 포기하면 안 된다 — 건너뛰고 계속한다",
                 1, points.size());
         assertEquals(48.85, points.get(0).lat, 1e-9);
         assertEquals(2.35, points.get(0).lng, 1e-9);

@@ -51,7 +51,14 @@ public final class GeocodingResponseParser {
             if (lat == null || lng == null || !lat.isJsonPrimitive() || !lng.isJsonPrimitive()) {
                 continue;
             }
-            points.add(new GeoPoint(lat.getAsDouble(), lng.getAsDouble()));
+            // getAsDouble() 은 String/Boolean 을 감싼 JsonPrimitive 에도 반응한다 —
+            // 숫자가 아닌 문자열이면 Double.parseDouble 이 NumberFormatException 을 던진다.
+            // 이 항목만 건너뛰고 나머지 파싱은 계속한다.
+            try {
+                points.add(new GeoPoint(lat.getAsDouble(), lng.getAsDouble()));
+            } catch (RuntimeException skip) {
+                continue;
+            }
         }
         return points;
     }
