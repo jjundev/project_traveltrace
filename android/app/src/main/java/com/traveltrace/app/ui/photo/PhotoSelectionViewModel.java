@@ -92,6 +92,12 @@ public class PhotoSelectionViewModel extends ViewModel {
         imageSource.loadAlbums(callback);
     }
 
+    /** 지금 그리드가 보여주는 앨범의 bucketId. null 이면 전체 사진 — 시트를 다시 열 때 어떤 행을 강조할지 결정한다. */
+    @Nullable
+    public String selectedBucketId() {
+        return selectedBucketId;
+    }
+
     /**
      * 앨범 드롭다운에서 폴더를 골랐다. bucketId 가 null 이면 "전체 사진"으로 되돌아간다.
      * 선택 상태는 toState() 의 id 기준 carry-over 로 그대로 이어진다 — 회전 재조회와
