@@ -144,7 +144,7 @@ dependencies {
     implementation libs.retrofit.converter.gson
     implementation libs.gson
     implementation libs.okhttp
-    debugImplementation libs.okhttp.logging
+    implementation libs.okhttp.logging
 
     implementation libs.room.runtime
     annotationProcessor libs.room.compiler

@@ -32,7 +32,11 @@ import retrofit2.converter.gson.GsonConverterFactory;
  * S4 가 정책을 세우기 전까지의 안전장치로 삼는다.
  *
  * <p>로깅은 디버그 빌드에서 HEADERS 까지만이다. BODY 로 올리면 base64 이미지 수 MB 가
- * logcat 에 쏟아지고, 무엇보다 요청 헤더에 실린 API 키가 그대로 찍힌다.
+ * logcat 에 쏟아지고, 무엇보다 요청 헤더에 실린 API 키가 그대로 찍힌다. 헤더는
+ * {@code redactHeader(...)} 로 가리지만, Geocoding 은 키를 쿼리 파라미터({@code ?key=...})로
+ * 보내므로 그것만으로는 부족하다 — 커스텀 로거로 로그 라인의 {@code key=<값>} 을
+ * 정규식으로 지워, 세 호스트(Vertex·Places·Geocoding) 모두에서 키가 logcat 에 남지
+ * 않도록 한다.
  */
 @Module
 @InstallIn(SingletonComponent.class)
@@ -56,7 +60,8 @@ public final class NetworkModule {
     @Provides
     @Singleton
     public static OkHttpClient provideOkHttpClient() {
-        HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
+        HttpLoggingInterceptor logging = new HttpLoggingInterceptor(message ->
+                android.util.Log.d("OkHttp", message.replaceAll("key=[^&\\s]+", "key=REDACTED")));
         logging.setLevel(BuildConfig.DEBUG
                 ? HttpLoggingInterceptor.Level.HEADERS
                 : HttpLoggingInterceptor.Level.NONE);

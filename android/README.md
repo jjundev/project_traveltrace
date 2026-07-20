@@ -98,8 +98,10 @@ Vertex 의 모델 목록에는 능력 메타데이터가 없다(`supportedAction
 - **Google Cloud (Maps / Places / Geocoding)** — APIs & Services → 각 API → *Quotas & System Limits* →
   "Requests per day" / "Requests per minute"에 상한 입력. 추가로 *Credentials*에서 키에 **API 제한**
   (해당 API만)과 **Android 앱 제한**(패키지명 + SHA-1)을 건다.
-- **Google AI Studio / Gemini API** — 프로젝트의 Gemini API 사용량 한도(또는 결제 프로젝트의 quota)를
-  일/분 단위로 낮춘다.
+- **Vertex AI Express (`aiplatform.googleapis.com`)** — VERTEX_API_KEY가 속한 프로젝트의 Google Cloud
+  콘솔에서 APIs & Services → *Vertex AI API* → *Quotas & System Limits* → "Requests per minute" /
+  "Requests per day"에 상한 입력. (Google AI Studio/Gemini API 콘솔이 아니다 — 이 앱의 비전 추론은
+  Vertex AI Express 를 호출하므로 quota도 그쪽에서 걸어야 실제 추론 경로가 보호된다.)
 - **OpenAI Platform** — *Settings → Limits*에서 **monthly budget / usage limit**과(가능 시) rate limit을
   보수적으로 설정한다.
 
@@ -116,7 +118,8 @@ Vertex 의 모델 목록에는 능력 메타데이터가 없다(`supportedAction
 - DI: **Hilt(annotationProcessor)** — `@HiltAndroidApp`, `@AndroidEntryPoint` Fragment/Activity, `@HiltViewModel`.
 - 네트워크/직렬화: **Retrofit + OkHttp + Gson**. 비동기: **ExecutorService**(Epic G). 로컬 저장: **Room(annotationProcessor)**.
 - 핵심 인터페이스 `VisionProvider`(Epic D) / `Geocoder`(Epic E) / `TripRepository`(Epic I)는
-  빈 스텁으로 Hilt `@Binds` 주입됨 — 각 에픽에서 실제 구현으로 교체.
+  S3 기준 모두 실제 구현(`VertexGeminiProvider` / `RoutingGeocoder` / `RoomTripRepository`)으로
+  Hilt `@Binds` 주입됨 — 더 이상 빈 스텁이 아니다.
 - Maps **3D SDK(Experimental)** 의존성은 P0 골격을 Preview 아티팩트에 결합하지 않도록 **Epic J(= plan/14-map-3d-flyover)에서 추가**한다.
   (이 README는 에픽을 문자 A/D/E/G/I/J로, `plan/`은 숫자 01–15로 표기한다 — Epic J ↔ plan/14.)
 
