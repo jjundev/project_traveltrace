@@ -35,4 +35,11 @@ public final class Migrations {
                     + "PRIMARY KEY(`mediaStoreId`, `contentHash`))");
         }
     };
+
+    /**
+     * databaseBuilder 에 등록할 모든 마이그레이션의 단일 출처. 새 마이그레이션을 만들면
+     * 반드시 여기에 더한다 — 빠뜨리면 release 빌드에서 그 점프가 데이터 삭제 대신 크게
+     * 실패하고(정상 방향), DatabaseModuleTest 의 체인 가드가 CI 에서 먼저 잡는다.
+     */
+    public static final Migration[] ALL = { MIGRATION_1_2 };
 }
