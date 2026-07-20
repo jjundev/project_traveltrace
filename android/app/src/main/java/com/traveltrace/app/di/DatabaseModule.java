@@ -4,6 +4,7 @@ import android.content.Context;
 
 import androidx.room.Room;
 
+import com.traveltrace.app.data.db.Migrations;
 import com.traveltrace.app.data.db.TravelTraceDatabase;
 
 import javax.inject.Singleton;
@@ -21,13 +22,15 @@ public final class DatabaseModule {
     private DatabaseModule() {}
 
     /**
-     * 정식 릴리스 전까지 파괴적 마이그레이션을 허용한다 — 아직 배포된 버전이 없어
-     * 보존할 사용자 데이터가 없다. 첫 릴리스 시점에 실제 Migration 으로 교체한다.
+     * 실 마이그레이션을 우선 태우고, 커버되지 않는 개발 중 스키마 점프만 파괴적으로 처리한다.
+     * 저장된 여행은 사용자가 되돌릴 수 없는 데이터(재분석 = 비용)라 v1→v2 는 반드시
+     * 가산 마이그레이션으로 넘어가야 한다.
      */
     @Provides
     @Singleton
     public static TravelTraceDatabase provideDatabase(@ApplicationContext Context context) {
         return Room.databaseBuilder(context, TravelTraceDatabase.class, TravelTraceDatabase.NAME)
+                .addMigrations(Migrations.MIGRATION_1_2)
                 .fallbackToDestructiveMigration()
                 .build();
     }
