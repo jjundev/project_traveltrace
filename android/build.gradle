@@ -17,12 +17,12 @@ String localProp(String key) {
 
 // A2 — EXPLICIT, decoupled resolve step (NOT part of every build).
 // Run manually / in CI:  ./gradlew resolveVisionModels
-// Hits the live provider model lists and rewrites the committed
+// Hits the live Vertex/OpenAI model lists and rewrites the committed
 // gradle/visionModels.generated.json. Normal builds never run this.
 tasks.register("resolveVisionModels", ResolveVisionModelsTask) {
     group = "traveltrace"
-    description = "Resolve current vision model IDs from live Gemini/OpenAI model lists and rewrite gradle/visionModels.generated.json"
-    geminiApiKey.set(localProp("GEMINI_API_KEY"))
+    description = "Resolve current vision model IDs from the live Vertex/OpenAI model lists and rewrite gradle/visionModels.generated.json"
+    vertexApiKey.set(localProp("VERTEX_API_KEY"))
     openAiApiKey.set(localProp("OPENAI_API_KEY"))
     rulesetVersion.set(Constants.RULESET_VERSION)
     outputFile.set(rootProject.file("gradle/visionModels.generated.json"))

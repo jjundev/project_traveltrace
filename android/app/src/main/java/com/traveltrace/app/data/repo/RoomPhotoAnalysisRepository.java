@@ -51,6 +51,7 @@ public class RoomPhotoAnalysisRepository implements PhotoAnalysisRepository {
                 p.takenAtUtc = a.takenAtUtc;
                 p.takenAtHasOffset = a.takenAtHasOffset;
                 p.displayName = a.displayName;
+                p.contentHash = a.contentHash;
                 photos.add(p);
 
                 PhotoLocationEntity l = new PhotoLocationEntity();
@@ -58,6 +59,10 @@ public class RoomPhotoAnalysisRepository implements PhotoAnalysisRepository {
                 l.lat = a.lat;
                 l.lng = a.lng;
                 l.source = a.source;
+                l.landmarkName = a.landmarkName;
+                l.city = a.city;
+                l.country = a.country;
+                l.confidence = a.confidence;
                 l.classification = a.classification;
                 l.detached = false;
                 locations.add(l);

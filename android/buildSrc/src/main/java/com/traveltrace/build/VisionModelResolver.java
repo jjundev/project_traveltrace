@@ -12,8 +12,9 @@ import java.util.regex.Pattern;
  * Design note (A2): the LIVE list proves existence / non-deprecation (a model that
  * disappears is simply absent — neither provider exposes a `deprecated` flag). VISION
  * CAPABILITY is decided here:
- *   - Gemini list carries supportedGenerationMethods, so we require generateContent plus
- *     a name filter (gemini-* family, excluding embedding/aqa/text-only names).
+ *   - Vertex publisherModels.list carries NO capability metadata (supportedActions is a
+ *     console CallToAction, not a generateContent flag), so capability is decided by a
+ *     versioned name allowlist. launchStage=DEPRECATED entries are dropped.
  *   - OpenAI /v1/models carries NO capability metadata, so capability is decided by a
  *     versioned allowlist of id patterns, intersected with the live list. Acknowledged
  *     limitation: a new vision model under an unanticipated name prefix is excluded until
@@ -30,27 +31,39 @@ public final class VisionModelResolver {
             Pattern.compile("^o[1-9][0-9]*(-.*)?$")
     );
 
-    private static final Pattern GEMINI_EXCLUDE =
-            Pattern.compile("(embedding|aqa|gemma|text-bison|chat-bison)", Pattern.CASE_INSENSITIVE);
+    /**
+     * Vertex vision-capable name patterns (capability allowlist). Vertex's model list has
+     * no capability metadata, so — exactly as with OpenAI — capability is a versioned
+     * ruleset intersected with the live list. Acknowledged limitation: a new vision model
+     * under an unanticipated name is excluded until this list is updated (RULESET_VERSION).
+     */
+    static final List<Pattern> VERTEX_VISION_ALLOWLIST = Arrays.asList(
+            Pattern.compile("^gemini-[0-9].*$")
+    );
+
+    /** Names that match the allowlist prefix but are not vision chat models. */
+    private static final Pattern VERTEX_EXCLUDE =
+            Pattern.compile("(embedding|aqa|gemma|tts|image|veo|imagen)", Pattern.CASE_INSENSITIVE);
+
+    private static final String DEPRECATED = "DEPRECATED";
 
     private static String shortName(String name) {
         int i = name.lastIndexOf('/');
         return i >= 0 ? name.substring(i + 1) : name;
     }
 
-    public static String selectGemini(List<GeminiModel> models) {
+    public static String selectVertex(List<VertexModel> models) {
         String best = models.stream()
-                .filter(m -> m.supportedGenerationMethods != null
-                        && m.supportedGenerationMethods.contains("generateContent"))
-                .filter(m -> shortName(m.name).startsWith("gemini-"))
-                .filter(m -> !GEMINI_EXCLUDE.matcher(m.name).find())
+                .filter(m -> !DEPRECATED.equalsIgnoreCase(m.launchStage))
                 .map(m -> shortName(m.name))
+                .filter(n -> VERTEX_VISION_ALLOWLIST.stream().anyMatch(p -> p.matcher(n).matches()))
+                .filter(n -> !VERTEX_EXCLUDE.matcher(n).find())
                 .max(Comparator.naturalOrder())  // heuristic: lexicographically-newest name
                 .orElse(null);
         if (best == null) {
             throw new NoSuitableModelException(
-                    "Gemini: live model list has no entry satisfying the vision ruleset (rulesetVersion="
-                            + Constants.RULESET_VERSION
+                    "Vertex: live publisher model list has no entry satisfying the vision ruleset"
+                            + " (rulesetVersion=" + Constants.RULESET_VERSION
                             + "). The list may be empty/unsuitable, or the ruleset needs updating.");
         }
         return best;
@@ -72,7 +85,7 @@ public final class VisionModelResolver {
     }
 
     /** Resolve both providers; throws NoSuitableModelException if either yields nothing. */
-    public static String[] select(List<GeminiModel> gemini, List<OpenAiModel> openAi) {
-        return new String[]{selectGemini(gemini), selectOpenAi(openAi)};
+    public static String[] select(List<VertexModel> vertex, List<OpenAiModel> openAi) {
+        return new String[]{selectVertex(vertex), selectOpenAi(openAi)};
     }
 }

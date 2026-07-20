@@ -36,8 +36,18 @@ public class MediaStoreImageSource {
             MediaStore.Images.Media._ID,
             MediaStore.Images.Media.DISPLAY_NAME,
             MediaStore.Images.Media.DATE_TAKEN,
+            MediaStore.Images.Media.DATE_ADDED,
             MediaStore.Images.Media.SIZE,
     };
+
+    /**
+     * 정렬·시각 폴백: DATE_TAKEN(EXIF 촬영 시각, 밀리초)이 없으면 DATE_ADDED(저장 시각,
+     * 초)로 대신한다. 브라우저 다운로드·메신저 수신 사진은 DATE_TAKEN 이 비어 있어, 이
+     * 폴백이 없으면 DESC 정렬에서 맨 뒤(NULL)로 밀려 최근 500장 창 밖으로 사라진다.
+     */
+    private static final String SORT_RECENT_FIRST =
+            "COALESCE(" + MediaStore.Images.Media.DATE_TAKEN + ", "
+                    + MediaStore.Images.Media.DATE_ADDED + " * 1000) DESC";
 
     private final Context context;
     private final AppExecutors executors;
@@ -91,7 +101,7 @@ public class MediaStoreImageSource {
 
     private List<GalleryImage> query(int limit, @Nullable String bucketId) {
         Uri collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-        String sort = MediaStore.Images.Media.DATE_TAKEN + " DESC";
+        String sort = SORT_RECENT_FIRST;
         String selection = bucketId == null ? null : MediaStore.Images.Media.BUCKET_ID + " = ?";
         String[] args = bucketId == null ? null : new String[]{bucketId};
 
@@ -154,7 +164,7 @@ public class MediaStoreImageSource {
         if (ids.isEmpty()) return new ArrayList<>();
 
         Uri collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-        String sort = MediaStore.Images.Media.DATE_TAKEN + " DESC";
+        String sort = SORT_RECENT_FIRST;
         StringBuilder selection = new StringBuilder(MediaStore.Images.Media._ID).append(" IN (");
         String[] args = new String[ids.size()];
         for (int i = 0; i < ids.size(); i++) {
@@ -181,10 +191,19 @@ public class MediaStoreImageSource {
         int nameCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DISPLAY_NAME);
         int takenCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN);
         int sizeCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.SIZE);
+        // getColumnIndex(비-Throw): 이 컬럼이 없는 테스트 커서에서도 -1 로 조용히 넘어가
+        // 기존 동작(DATE_TAKEN 없으면 null)을 그대로 보존한다. 실제 MediaStore 쿼리는
+        // PROJECTION 에 DATE_ADDED 가 있어 폴백이 동작한다.
+        int addedCol = cursor.getColumnIndex(MediaStore.Images.Media.DATE_ADDED);
 
         while (cursor.moveToNext() && images.size() < limit) {
             long id = cursor.getLong(idCol);
             long taken = cursor.isNull(takenCol) ? 0L : cursor.getLong(takenCol);
+            // EXIF 촬영 시각이 없으면 저장 시각(DATE_ADDED, 초→밀리초)으로 폴백한다 —
+            // 다운로드·수신 사진이 정렬에서 밀려나거나 시각 없음으로 사라지지 않게.
+            if (taken <= 0L && addedCol >= 0 && !cursor.isNull(addedCol)) {
+                taken = cursor.getLong(addedCol) * 1000L;
+            }
             images.add(new GalleryImage(
                     id,
                     ContentUris.withAppendedId(collection, id),

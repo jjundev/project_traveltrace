@@ -46,7 +46,7 @@ cp local.properties.example local.properties
 | `./gradlew :app:assembleDebug` | 디버그 APK 빌드 (네트워크/Vision 키 불필요 — 커밋된 모델 ID 사용) |
 | `./gradlew :buildSrc:test` | A2 선정 로직 + 가드 task 빌드실패 테스트 |
 | `./gradlew check` | 린트 + `modelIdGuard`(죽은 ID 하드코딩) + `visionModelStalenessGuard` |
-| `./gradlew resolveVisionModels` | **명시적** 라이브 모델 재해소 (GEMINI/OPENAI 키 + 네트워크 필요) |
+| `./gradlew resolveVisionModels` | **명시적** 라이브 모델 재해소 (VERTEX/OPENAI 키 + 네트워크 필요) |
 
 ---
 
@@ -55,8 +55,9 @@ cp local.properties.example local.properties
 모델 ID는 하드코딩하지 않는다(폐기 위험, PRD §4.3/§8). 대신:
 
 - **해소는 빌드와 분리된 명시적 스텝**이다: `./gradlew resolveVisionModels`가 라이브 모델 목록
-  (Gemini `GET /v1beta/models`, OpenAI `GET /v1/models`)을 조회해 적합 vision 모델을 고르고,
-  결과를 **VCS에 커밋되는** [`gradle/visionModels.generated.json`](gradle/visionModels.generated.json)에 기록한다.
+  (Vertex `GET /v1/publishers/google/models`(Express Mode, `x-goog-api-key`), OpenAI `GET /v1/models`)을
+  조회해 적합 vision 모델을 고르고, 결과를 **VCS에 커밋되는**
+  [`gradle/visionModels.generated.json`](gradle/visionModels.generated.json)에 기록한다.
 - **모든 일반 빌드**는 이 커밋된 파일을 **configuration 단계에서 읽어** `BuildConfig.GEMINI_VISION_MODEL`/
   `OPENAI_VISION_MODEL`로 주입한다 → 네트워크·키 없이 **재현 가능·오프라인** 빌드.
 - **적합 모델 0개 → 빌드 실패.** `resolveVisionModels`는 적합 모델이 없으면 `NoSuitableModelException`을
@@ -65,6 +66,12 @@ cp local.properties.example local.properties
   (테스트/생성 코드는 스캔 제외).
 - **staleness 가드**(`visionModelStalenessGuard`, `check`에 연결): 룰셋 버전 불일치는 **실패**(릴리스 파이프라인이
   `check` 실행), 경과일 초과는 **경고만**(재현성 유지).
+
+Vertex 의 모델 목록에는 능력 메타데이터가 없다(`supportedActions` 는 콘솔 UI 용이라
+`generateContent` 지원 여부를 알려주지 않는다). 그래서 vision 판별은 OpenAI 와 동일하게
+**버전 관리되는 이름 allowlist**로 하고, Vertex 가 주는 `launchStage` 로 `DEPRECATED` 를
+걸러낸다. 조회 표면과 런타임 호출 표면이 같은 Express Mode 엔드포인트이므로, 여기서
+확정된 모델은 실제로 `:generateContent` 에 응답하는 모델이다.
 
 능력 판별 한계: OpenAI `/v1/models`는 능력 메타데이터를 주지 않아 vision 여부를 **허용 패턴 allowlist**로
 판별한다(버전 관리됨, `RULESET_VERSION`). 새 vision 모델이 예상 못 한 이름으로 나오면 allowlist 갱신
@@ -79,7 +86,7 @@ cp local.properties.example local.properties
 - 소비 경로가 키마다 다르다:
   - **Maps**: `AndroidManifest.xml`의 `meta-data`로 주입(`manifestPlaceholders = [MAPS_API_KEY: ...]`).
   - **Places**: 런타임 `Places.initialize(context, KEY)` (Epic E).
-  - **Geocoding / Gemini / OpenAI**: REST 호출(`BuildConfig`의 키 사용, Epic D·E).
+  - **Geocoding / Vertex / OpenAI**: REST 호출(`BuildConfig`의 키 사용, Epic D·E).
 
 ### 콘솔 quota cap — 도난 키 피해를 제한하는 **유일한** 장치
 > 이 앱은 가족용으로 API 키를 APK에 내장한다. 디컴파일로 키 추출이 가능하며, **앱 내 여행당 비용 상한(Epic G)은
@@ -91,8 +98,10 @@ cp local.properties.example local.properties
 - **Google Cloud (Maps / Places / Geocoding)** — APIs & Services → 각 API → *Quotas & System Limits* →
   "Requests per day" / "Requests per minute"에 상한 입력. 추가로 *Credentials*에서 키에 **API 제한**
   (해당 API만)과 **Android 앱 제한**(패키지명 + SHA-1)을 건다.
-- **Google AI Studio / Gemini API** — 프로젝트의 Gemini API 사용량 한도(또는 결제 프로젝트의 quota)를
-  일/분 단위로 낮춘다.
+- **Vertex AI Express (`aiplatform.googleapis.com`)** — VERTEX_API_KEY가 속한 프로젝트의 Google Cloud
+  콘솔에서 APIs & Services → *Vertex AI API* → *Quotas & System Limits* → "Requests per minute" /
+  "Requests per day"에 상한 입력. (Google AI Studio/Gemini API 콘솔이 아니다 — 이 앱의 비전 추론은
+  Vertex AI Express 를 호출하므로 quota도 그쪽에서 걸어야 실제 추론 경로가 보호된다.)
 - **OpenAI Platform** — *Settings → Limits*에서 **monthly budget / usage limit**과(가능 시) rate limit을
   보수적으로 설정한다.
 
@@ -109,7 +118,8 @@ cp local.properties.example local.properties
 - DI: **Hilt(annotationProcessor)** — `@HiltAndroidApp`, `@AndroidEntryPoint` Fragment/Activity, `@HiltViewModel`.
 - 네트워크/직렬화: **Retrofit + OkHttp + Gson**. 비동기: **ExecutorService**(Epic G). 로컬 저장: **Room(annotationProcessor)**.
 - 핵심 인터페이스 `VisionProvider`(Epic D) / `Geocoder`(Epic E) / `TripRepository`(Epic I)는
-  빈 스텁으로 Hilt `@Binds` 주입됨 — 각 에픽에서 실제 구현으로 교체.
+  S3 기준 모두 실제 구현(`VertexGeminiProvider` / `RoutingGeocoder` / `RoomTripRepository`)으로
+  Hilt `@Binds` 주입됨 — 더 이상 빈 스텁이 아니다.
 - Maps **3D SDK(Experimental)** 의존성은 P0 골격을 Preview 아티팩트에 결합하지 않도록 **Epic J(= plan/14-map-3d-flyover)에서 추가**한다.
   (이 README는 에픽을 문자 A/D/E/G/I/J로, `plan/`은 숫자 01–15로 표기한다 — Epic J ↔ plan/14.)
 

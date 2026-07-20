@@ -47,8 +47,12 @@ public class RoomTripRepository implements TripRepository {
                 detail.name = entity.name;
                 detail.timeZoneId = entity.timeZoneId;
                 detail.stops = db.photoLocationDao().stopsFor(tripId);
+                // NAME_ONLY 는 "지도에 없는 사진"이라는 점에서 사용자에겐 위치 미상과 같다.
+                // 둘을 화면에서 분리하는 건 S6 이며, 그때 이 합산을 쪼갠다.
                 detail.unknownCount = db.photoLocationDao()
-                        .countByClassification(tripId, LocationClassification.UNKNOWN);
+                        .countByClassification(tripId, LocationClassification.UNKNOWN)
+                        + db.photoLocationDao()
+                        .countByClassification(tripId, LocationClassification.NAME_ONLY);
             }
             TripDetail result = detail;
             executors.mainThread().execute(() -> callback.onResult(result));

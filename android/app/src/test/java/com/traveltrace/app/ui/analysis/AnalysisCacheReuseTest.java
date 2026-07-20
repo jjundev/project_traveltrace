@@ -17,6 +17,9 @@ import androidx.room.Room;
 import androidx.test.core.app.ApplicationProvider;
 
 import com.traveltrace.app.AsyncTestHarness;
+import com.traveltrace.app.analysis.AiLocationResolver;
+import com.traveltrace.app.analysis.PhotoAnalysisPipeline;
+import com.traveltrace.app.analysis.UploadPreparer;
 import com.traveltrace.app.core.AnalysisCostLog;
 import com.traveltrace.app.core.AppExecutors;
 import com.traveltrace.app.data.db.TravelTraceDatabase;
@@ -215,10 +218,21 @@ public class AnalysisCacheReuseTest {
     }
 
     private AnalysisViewModel newViewModel() {
+        // S8 캐시가 감싸는 "실제 판독"은 이제 S3 파이프라인이다. 이 테스트는 GPS 사진만
+        // 쓰므로 파이프라인이 exif.extract() 뒤 곧바로 반환한다 — vision/geocoder/preparer 는
+        // 절대 불리지 않는다(불리면 AssertionError 로 즉시 드러난다). extract() 호출 수는
+        // CountingExifExtractor 가 파이프라인 안에서 그대로 센다.
+        PhotoAnalysisPipeline pipeline = new PhotoAnalysisPipeline(
+                extractor,
+                new UploadPreparer(ctx),
+                jpeg -> { throw new AssertionError("GPS 사진은 vision 을 타면 안 된다"); },
+                new AiLocationResolver(query -> {
+                    throw new AssertionError("GPS 사진은 geocoder 를 타면 안 된다");
+                }));
         return new AnalysisViewModel(
                 ctx,
                 new MediaStoreImageSource(ctx, executors),
-                extractor,
+                pipeline,
                 new RoomPhotoAnalysisRepository(db, executors),
                 session,
                 executors,
