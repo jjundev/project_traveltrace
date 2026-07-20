@@ -72,7 +72,10 @@ public class AnalysisPipelineTest {
                 new ExifExtractor(ctx, TimeZone.getTimeZone("Asia/Seoul")),
                 new RoomPhotoAnalysisRepository(db, executors),
                 session,
-                executors);
+                executors,
+                new com.traveltrace.app.data.media.ContentHasher(ctx),
+                new com.traveltrace.app.data.repo.RoomAnalysisCacheStore(db),
+                new com.traveltrace.app.core.AnalysisCostLog());
     }
 
     @After
@@ -118,12 +121,23 @@ public class AnalysisPipelineTest {
 
         Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI.buildUpon()
                 .appendPath(String.valueOf(id)).build();
-        // 브리프 원안은 이 bare uri 에 스트림을 등록했지만, ExifExtractor 는
-        // MediaStore.setRequireOriginal(uri) 로 얻은(쿼리 파라미터 "?requireOriginal=1" 이 붙은)
-        // 별도의 Uri 로만 스트림을 연다 — ShadowContentResolver#registerInputStream 은 정확히
-        // 같은 Uri 로만 매칭하므로(ExifExtractorTest 의 선례), 실제로 여는 Uri 에 등록한다.
+        // ExifExtractor 는 MediaStore.setRequireOriginal(uri) 로 얻은(쿼리 파라미터
+        // "?requireOriginal=1" 이 붙은) Uri 를, ContentHasher 는 평범한 uri 를 연다 — 서로 다른
+        // Uri 라 양쪽 모두 등록해야 한다. 배치를 두 번(캐시 재사용 검증) 돌릴 수도 있으므로
+        // registerInputStream 대신 registerInputStreamSupplier 로 매번 새 스트림을 만든다.
         Shadows.shadowOf(ctx.getContentResolver())
-                .registerInputStream(MediaStore.setRequireOriginal(uri), new FileInputStream(file));
+                .registerInputStreamSupplier(uri, () -> openQuietly(file));
+        Shadows.shadowOf(ctx.getContentResolver())
+                .registerInputStreamSupplier(MediaStore.setRequireOriginal(uri),
+                        () -> openQuietly(file));
+    }
+
+    private static FileInputStream openQuietly(File file) {
+        try {
+            return new FileInputStream(file);
+        } catch (java.io.IOException impossible) {
+            throw new AssertionError(impossible);
+        }
     }
 
     /** 백그라운드 작업 + 메인 루퍼 콜백이 모두 소진될 때까지 돌린다. */
@@ -332,7 +346,10 @@ public class AnalysisPipelineTest {
                 new ExifExtractor(ctx, TimeZone.getTimeZone("Asia/Seoul")),
                 fakeRepo,
                 session,
-                executors);
+                executors,
+                new com.traveltrace.app.data.media.ContentHasher(ctx),
+                new com.traveltrace.app.data.repo.RoomAnalysisCacheStore(db),
+                new com.traveltrace.app.core.AnalysisCostLog());
         fakeRepo.attachTo(raceVm);
 
         session.put(Arrays.asList(1L, 2L, 3L));
