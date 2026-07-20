@@ -90,6 +90,26 @@ public class GeocodeResponseParserTest {
                         .isEmpty());
     }
 
+    @Test
+    public void placesSkipsEntryWithBooleanLatWithoutThrowing() {
+        assertTrue("JsonPrimitive 가 Boolean 을 감싸면 getAsDouble() 이 \"true\"/\"false\" 문자열을 "
+                        + "parseDouble 에 넘겨 NumberFormatException 을 던진다",
+                PlacesResponseParser.parse(json(
+                        "{\"places\":[{\"location\":{\"latitude\":true,\"longitude\":2.0}}]}"))
+                        .isEmpty());
+    }
+
+    @Test
+    public void placesSkipsNonNumericLatEntryButKeepsValidOne() {
+        List<GeoPoint> points = PlacesResponseParser.parse(json(
+                "{\"places\":[{\"location\":{\"latitude\":\"nope\",\"longitude\":2.0}},"
+                        + "{\"location\":{\"latitude\":48.85,\"longitude\":2.35}}]}"));
+        assertEquals("숫자가 아닌 latitude 항목 하나 때문에 전체를 포기하면 안 된다 — 건너뛰고 계속한다",
+                1, points.size());
+        assertEquals(48.85, points.get(0).lat, 1e-9);
+        assertEquals(2.35, points.get(0).lng, 1e-9);
+    }
+
     // ---------- Geocoding ----------
 
     @Test
