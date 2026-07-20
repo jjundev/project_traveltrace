@@ -8,8 +8,10 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.traveltrace.app.R;
+import com.traveltrace.app.data.media.AlbumBucket;
 import com.traveltrace.app.data.media.GalleryImage;
 import com.traveltrace.app.data.media.MediaStoreImageSource;
+import com.traveltrace.app.domain.Callback;
 import com.traveltrace.app.ui.selection.SelectionSession;
 
 import java.text.SimpleDateFormat;
@@ -49,6 +51,10 @@ public class PhotoSelectionViewModel extends ViewModel {
     private final SelectionSession session;
     private final MutableLiveData<PhotoSelectionUiState> state = new MutableLiveData<>();
 
+    /** null 이면 전체 앨범. 앨범 드롭다운에서 고른 폴더로 그리드를 좁힌다. */
+    @Nullable private String selectedBucketId;
+    private String selectedAlbumLabel;
+
     @Inject
     public PhotoSelectionViewModel(@ApplicationContext Context context,
                                    MediaStoreImageSource imageSource,
@@ -56,6 +62,7 @@ public class PhotoSelectionViewModel extends ViewModel {
         this.context = context;
         this.imageSource = imageSource;
         this.session = session;
+        this.selectedAlbumLabel = context.getString(R.string.select_album_all);
     }
 
     public LiveData<PhotoSelectionUiState> state() {
@@ -73,7 +80,27 @@ public class PhotoSelectionViewModel extends ViewModel {
      */
     public void load() {
         PhotoSelectionUiState previous = state.getValue();
-        imageSource.loadRecent(GALLERY_PAGE, images -> state.setValue(toState(images, previous)));
+        imageSource.loadRecent(GALLERY_PAGE, selectedBucketId,
+                images -> state.setValue(toState(images, previous)));
+    }
+
+    /**
+     * 기기의 앨범(폴더) 목록. 앨범 드롭다운을 여는 시점에 Fragment 가 부른다 — 화면
+     * 진입마다 미리 조회하지 않는다(그리드 로딩과 무관한 별도 쿼리라 필요할 때만).
+     */
+    public void loadAlbums(Callback<List<AlbumBucket>> callback) {
+        imageSource.loadAlbums(callback);
+    }
+
+    /**
+     * 앨범 드롭다운에서 폴더를 골랐다. bucketId 가 null 이면 "전체 사진"으로 되돌아간다.
+     * 선택 상태는 toState() 의 id 기준 carry-over 로 그대로 이어진다 — 회전 재조회와
+     * 같은 경로라 앨범 전환을 특별 취급할 이유가 없다.
+     */
+    public void selectAlbum(@Nullable String bucketId, String displayName) {
+        selectedBucketId = bucketId;
+        selectedAlbumLabel = displayName;
+        load();
     }
 
     private PhotoSelectionUiState toState(List<GalleryImage> images,
@@ -101,7 +128,7 @@ public class PhotoSelectionViewModel extends ViewModel {
                     image.contentUri));
         }
         return new PhotoSelectionUiState(periodLabel(images), MAX_SELECTION,
-                context.getString(R.string.select_album_all), tiles);
+                selectedAlbumLabel, tiles);
     }
 
     /** "2024. 6. 12 – 6. 15 · 사진 94장" 형태. 시각을 모르는 사진은 기간 계산에서 뺀다. */

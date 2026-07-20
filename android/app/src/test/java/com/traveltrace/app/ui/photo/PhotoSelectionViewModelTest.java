@@ -11,7 +11,9 @@ import android.provider.MediaStore;
 import androidx.test.core.app.ApplicationProvider;
 
 import com.traveltrace.app.AsyncTestHarness;
+import com.traveltrace.app.R;
 import com.traveltrace.app.core.AppExecutors;
+import com.traveltrace.app.data.media.AlbumBucket;
 import com.traveltrace.app.data.media.MediaStoreImageSource;
 import com.traveltrace.app.ui.selection.SelectionSession;
 
@@ -25,6 +27,7 @@ import org.robolectric.fakes.RoboCursor;
 import org.robolectric.shadows.ShadowLooper;
 
 import java.util.Arrays;
+import java.util.List;
 
 @RunWith(RobolectricTestRunner.class)
 public class PhotoSelectionViewModelTest {
@@ -136,6 +139,67 @@ public class PhotoSelectionViewModelTest {
 
         assertFalse("한 장도 없으면 분석을 시작할 수 없다", vm.commitSelection());
         assertTrue(session.isEmpty());
+    }
+
+    @Test
+    public void defaultAlbumLabelIsAllPhotos() {
+        PhotoSelectionUiState state = loadState();
+        assertEquals(ctx.getString(R.string.select_album_all), state.albumLabel);
+    }
+
+    @Test
+    public void selectAlbumUpdatesTheAlbumLabelAndReloads() {
+        PhotoSelectionUiState before = loadState();
+
+        PhotoSelectionUiState after = AsyncTestHarness.awaitLiveData(
+                vm.state(), () -> vm.selectAlbum("7", "카메라"), s -> s != before,
+                "PhotoSelectionViewModel.selectAlbum() reload");
+
+        assertEquals("카메라", after.albumLabel);
+    }
+
+    /**
+     * 앨범을 바꿔도 이미 골라 둔 사진의 선택은 그대로다 — id 기준 carry-over 로직은 재조회
+     * 사유(회전이든 앨범 전환이든)를 가리지 않는다(toState() 참고).
+     *
+     * <p>단, 이 테스트가 증명하는 건 "VM 이 선택 상태를 id 로 이어받는다"는 것뿐이다.
+     * setCursor 훅은 selection 인자를 무시하므로 "실제로 그 앨범 사진만 온다"는 SQL
+     * 필터링 자체는 MediaStoreImageSourceTest 가 ContentProvider 스텁으로 증명한다.
+     */
+    @Test
+    public void selectAlbumPreservesCarriedSelectionsById() {
+        loadState();
+        vm.toggle(0); // 11L 선택
+        ShadowLooper.idleMainLooper();
+        PhotoSelectionUiState beforeSwitch = vm.state().getValue();
+
+        seed(new Object[]{11L, "a.jpg", 1_718_000_000_000L},
+                new Object[]{22L, "b.jpg", 1_718_100_000_000L});
+        PhotoSelectionUiState afterSwitch = AsyncTestHarness.awaitLiveData(
+                vm.state(), () -> vm.selectAlbum("7", "카메라"), s -> s != beforeSwitch,
+                "PhotoSelectionViewModel.selectAlbum() reload");
+
+        assertTrue("앨범을 바꿔도 이미 고른 사진은 그대로 선택돼 있다",
+                afterSwitch.tiles.get(0).selected);
+        assertEquals(11L, afterSwitch.tiles.get(0).mediaStoreId);
+    }
+
+    @Test
+    public void loadAlbumsDelegatesToTheImageSource() {
+        // loadAlbums() 은 다른 커서 shape(BUCKET_ID/BUCKET_DISPLAY_NAME) 을 요구하므로
+        // setUp() 의 3열 seed() 를 덮어써야 한다 — Robolectric 의 setCursor 는 URI 당
+        // 하나의 커서만 들고 있고, 요청한 프로젝션과 무관하게 등록된 그 커서를 그대로 준다.
+        RoboCursor bucketCursor = new RoboCursor();
+        bucketCursor.setColumnNames(Arrays.asList(
+                MediaStore.Images.Media.BUCKET_ID, MediaStore.Images.Media.BUCKET_DISPLAY_NAME));
+        bucketCursor.setResults(new Object[][]{{"7", "카메라"}});
+        Shadows.shadowOf(ctx.getContentResolver())
+                .setCursor(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, bucketCursor);
+
+        List<AlbumBucket> albums = AsyncTestHarness.awaitCallback(vm::loadAlbums);
+
+        assertEquals(1, albums.size());
+        assertEquals("카메라", albums.get(0).displayName);
     }
 
     @Test
